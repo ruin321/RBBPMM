@@ -247,7 +247,7 @@ export function BananaPage({ onInstalled }: Props): React.JSX.Element {
     <div className="mx-auto w-full max-w-5xl overflow-x-hidden">
       {}
       {current ? (
-        <div className="page-fade">
+        <div className="fade-in">
           <ModDetailPage
             submissionId={current.id}
             fallback={current.fallback}
