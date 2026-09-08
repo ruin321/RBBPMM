@@ -13,7 +13,7 @@ import {
   DialogTitle
 } from '@/components/ui/dialog'
 
-const APP_VERSION = '0.1.0'
+const APP_VERSION = '0.1.1'
 
 const SOURCE_URL = 'https://github.com/ruin321/RBBPMM'
 

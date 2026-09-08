@@ -1,7 +1,7 @@
 {
   "name": "ruin321s-baldi-mod-manager",
   "productName": "Ruin321's Baldi's Basics Plus Mod Manager",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Baldi's Basics Plus mod manager",
   "main": "./out/main/index.js",
   "author": "RUIN321 GAMES",
