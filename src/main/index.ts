@@ -1,5 +1,6 @@
 import { app, BrowserWindow, shell, nativeTheme, nativeImage } from 'electron'
 import path from 'path'
+import { registerWindowIpc } from './ipc/window.ipc'
 import { registerGameIpc } from './ipc/game.ipc'
 import { registerModsIpc } from './ipc/mods.ipc'
 import { registerBananaIpc } from './ipc/banana.ipc'
@@ -21,6 +22,13 @@ let mainWindow: BrowserWindow | null = null
 
 
 function windowIcon(): Electron.NativeImage | undefined {
+  if (process.platform !== 'win32') {
+    const pngPath = path.join(app.getAppPath(), 'resources', 'app-icon.png')
+    const png = nativeImage.createFromPath(pngPath)
+    if (!png.isEmpty()) return png
+    const empty = nativeImage.createEmpty()
+    return empty
+  }
   const icoPath = path.join(app.getAppPath(), 'resources', 'apps.ico')
   const img = nativeImage.createFromPath(icoPath)
   return img.isEmpty() ? undefined : img
@@ -34,6 +42,7 @@ function createWindow(): void {
     minWidth: 860,
     minHeight: 600,
     show: false,
+    frame: false,
     autoHideMenuBar: true,
     title: "Ruin321's Baldi's Basics Plus Mod Manager",
     
@@ -76,6 +85,7 @@ app.whenReady().then(() => {
   if (exe) runtimeState.environment = resolveEnvironment(exe)
 
   registerGameIpc()
+  registerWindowIpc(() => mainWindow)
   registerModsIpc(() => mainWindow?.webContents ?? null)
   registerBananaIpc(() => mainWindow?.webContents ?? null)
   registerUiIpc()

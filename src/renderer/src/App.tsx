@@ -26,6 +26,7 @@ import { ConfigsPage } from '@/pages/ConfigsPage'
 import { TexturePacksPage } from '@/pages/TexturePacksPage'
 import { AboutDialog } from '@/components/AboutDialog'
 import { SplashScreen } from '@/components/SplashScreen'
+import { TitleBar } from '@/components/TitleBar'
 import { cn } from '@/lib/utils'
 
 type Page = 'mods' | 'browse' | 'textures' | 'settings' | 'config'
@@ -108,17 +109,19 @@ export function App(): React.JSX.Element {
   }
 
   return (
-    <div
-      className="relative flex h-full select-none overflow-hidden"
-      onDragOver={(e) => {
-        if (e.dataTransfer.types.includes('Files')) {
-          e.preventDefault()
-          setDragging(true)
-        }
-      }}
-      onDragLeave={() => setDragging(false)}
-      onDrop={handleDrop}
-    >
+    <div className="flex h-full flex-col overflow-hidden">
+      <TitleBar />
+      <div
+        className="relative flex flex-1 select-none overflow-hidden"
+        onDragOver={(e) => {
+          if (e.dataTransfer.types.includes('Files')) {
+            e.preventDefault()
+            setDragging(true)
+          }
+        }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={handleDrop}
+      >
       <Toaster theme={isDark ? 'dark' : 'light'} position="bottom-right" />
       {}
       <aside
@@ -228,6 +231,7 @@ export function App(): React.JSX.Element {
 
       {}
       {splashOn ? <SplashScreen onDone={() => setSplashOn(false)} /> : null}
+    </div>
     </div>
   )
 }

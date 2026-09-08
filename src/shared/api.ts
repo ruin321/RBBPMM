@@ -48,6 +48,14 @@ export interface AppApi {
     revealFile: (path: string) => Promise<void>
     openExternal: (url: string) => Promise<void>
   }
+  window: {
+    minimize: () => Promise<void>
+    toggleMaximize: () => Promise<void>
+    close: () => Promise<void>
+    isMaximized: () => Promise<boolean>
+    registerMaximizeEvents: () => Promise<void>
+    onMaximizedChanged: (cb: (maximized: boolean) => void) => () => void
+  }
   configs: {
     list: () => Promise<Result<ConfigFileDto[]>>
     set: (cfgPath: string, section: string, key: string, value: string) => Promise<Result>

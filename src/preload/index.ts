@@ -33,6 +33,18 @@ const api: AppApi = {
     revealFile: (p) => ipcRenderer.invoke('ui:reveal-file', { path: p }),
     openExternal: (url) => ipcRenderer.invoke('ui:open-external', { url })
   },
+  window: {
+    minimize: () => ipcRenderer.invoke('window:minimize'),
+    toggleMaximize: () => ipcRenderer.invoke('window:toggle-maximize'),
+    close: () => ipcRenderer.invoke('window:close'),
+    isMaximized: () => ipcRenderer.invoke('window:is-maximized'),
+    registerMaximizeEvents: () => ipcRenderer.invoke('window:register-maximize-events'),
+    onMaximizedChanged: (cb) => {
+      const handler = (_e: unknown, v: unknown): void => cb(Boolean(v))
+      ipcRenderer.on('window:maximized-changed', handler)
+      return () => ipcRenderer.removeListener('window:maximized-changed', handler)
+    }
+  },
   configs: {
     list: () => ipcRenderer.invoke('configs:list'),
     set: (cfgPath, section, key, value) =>
