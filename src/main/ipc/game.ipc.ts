@@ -1,6 +1,7 @@
 import { ipcMain, dialog, shell } from 'electron'
 import { spawn } from 'child_process'
 import { resolveEnvironment } from '../services/GameEnvironment'
+import { isGameRunning, stopGame } from '../services/GameProcess'
 import { getStoredExePath, setStoredExePath, runtimeState } from '../store'
 import type { GameEnvironment, Result } from '../../shared/types'
 
@@ -65,6 +66,7 @@ export function registerGameIpc(): void {
           resolve({ ok: false, error: err.message })
         })
         child.unref()
+        runtimeState.gamePid = child.pid ?? null
         resolve({ ok: true, value: { pid: child.pid } })
       } catch (err) {
         resolve({ ok: false, error: err instanceof Error ? err.message : String(err) })
@@ -75,9 +77,20 @@ export function registerGameIpc(): void {
   ipcMain.handle('game:launch-steam', async (): Promise<Result<{ launched: boolean }>> => {
     try {
       await shell.openExternal(`steam://rungameid/${STEAM_APPID}`)
+      runtimeState.gamePid = null
       return { ok: true, value: { launched: true } }
     } catch (err) {
       return { ok: false, error: err instanceof Error ? err.message : String(err) }
     }
+  })
+
+  ipcMain.handle('game:is-running', async (): Promise<Result<{ running: boolean }>> => {
+    return { ok: true, value: { running: await isGameRunning() } }
+  })
+
+  ipcMain.handle('game:stop', async (): Promise<Result<{ stopped: boolean }>> => {
+    const stopped = await stopGame(runtimeState.gamePid)
+    if (stopped) runtimeState.gamePid = null
+    return { ok: true, value: { stopped } }
   })
 }

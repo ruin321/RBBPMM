@@ -43,7 +43,7 @@ export function App(): React.JSX.Element {
   const [page, setPage] = useState<Page>('mods')
   const [splashOn, setSplashOn] = useState<boolean | null>(null)
   const { isDark, toggle, themeId, setThemeId } = useTheme()
-  const { env, loading, select, launch, launchSteam } = useGame()
+  const { env, loading, select, launch, launchSteam, running, stop } = useGame()
   const { font, fonts, setFont } = useFont()
   const { t } = useI18n()
   const [aboutOpen, setAboutOpen] = useState(false)
@@ -178,6 +178,8 @@ export function App(): React.JSX.Element {
             env={env}
             onLaunch={launch}
             onLaunchSteam={launchSteam}
+            running={running}
+            onStop={stop}
             dropPath={dropPath}
             onDropConsumed={() => setDropPath(null)}
             onEditConfig={(configFile, search) => {

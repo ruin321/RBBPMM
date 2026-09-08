@@ -166,6 +166,8 @@ const zhCN: Required<Messages> = {
   'mods.launchSteam': '通过 Steam 启动',
   'mods.launchFail': '启动游戏失败',
   'mods.launchSteamFail': '通过 Steam 启动失败',
+  'mods.stop': '停止',
+  'mods.stopFail': '停止游戏失败',
 
   'mods.installedName': '已安装：{name}',
   'mods.installedFallback': '模组',
@@ -394,6 +396,8 @@ const zhTW: Required<Messages> = {
   'mods.launchSteam': '透過 Steam 啟動',
   'mods.launchFail': '啟動遊戲失敗',
   'mods.launchSteamFail': '透過 Steam 啟動失敗',
+  'mods.stop': '停止',
+  'mods.stopFail': '停止遊戲失敗',
 
   'mods.installedName': '已安裝：{name}',
   'mods.installedFallback': '模組',
@@ -622,6 +626,8 @@ const ja: Required<Messages> = {
   'mods.launchSteam': 'Steamで起動',
   'mods.launchFail': 'ゲームを起動できませんでした',
   'mods.launchSteamFail': 'Steamからゲームを起動できませんでした',
+  'mods.stop': '停止',
+  'mods.stopFail': 'ゲームを停止できませんでした',
 
   'mods.installedName': 'インストール: {name}',
   'mods.installedFallback': 'MOD',
@@ -850,6 +856,8 @@ const ko: Required<Messages> = {
   'mods.launchSteam': 'Steam으로 실행',
   'mods.launchFail': '게임을 실행하지 못했습니다',
   'mods.launchSteamFail': 'Steam으로 게임을 실행하지 못했습니다',
+  'mods.stop': '중지',
+  'mods.stopFail': '게임을 중지하지 못했습니다',
 
   'mods.installedName': '설치 완료: {name}',
   'mods.installedFallback': '모드',
@@ -1078,6 +1086,8 @@ const fr: Required<Messages> = {
   'mods.launchSteam': 'Jouer via Steam',
   'mods.launchFail': 'Échec du lancement du jeu',
   'mods.launchSteamFail': 'Échec du lancement du jeu via Steam',
+  'mods.stop': 'Arrêter',
+  'mods.stopFail': "Impossible d'arrêter le jeu",
 
   'mods.installedName': 'Installé : {name}',
   'mods.installedFallback': 'MOD',
@@ -1306,6 +1316,8 @@ const de: Required<Messages> = {
   'mods.launchSteam': 'Über Steam spielen',
   'mods.launchFail': 'Spiel konnte nicht gestartet werden',
   'mods.launchSteamFail': 'Spiel konnte nicht über Steam gestartet werden',
+  'mods.stop': 'Beenden',
+  'mods.stopFail': 'Spiel konnte nicht beendet werden',
 
   'mods.installedName': 'Installiert: {name}',
   'mods.installedFallback': 'MOD',
@@ -1534,6 +1546,8 @@ const es: Required<Messages> = {
   'mods.launchSteam': 'Jugar vía Steam',
   'mods.launchFail': 'No se pudo iniciar el juego',
   'mods.launchSteamFail': 'No se pudo iniciar el juego vía Steam',
+  'mods.stop': 'Detener',
+  'mods.stopFail': 'No se pudo detener el juego',
 
   'mods.installedName': 'Instalado: {name}',
   'mods.installedFallback': 'MOD',
@@ -1762,6 +1776,8 @@ const pt: Required<Messages> = {
   'mods.launchSteam': 'Jogar via Steam',
   'mods.launchFail': 'Falha ao iniciar o jogo',
   'mods.launchSteamFail': 'Falha ao iniciar o jogo via Steam',
+  'mods.stop': 'Parar',
+  'mods.stopFail': 'Falha ao parar o jogo',
 
   'mods.installedName': 'Instalado: {name}',
   'mods.installedFallback': 'MOD',
@@ -1990,6 +2006,8 @@ const ru: Required<Messages> = {
   'mods.launchSteam': 'Играть через Steam',
   'mods.launchFail': 'Не удалось запустить игру',
   'mods.launchSteamFail': 'Не удалось запустить игру через Steam',
+  'mods.stop': 'Остановить',
+  'mods.stopFail': 'Не удалось остановить игру',
 
   'mods.installedName': 'Установлено: {name}',
   'mods.installedFallback': 'МОД',

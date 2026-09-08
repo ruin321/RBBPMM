@@ -7,7 +7,9 @@ const api: AppApi = {
     setDir: (exePath) => ipcRenderer.invoke('game:set-dir', { exePath }),
     get: () => ipcRenderer.invoke('game:get'),
     launch: () => ipcRenderer.invoke('game:launch'),
-    launchSteam: () => ipcRenderer.invoke('game:launch-steam')
+    launchSteam: () => ipcRenderer.invoke('game:launch-steam'),
+    isRunning: () => ipcRenderer.invoke('game:is-running'),
+    stop: () => ipcRenderer.invoke('game:stop')
   },
   mods: {
     list: () => ipcRenderer.invoke('mods:list'),

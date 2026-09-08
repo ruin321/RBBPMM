@@ -108,7 +108,9 @@ export function resetAllSettings(): {
 export const runtimeState: {
   environment: GameEnvironment | null
   cancelController: AbortController | null
+  gamePid: number | null
 } = {
   environment: null,
-  cancelController: null
+  cancelController: null,
+  gamePid: null
 }

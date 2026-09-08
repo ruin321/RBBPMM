@@ -22,6 +22,8 @@ export interface AppApi {
     get: () => Promise<Result<GameEnvironment>>
     launch: () => Promise<Result<{ pid?: number }>>
     launchSteam: () => Promise<Result<{ launched: boolean }>>
+    isRunning: () => Promise<Result<{ running: boolean }>>
+    stop: () => Promise<Result<{ stopped: boolean }>>
   }
   mods: {
     list: () => Promise<Result<ModItemDto[]>>

@@ -141,6 +141,8 @@ export const en = {
   'mods.launchSteam': 'Play via Steam',
   'mods.launchFail': 'Failed to launch the game',
   'mods.launchSteamFail': 'Failed to start the game via Steam',
+  'mods.stop': 'Stop',
+  'mods.stopFail': 'Failed to stop the game',
 
   'mods.installedName': 'Installed: {name}',
   'mods.installedFallback': 'MOD',

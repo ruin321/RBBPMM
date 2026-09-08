@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Download, Gamepad2, PackageX, Play, Search, SlidersHorizontal, Package } from 'lucide-react'
+import { Download, Gamepad2, PackageX, Play, Search, SlidersHorizontal, Package, Square } from 'lucide-react'
 import { toast } from 'sonner'
 import type { GameEnvironment } from '@shared/types'
 import { useI18n } from '@/i18n'
@@ -36,6 +36,8 @@ interface Props {
   env: GameEnvironment | null
   onLaunch: () => Promise<{ ok: boolean; error?: string }>
   onLaunchSteam: () => Promise<{ ok: boolean; error?: string }>
+  running: boolean
+  onStop: () => Promise<{ ok: boolean; error?: string }>
   dropPath: string | null
   onDropConsumed: () => void
   
@@ -46,6 +48,8 @@ export function ModsPage({
   env,
   onLaunch,
   onLaunchSteam,
+  running,
+  onStop,
   dropPath,
   onDropConsumed,
   onEditConfig
@@ -187,6 +191,11 @@ export function ModsPage({
     if (!r.ok) toast.error(t('mods.launchSteamFail'), { description: r.error })
   }
 
+  const stop = async (): Promise<void> => {
+    const r = await onStop()
+    if (!r.ok) toast.error(t('mods.stopFail'), { description: r.error })
+  }
+
   const status: 'running' | 'done' | 'error' =
     installState.status === 'running'
       ? 'running'
@@ -201,14 +210,23 @@ export function ModsPage({
         title={t('mods.title')}
         desc={t('mods.countInstalled', { n: filtered.length })}
       >
-        <Button variant="outline" disabled={!env} onClick={() => void launch()} title={t('mods.launch')}>
-          <Play className="mr-2 h-4 w-4" />
-          {t('mods.launch')}
-        </Button>
-        <Button variant="outline" disabled={!env} onClick={() => void launchSteam()} title={t('mods.launchSteam')}>
-          <Gamepad2 className="mr-2 h-4 w-4" />
-          {t('mods.launchSteam')}
-        </Button>
+        {running ? (
+          <Button variant="outline" onClick={() => void stop()} title={t('mods.stop')}>
+            <Square className="mr-2 h-4 w-4" />
+            {t('mods.stop')}
+          </Button>
+        ) : (
+          <>
+            <Button variant="outline" disabled={!env} onClick={() => void launch()} title={t('mods.launch')}>
+              <Play className="mr-2 h-4 w-4" />
+              {t('mods.launch')}
+            </Button>
+            <Button variant="outline" disabled={!env} onClick={() => void launchSteam()} title={t('mods.launchSteam')}>
+              <Gamepad2 className="mr-2 h-4 w-4" />
+              {t('mods.launchSteam')}
+            </Button>
+          </>
+        )}
         <Button onClick={() => void pickAndInstall()}>
           <Download className="mr-2 h-4 w-4" />
           {t('mods.install')}
