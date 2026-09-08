@@ -58,6 +58,5 @@ jobs:
           name: ${{ github.ref_name }}
           files: artifacts/*/*
           make_latest: true
-          allowUpdates: true
           draft: false
           prerelease: false
