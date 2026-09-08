@@ -231,7 +231,10 @@ export function BananaPage({ onInstalled }: Props): React.JSX.Element {
 
   
   useEffect(() => {
-    if (current !== null) return
+    if (current !== null) {
+      mainEl()?.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+      return
+    }
     const target = listScrollRef.current
     const id = window.setTimeout(() => {
       if (current === null) mainEl()?.scrollTo({ top: target, left: 0, behavior: 'auto' })
@@ -243,12 +246,23 @@ export function BananaPage({ onInstalled }: Props): React.JSX.Element {
   return (
     <div className="mx-auto w-full max-w-5xl overflow-x-hidden">
       {}
-      <div
-        className="flex items-start transition-transform duration-300 ease-out"
-        style={{ transform: current ? 'translateX(-100%)' : 'translateX(0)' }}
-      >
-        {}
-        <section className={`w-full shrink-0 space-y-6 ${current ? 'h-0 overflow-hidden' : ''}`}>
+      {current ? (
+        <div className="page-fade">
+          <ModDetailPage
+            submissionId={current.id}
+            fallback={current.fallback}
+            onBack={() => setEntries([])}
+            onInstalled={onInstalled}
+            onOpenSubmission={openSubmission}
+            historyDepth={entries.length}
+            level={entries.length - 1}
+            onBackLevel={onBackLevel}
+            scrollOnSubmit={restoreTargetLevel.current === null}
+            onContentReady={onContentReady}
+          />
+        </div>
+      ) : (
+        <section className="space-y-6">
           <PageHeader icon={<Store className="h-6 w-6" />} title={t('banana.title')} />
 
           {}
@@ -435,25 +449,7 @@ export function BananaPage({ onInstalled }: Props): React.JSX.Element {
             </div>
           )}
         </section>
-
-        {}
-        <section className="w-full shrink-0">
-          {current && (
-            <ModDetailPage
-              submissionId={current.id}
-              fallback={current.fallback}
-              onBack={() => setEntries([])}
-              onInstalled={onInstalled}
-              onOpenSubmission={openSubmission}
-              historyDepth={entries.length}
-              level={entries.length - 1}
-              onBackLevel={onBackLevel}
-              scrollOnSubmit={restoreTargetLevel.current === null}
-              onContentReady={onContentReady}
-            />
-          )}
-        </section>
-      </div>
+      )}
 
       {}
       <Dialog open={needTextureDep} onOpenChange={setNeedTextureDep}>
