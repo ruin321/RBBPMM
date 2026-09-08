@@ -248,7 +248,7 @@ export function BananaPage({ onInstalled }: Props): React.JSX.Element {
         style={{ transform: current ? 'translateX(-100%)' : 'translateX(0)' }}
       >
         {}
-        <section className="w-full shrink-0 space-y-6">
+        <section className={`w-full shrink-0 space-y-6 ${current ? 'h-0 overflow-hidden' : ''}`}>
           <PageHeader icon={<Store className="h-6 w-6" />} title={t('banana.title')} />
 
           {}
