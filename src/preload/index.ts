@@ -30,7 +30,8 @@ const api: AppApi = {
   ui: {
     pickZip: () => ipcRenderer.invoke('ui:pick-zip'),
     openFolder: (p) => ipcRenderer.invoke('ui:open-folder', { path: p }),
-    revealFile: (p) => ipcRenderer.invoke('ui:reveal-file', { path: p })
+    revealFile: (p) => ipcRenderer.invoke('ui:reveal-file', { path: p }),
+    openExternal: (url) => ipcRenderer.invoke('ui:open-external', { url })
   },
   configs: {
     list: () => ipcRenderer.invoke('configs:list'),

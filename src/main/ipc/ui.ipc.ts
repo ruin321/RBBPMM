@@ -24,4 +24,8 @@ export function registerUiIpc(): void {
   ipcMain.handle('ui:reveal-file', async (_e, { path: p }: { path: string }): Promise<void> => {
     if (p) shell.showItemInFolder(p)
   })
+
+  ipcMain.handle('ui:open-external', async (_e, { url }: { url: string }): Promise<void> => {
+    if (url && /^https?:\/\//i.test(url)) shell.openExternal(url)
+  })
 }

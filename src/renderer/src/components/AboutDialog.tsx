@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ImageIcon, Package } from 'lucide-react'
+import { ExternalLink, ImageIcon, Package } from 'lucide-react'
 import splashUrl from '@/assets/splash.png'
 import { useI18n } from '@/i18n'
 import { Button } from '@/components/ui/button'
@@ -14,6 +14,8 @@ import {
 } from '@/components/ui/dialog'
 
 const APP_VERSION = '0.1.0'
+
+const SOURCE_URL = 'https://github.com/ruin321/RBBPMM'
 
 const ABOUT_NOTE = [
   "Ruin321's Baldi's Basics Plus Mod Manager is just a little thing I threw together... (I think?)",
@@ -72,6 +74,15 @@ export function AboutDialog({ open, onOpenChange }: Props): React.JSX.Element {
         <p className="max-h-64 overflow-y-auto whitespace-pre-line text-sm text-muted-foreground">
           {ABOUT_NOTE}
         </p>
+        <button
+          type="button"
+          onClick={() => void window.api.ui.openExternal(SOURCE_URL)}
+          className="flex w-full items-center justify-between gap-2 rounded-lg border bg-muted/50 px-3 py-2 text-left text-sm hover:bg-muted/80"
+          title={SOURCE_URL}
+        >
+          <span className="truncate text-muted-foreground">{t('about.source')}</span>
+          <ExternalLink className="h-4 w-4 shrink-0 text-primary" />
+        </button>
         <DialogFooter>
           <DialogClose asChild>
             <Button>{t('about.close')}</Button>

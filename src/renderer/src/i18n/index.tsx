@@ -222,6 +222,7 @@ const zhCN: Required<Messages> = {
   'textureDep.desc': '浏览材质包需先在“我的模组”里安装 BaldiTexturePacks 模组。请先安装它，再回来查看材质包。',
   'textureDep.go': '去安装',
   'about.imageHint': '查看大图',
+  'about.source': '开源代码',
   'banana.preview': '预览',
 
   'dialog.installFailed': '安装失败',
@@ -452,6 +453,7 @@ const zhTW: Required<Messages> = {
   'textureDep.desc': '瀏覽材質包需先在「我的模組」中安裝 BaldiTexturePacks 模組。請先安裝它，再回來查看材質包。',
   'textureDep.go': '前往安裝',
   'about.imageHint': '檢視大圖',
+  'about.source': '開源程式碼',
   'banana.preview': '預覽',
 
   'dialog.installFailed': '安裝失敗',
@@ -682,6 +684,7 @@ const ja: Required<Messages> = {
   'textureDep.desc': 'テクスチャパックを閲覧するには、先に「Mods」に BaldiTexturePacks をインストールしてください。インストール後、再び戻ってきてください。',
   'textureDep.go': 'インストールへ',
   'about.imageHint': '画像を表示',
+  'about.source': 'オープンソース',
   'banana.preview': 'プレビュー',
 
   'dialog.installFailed': 'インストールに失敗しました',
@@ -912,6 +915,7 @@ const ko: Required<Messages> = {
   'textureDep.desc': '텍스처 팩을 보려면 먼저 Mods에 BaldiTexturePacks 모드를 설치해야 합니다. 설치 후 다시 돌아오세요.',
   'textureDep.go': '설치하러 가기',
   'about.imageHint': '이미지 보기',
+  'about.source': '오픈 소스',
   'banana.preview': '미리보기',
 
   'dialog.installFailed': '설치 실패',
@@ -1142,6 +1146,7 @@ const fr: Required<Messages> = {
   'textureDep.desc': "Parcourir les packs de textures nécessite le mod 'BaldiTexturePacks' installé dans Mods. Installez-le d'abord, puis revenez.",
   'textureDep.go': "Aller l'installer",
   'about.imageHint': "Voir l'image complète",
+  'about.source': 'Open Source',
   'banana.preview': 'Aperçu',
 
   'dialog.installFailed': 'Échec de l\'installation',
@@ -1372,6 +1377,7 @@ const de: Required<Messages> = {
   'textureDep.desc': "Zum Durchsuchen von Texturpaketen muss das Mod 'BaldiTexturePacks' in Mods installiert sein. Installiere es zuerst und kehre dann zurück.",
   'textureDep.go': 'Installieren',
   'about.imageHint': 'Vollständiges Bild ansehen',
+  'about.source': 'Open Source',
   'banana.preview': 'Vorschau',
 
   'dialog.installFailed': 'Installation fehlgeschlagen',
@@ -1602,6 +1608,7 @@ const es: Required<Messages> = {
   'textureDep.desc': "Navegar por los paquetes de texturas requiere el mod 'BaldiTexturePacks' instalado en Mods. Instálalo primero y vuelve.",
   'textureDep.go': 'Ir a instalarlo',
   'about.imageHint': 'Ver imagen completa',
+  'about.source': 'Código fuente',
   'banana.preview': 'Vista previa',
 
   'dialog.installFailed': 'Error de instalación',
@@ -1832,6 +1839,7 @@ const pt: Required<Messages> = {
   'textureDep.desc': "Navegar por pacotes de textura exige o mod 'BaldiTexturePacks' instalado em Mods. Instale primeiro e depois volte.",
   'textureDep.go': 'Instalar',
   'about.imageHint': 'Ver imagem completa',
+  'about.source': 'Código-fonte',
   'banana.preview': 'Pré-visualização',
 
   'dialog.installFailed': 'Falha na instalação',
@@ -2062,6 +2070,7 @@ const ru: Required<Messages> = {
   'textureDep.desc': "Для просмотра текстур-паков нужно сначала установить мод 'BaldiTexturePacks' в Mods. Установите его и вернитесь.",
   'textureDep.go': 'Установить',
   'about.imageHint': 'Открыть полное изображение',
+  'about.source': 'Открытый код',
   'banana.preview': 'Предпросмотр',
 
   'dialog.installFailed': 'Ошибка установки',

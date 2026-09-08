@@ -46,6 +46,7 @@ export interface AppApi {
     pickZip: () => Promise<Result<{ path: string }>>
     openFolder: (path: string) => Promise<void>
     revealFile: (path: string) => Promise<void>
+    openExternal: (url: string) => Promise<void>
   }
   configs: {
     list: () => Promise<Result<ConfigFileDto[]>>

@@ -199,6 +199,7 @@ export const en = {
     "Browsing texture packs requires the 'BaldiTexturePacks' mod installed in your Mods. Install it first, then come back.",
   'textureDep.go': 'Go install it',
   'about.imageHint': 'View full image',
+  'about.source': 'Open Source',
   'banana.preview': 'Preview',
 
   'dialog.installFailed': 'Installation failed',
