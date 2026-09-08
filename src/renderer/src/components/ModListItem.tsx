@@ -1,6 +1,6 @@
-import { ClipboardList, Eye, FolderOpen, FolderPlus, MoreVertical, Package, Trash2 } from 'lucide-react'
+import { ClipboardList, Eye, FolderOpen, FolderPlus, MoreVertical, Package, RefreshCw, Sparkles, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
-import type { ModItemDto } from '@shared/types'
+import type { ModItemDto, ModUpdateInfoDto } from '@shared/types'
 import { useI18n } from '@/i18n'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -26,6 +26,9 @@ import { useState } from 'react'
 
 interface Props {
   mod: ModItemDto
+  updateInfo?: ModUpdateInfoDto
+  updating?: boolean
+  onUpdate?: () => void
   onToggle: (guid: string, activate: boolean) => Promise<boolean>
   onUninstall: (guid: string) => Promise<boolean>
   
@@ -34,6 +37,9 @@ interface Props {
 
 export function ModListItem({
   mod,
+  updateInfo,
+  updating,
+  onUpdate,
   onToggle,
   onUninstall,
   onEditConfig
@@ -78,6 +84,26 @@ export function ModListItem({
             <span>{mod.author}</span>
             <Badge variant="secondary">v{mod.version}</Badge>
           </div>
+          {updateInfo && (
+            <div className="mt-2 flex flex-wrap items-center gap-2 rounded-md bg-primary/10 px-2.5 py-1.5 text-xs">
+              <Sparkles className="h-3.5 w-3.5 shrink-0 text-primary" />
+              <span className="flex-1 text-foreground">
+                {updateInfo.version
+                  ? t('mods.updateAvailableV', { version: updateInfo.version })
+                  : t('mods.updateAvailable')}
+              </span>
+              <Button
+                size="sm"
+                variant="default"
+                disabled={updating}
+                onClick={onUpdate}
+                className="h-7 gap-1 px-2.5"
+              >
+                <RefreshCw className={updating ? 'h-3.5 w-3.5 animate-spin' : 'h-3.5 w-3.5'} />
+                {updating ? t('banana.installing') : t('mods.update')}
+              </Button>
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">

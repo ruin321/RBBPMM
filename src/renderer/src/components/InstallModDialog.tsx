@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Loader2 } from 'lucide-react'
 import type { InstallProgress } from '@shared/types'
-import { useI18n } from '@/i18n'
+import { useI18n, type MessageKey } from '@/i18n'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import {
@@ -24,6 +24,15 @@ interface Props {
   onCancel: () => Promise<void>
 }
 
+const STAGE_KEY: Record<string, MessageKey> = {
+  start: 'dialog.workingMsg',
+  downloading: 'banana.downloading',
+  extracting: 'textures.installingExtract',
+  installing: 'banana.installing',
+  install: 'banana.installing',
+  done: 'dialog.installDone'
+}
+
 export function InstallModDialog({
   open,
   onOpenChange,
@@ -40,6 +49,13 @@ export function InstallModDialog({
     setBusy(true)
     await onCancel()
     setBusy(false)
+  }
+
+  const stageText = (p: InstallProgress): string => {
+    const key = STAGE_KEY[p.stage]
+    const stageName = key ? t(key) : p.stage
+    if (typeof p.percent === 'number') return `${stageName} · ${p.percent}%`
+    return stageName
   }
 
   return (
@@ -60,7 +76,7 @@ export function InstallModDialog({
                 : t('dialog.installing')}
           </DialogTitle>
           <DialogDescription>
-            {status === 'running' && (progress?.message ?? t('dialog.workingMsg'))}
+            {status === 'running' && (progress ? stageText(progress) : t('dialog.workingMsg'))}
             {status === 'done' && (modName ? `${t('dialog.installedEnabled')} · ${modName}` : t('dialog.installedEnabled'))}
             {status === 'error' && errorMessage}
           </DialogDescription>
@@ -70,7 +86,7 @@ export function InstallModDialog({
             {}
             <Progress value={progress.percent} indeterminate={progress.percent === undefined} />
             <p className="text-xs text-muted-foreground">
-              {progress.stage} · {progress.percent === undefined ? '…' : `${progress.percent}%`}
+              {stageText(progress)}
             </p>
           </div>
         )}

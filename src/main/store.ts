@@ -1,5 +1,6 @@
 import Store from 'electron-store'
-import { FONT_DEFAULT, LOCALE_DEFAULT, THEME_DEFAULT } from './constants'
+import { app } from 'electron'
+import { FONT_DEFAULT, THEME_DEFAULT, inferSystemLocale } from './constants'
 import type { GameEnvironment } from '../shared/types'
 
 interface StoreSchema {
@@ -7,6 +8,7 @@ interface StoreSchema {
   theme: string
   fontFamily?: string
   locale?: string
+  fishPrevLocale?: string
   splashEnabled?: boolean
   debugLogging?: boolean
   navOpen?: boolean
@@ -16,7 +18,6 @@ const store = new Store<StoreSchema>({
   defaults: {
     theme: THEME_DEFAULT,
     fontFamily: FONT_DEFAULT,
-    locale: LOCALE_DEFAULT,
     splashEnabled: true,
     debugLogging: false,
     navOpen: true
@@ -49,10 +50,19 @@ export function setFontFamily(f: string): void {
 }
 
 export function getLocale(): string {
-  return store.get('locale', LOCALE_DEFAULT)
+  const saved = store.get('locale')
+  if (saved === 'fish') return store.get('fishPrevLocale') || inferSystemLocale(app.getLocale())
+  if (saved) return saved
+  return inferSystemLocale(app.getLocale())
 }
 
 export function setLocale(l: string): void {
+  if (l === 'fish') {
+    const current = store.get('locale') || inferSystemLocale(app.getLocale())
+    if (current && current !== 'fish') store.set('fishPrevLocale', current)
+  } else {
+    store.delete('fishPrevLocale')
+  }
   store.set('locale', l)
 }
 
@@ -90,7 +100,7 @@ export function resetAllSettings(): {
 } {
   setTheme(THEME_DEFAULT)
   setFontFamily(FONT_DEFAULT)
-  setLocale(LOCALE_DEFAULT)
+  store.delete('locale')
   setSplashEnabled(true)
   setDebugLogging(false)
   setStoredExePath(undefined)
@@ -98,7 +108,7 @@ export function resetAllSettings(): {
   return {
     theme: THEME_DEFAULT,
     fontFamily: FONT_DEFAULT,
-    locale: LOCALE_DEFAULT,
+    locale: inferSystemLocale(app.getLocale()),
     splashEnabled: true,
     debugLogging: false
   }

@@ -164,17 +164,7 @@ export function ConfigsPage({
   }, [files, fileFilter])
 
   
-  const selectedSearch = search.trim().toLowerCase()
-  const visibleSections = useMemo(() => {
-    if (!selected) return []
-    if (!selectedSearch) return selected.sections
-    return selected.sections
-      .map((s) => ({
-        ...s,
-        entries: s.entries.filter((e) => e.key.toLowerCase().includes(selectedSearch))
-      }))
-      .filter((s) => s.entries.length > 0)
-  }, [selected, selectedSearch])
+  const visibleSections = useMemo(() => (selected ? selected.sections : []), [selected])
 
   const save = (section: string, entry: CfgEntryDto, rawValue: string): void => {
     if (!selected) return

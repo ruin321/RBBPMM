@@ -6,6 +6,23 @@ import { cn } from '@/lib/utils'
 export function LanguagePicker(): React.JSX.Element {
   const { locale, setLocale, locales, t } = useI18n()
 
+  if (locale === 'fish') {
+    return (
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Languages className="h-5 w-5 text-muted-foreground" />
+            FISH
+          </CardTitle>
+          <CardDescription>IM FISH</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">FISH FISH FISH</p>
+        </CardContent>
+      </Card>
+    )
+  }
+
   return (
     <Card className="w-full">
       <CardHeader>

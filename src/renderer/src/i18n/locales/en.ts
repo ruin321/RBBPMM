@@ -1,4 +1,5 @@
 export const en = {
+  'nav.home': 'Home',
   'nav.mods': 'Mods',
   'nav.browse': 'Browse',
   'nav.textures': 'Texture Packs',
@@ -7,6 +8,15 @@ export const en = {
   'nav.dark': 'Dark mode',
   'nav.collapse': 'Collapse',
   'nav.expand': 'Expand',
+
+  'home.subtitle':
+    'Browse, install and manage all your Baldi mods and texture packs in one place. (＾▽＾)',
+  'home.configure': 'Select Game Folder',
+  'home.modsDesc':
+    'Your installed mods. Enable and disable them, update in a click when a new version drops.',
+  'home.browseDesc': 'Search the GameBanana catalog and install community mods.',
+  'home.texturesDesc': 'View and manage your installed texture packs.',
+  'home.settingsDesc': 'Theme, font, language and game directory settings.',
 
   'textures.title': 'Texture Packs',
   'textures.countInstalled': '{n} installed',
@@ -143,8 +153,14 @@ export const en = {
   'mods.launchSteamFail': 'Failed to start the game via Steam',
   'mods.stop': 'Stop',
   'mods.stopFail': 'Failed to stop the game',
+  'mods.update': 'Update',
+  'mods.updateAvailable': 'A newer version is out — want to update?',
+  'mods.updateAvailableV': 'A newer version (v{version}) is out — want to update?',
+  'mods.updateDone': 'Updated to the latest version (・∀・)',
+  'mods.updateDoneDesc': 'All done, you\u2019re on the newest version now.',
+  'mods.updateFail': "Couldn't update",
 
-  'mods.installedName': 'Installed: {name}',
+  'mods.installedName': 'Installed: {name} (ﾉ´ヮ`)ﾉ*: ･ﾟ',
   'mods.installedFallback': 'MOD',
   'mods.confirmTitle': 'Confirm install',
   'mods.confirmDescription':

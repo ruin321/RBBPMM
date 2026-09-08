@@ -64,13 +64,26 @@ function resolveLink(cloaked: string): string {
 }
 
 
+const GAMEBANANA_ID_PATTERNS: RegExp[] = [
+  /\/mods\/0*(\d+)/i,
+  /\/wip\/0*(\d+)/i,
+  /\/m\/0*(\d+)/i,
+  /\/details\/(?:[^/]+\/)*0*(\d+)/i,
+  /[?&](?:id|modsid|submissionid)=(\d+)/i
+]
+
 function extractGamebananaId(u: string | undefined): number | undefined {
   if (!u) return undefined
   const real = resolveLink(u)
-  const m = /\/mods\/0*(\d+)/i.exec(real)
-  if (!m) return undefined
-  const id = Number(m[1])
-  return Number.isFinite(id) && id > 0 ? id : undefined
+  const base = real.split(/[?#]/)[0]
+  for (const p of GAMEBANANA_ID_PATTERNS) {
+    const hay = p.source.includes('?') ? real : base
+    const m = p.exec(hay)
+    if (!m) continue
+    const id = Number(m[m.length - 1])
+    if (Number.isFinite(id) && id > 0) return id
+  }
+  return undefined
 }
 
 

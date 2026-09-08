@@ -8,6 +8,7 @@ import type {
   InstallResult,
   ModInstallOutcome,
   ModItemDto,
+  ModUpdateInfoDto,
   ReadmeFileDto,
   Result,
   TexturePackInstallResult,
@@ -33,6 +34,8 @@ export interface AppApi {
     cancelInstall: () => Promise<void>
     uninstall: (guid: string) => Promise<Result>
     toggle: (guid: string, activate: boolean) => Promise<Result<{ activated: boolean }>>
+    checkUpdate: (guid: string) => Promise<Result<ModUpdateInfoDto>>
+    update: (guid: string) => Promise<Result>
   }
   banana: {
     search: (page: number, query?: string, category?: number) =>

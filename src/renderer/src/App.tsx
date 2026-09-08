@@ -11,7 +11,8 @@ import {
   SlidersHorizontal,
   Palette,
   PanelLeftClose,
-  PanelLeftOpen
+  PanelLeftOpen,
+  Home
 } from 'lucide-react'
 import { Toaster } from 'sonner'
 import { useGame } from '@/hooks/useGame'
@@ -19,6 +20,7 @@ import { useTheme } from '@/hooks/useTheme'
 import { useFont } from '@/hooks/useFont'
 import { useI18n } from '@/i18n'
 import { Button } from '@/components/ui/button'
+import { HomePage } from '@/pages/HomePage'
 import { ModsPage } from '@/pages/ModsPage'
 import { SettingsPage } from '@/pages/SettingsPage'
 import { BananaPage } from '@/pages/BananaPage'
@@ -27,9 +29,10 @@ import { TexturePacksPage } from '@/pages/TexturePacksPage'
 import { AboutDialog } from '@/components/AboutDialog'
 import { SplashScreen } from '@/components/SplashScreen'
 import { TitleBar } from '@/components/TitleBar'
+import { FishSplash } from '@/components/FishSplash'
 import { cn } from '@/lib/utils'
 
-type Page = 'mods' | 'browse' | 'textures' | 'settings' | 'config'
+type Page = 'home' | 'mods' | 'browse' | 'textures' | 'settings' | 'config'
 
 
 interface ConfigRequest {
@@ -41,7 +44,7 @@ interface ConfigRequest {
 const ARCHIVE_EXT = /\.(zip|rar|7z|tar|gz|bz2|xz|tgz|jar|bbmod|gmp)$/i
 
 export function App(): React.JSX.Element {
-  const [page, setPage] = useState<Page>('mods')
+  const [page, setPage] = useState<Page>('home')
   const [splashOn, setSplashOn] = useState<boolean | null>(null)
   const { isDark, toggle, themeId, setThemeId } = useTheme()
   const { env, loading, select, launch, launchSteam, running, stop } = useGame()
@@ -146,6 +149,9 @@ export function App(): React.JSX.Element {
         </div>
 
         <div className={navOpen ? 'mt-2 space-y-1' : 'mt-2 flex flex-col items-center gap-1'}>
+          <NavButton active={page === 'home'} onClick={() => setPage('home')} label={t('nav.home')} open={navOpen}>
+            <Home className="h-5 w-5" />
+          </NavButton>
           <NavButton active={page === 'mods'} onClick={() => setPage('mods')} label={t('nav.mods')} open={navOpen}>
             <Package className="h-5 w-5" />
           </NavButton>
@@ -176,7 +182,21 @@ export function App(): React.JSX.Element {
 
       {}
       <main className="flex-1 overflow-y-auto p-8">
-        {page === 'mods' ? (
+        {page === 'home' ? (
+          <HomePage
+            env={env}
+            running={running}
+            onLaunch={launch}
+            onLaunchSteam={launchSteam}
+            onStop={stop}
+            onSelectDir={async () => {
+              const ok = await select()
+              if (ok) setPage('mods')
+              return ok
+            }}
+            onNavigate={setPage}
+          />
+        ) : page === 'mods' ? (
           <ModsPage
             env={env}
             onLaunch={launch}
@@ -231,6 +251,7 @@ export function App(): React.JSX.Element {
 
       {}
       {splashOn ? <SplashScreen onDone={() => setSplashOn(false)} /> : null}
+      <FishSplash />
     </div>
     </div>
   )

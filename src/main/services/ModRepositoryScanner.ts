@@ -127,7 +127,8 @@ export function buildModItem(
     supportsCurrentVersion: supports,
     pluginFiles: manifest.plugins,
     assetPaths: manifest.assets.map((a) => a.destination || a.localPath),
-    loose: false
+    loose: false,
+    gamebananaSource: meta.gamebananaSource
   }
 }
 
@@ -203,6 +204,32 @@ function buildLegacyItem(
 
 
 
+
+const SCAN_CACHE = new Map<string, { gameVersion?: string; mods: ModItemDto[] }>()
+
+function scanCacheKey(gameRoot: string, gameVersion?: string): string {
+  return `${String(gameRoot).toLowerCase()}\u0000${gameVersion ?? ''}`
+}
+
+export function invalidateModScan(gameRoot: string, gameVersion?: string): void {
+  if (gameVersion !== undefined) {
+    SCAN_CACHE.delete(scanCacheKey(gameRoot, gameVersion))
+    return
+  }
+  const prefix = String(gameRoot).toLowerCase()
+  for (const k of SCAN_CACHE.keys()) {
+    if (k.startsWith(prefix)) SCAN_CACHE.delete(k)
+  }
+}
+
+export function scanRepositoryCached(gameRoot: string, gameVersion?: string): ModItemDto[] {
+  const key = scanCacheKey(gameRoot, gameVersion)
+  const hit = SCAN_CACHE.get(key)
+  if (hit) return hit.mods.slice()
+  const mods = scanRepository(gameRoot, gameVersion)
+  SCAN_CACHE.set(key, { gameVersion, mods })
+  return mods.slice()
+}
 
 export function scanRepository(gameRoot: string, gameVersion?: string): ModItemDto[] {
   const pluginsDir = bepinexPluginsDir(gameRoot)

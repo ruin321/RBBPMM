@@ -31,6 +31,9 @@ export interface ModMetadataDto {
   installationUrl?: string
   thumbnail?: string
   path?: string
+  
+  gamebananaSource?: GamebananaSourceDto
+  lastInstalledArchiveName?: string
 }
 
 
@@ -60,6 +63,27 @@ export interface ModItemDto {
   loose: boolean
   
   configFile?: string
+
+  gamebananaSource?: GamebananaSourceDto
+}
+
+export interface GamebananaSourceDto {
+  submissionId: number
+  fileId: number
+  fileName: string
+  version?: string
+  submissionName?: string
+  dateLinked: string
+}
+
+export interface ModUpdateInfoDto {
+  hasUpdate: boolean
+  submissionId: number
+  fileId: number
+  fileName: string
+  version?: string
+  publishedDate?: number
+  downloadUrl: string
 }
 
 export interface InstallProgress {

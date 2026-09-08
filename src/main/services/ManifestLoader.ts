@@ -54,7 +54,9 @@ export function loadMetadata(modRoot: string, manifest: ModManifestDto): ModMeta
       lastUpdateDate: raw.lastUpdateDate,
       installationUrl: raw.installationUrl,
       thumbnail: raw.thumbnail,
-      path: raw.path
+      path: raw.path,
+      gamebananaSource: raw.gamebananaSource,
+      lastInstalledArchiveName: raw.lastInstalledArchiveName
     }
   } catch {
     return defaults

@@ -13,6 +13,9 @@ import {
 } from '../services/GamebananaService'
 import { runtimeState } from '../store'
 import { debugLog, debugError } from '../logger'
+import { linkKnownSubmission } from '../services/ModSourceLinker'
+import { loadModManifest } from '../services/ManifestLoader'
+import { invalidateModScan } from '../services/ModRepositoryScanner'
 import { TEXTURE_PACK_CATEGORY_ID } from '../../shared/types'
 import type {
   GamebananaCommentDto,
@@ -157,8 +160,19 @@ export function registerBananaIpc(getWebContents: () => WebContents | null): voi
               () => signal.aborted,
               extractRoot
             )
+            if (result.mod) {
+              const mm = loadModManifest(result.mod.installDir)
+              if (mm) {
+                try {
+                  await linkKnownSubmission(result.mod, mm, submission, file)
+                } catch {
+                }
+              }
+            }
+            invalidateModScan(env.value)
           } else {
             installUnmanaged(extractRoot, env.value, (p) => emit(p), () => signal.aborted)
+            invalidateModScan(env.value)
             result = { mod: undefined, warnings: [] }
           }
         } finally {

@@ -17,7 +17,9 @@ const api: AppApi = {
     installUnmanaged: (archivePath) => ipcRenderer.invoke('mods:install-unmanaged', { archivePath }),
     cancelInstall: () => ipcRenderer.invoke('mods:install-cancel'),
     uninstall: (guid) => ipcRenderer.invoke('mods:uninstall', { guid }),
-    toggle: (guid, activate) => ipcRenderer.invoke('mods:toggle', { guid, activate })
+    toggle: (guid, activate) => ipcRenderer.invoke('mods:toggle', { guid, activate }),
+    checkUpdate: (guid) => ipcRenderer.invoke('mods:check-update', { guid }),
+    update: (guid) => ipcRenderer.invoke('mods:update', { guid })
   },
   banana: {
     search: (page, query, category) =>

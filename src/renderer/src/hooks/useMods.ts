@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
-import type { InstallProgress, ModInstallPlanDto, ModItemDto, ReadmeFileDto } from '@shared/types'
+import type { InstallProgress, ModInstallPlanDto, ModItemDto, ModUpdateInfoDto, ReadmeFileDto } from '@shared/types'
 import { useI18n } from '@/i18n'
 
 export type InstallState =
@@ -15,6 +15,8 @@ export function useMods(): {
   installState: InstallState
   pendingPlan: ModInstallPlanDto | null
   readmes: ReadmeFileDto[]
+  updates: Record<string, ModUpdateInfoDto>
+  updating: Record<string, boolean>
   refresh: () => Promise<void>
   startInstall: (archivePath: string) => Promise<'ok' | 'confirm' | 'error'>
   confirmUnmanaged: () => Promise<boolean>
@@ -22,6 +24,7 @@ export function useMods(): {
   cancelInstall: () => Promise<void>
   toggle: (guid: string, activate: boolean) => Promise<boolean>
   uninstall: (guid: string) => Promise<boolean>
+  updateMod: (guid: string) => Promise<boolean>
   clearReadmes: () => void
 } {
   const { t } = useI18n()
@@ -30,18 +33,38 @@ export function useMods(): {
   const [installState, setInstallState] = useState<InstallState>({ status: 'idle' })
   const [pendingPlan, setPendingPlan] = useState<ModInstallPlanDto | null>(null)
   const [readmes, setReadmes] = useState<ReadmeFileDto[]>([])
+  const [updates, setUpdates] = useState<Record<string, ModUpdateInfoDto>>({})
+  const [updating, setUpdating] = useState<Record<string, boolean>>({})
   const pendingArchive = useRef<string | null>(null)
   const mounted = useRef(true)
+
+  const checkUpdates = useCallback(async (list: ModItemDto[]): Promise<void> => {
+    const sourced = list.filter((m) => m.gamebananaSource)
+    if (sourced.length === 0) {
+      setUpdates({})
+      return
+    }
+    const map: Record<string, ModUpdateInfoDto> = {}
+    for (const m of sourced) {
+      const r = await window.api.mods.checkUpdate(m.guid)
+      if (r.ok && r.value?.hasUpdate) map[m.guid] = r.value
+    }
+    if (mounted.current) setUpdates(map)
+  }, [])
 
   const refresh = useCallback(async () => {
     setLoading(true)
     try {
       const r = await window.api.mods.list()
-      if (r.ok) setMods(r.value ?? [])
+      if (r.ok) {
+        const list = r.value ?? []
+        setMods(list)
+        void checkUpdates(list)
+      }
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [checkUpdates])
 
   useEffect(() => {
     mounted.current = true
@@ -147,12 +170,35 @@ export function useMods(): {
     [refresh]
   )
 
+  const updateMod = useCallback(
+    async (guid: string): Promise<boolean> => {
+      setUpdating((prev) => ({ ...prev, [guid]: true }))
+      const r = await window.api.mods.update(guid)
+      setUpdating((prev) => ({ ...prev, [guid]: false }))
+      if (r.ok) {
+        toast.success(t('mods.updateDone'), { description: t('mods.updateDoneDesc') })
+        setUpdates((prev) => {
+          const next = { ...prev }
+          delete next[guid]
+          return next
+        })
+        await refresh()
+        return true
+      }
+      toast.error(t('mods.updateFail'), { description: r.error })
+      return false
+    },
+    [refresh, t]
+  )
+
   return {
     mods,
     loading,
     installState,
     pendingPlan,
     readmes,
+    updates,
+    updating,
     refresh,
     startInstall,
     confirmUnmanaged,
@@ -160,6 +206,7 @@ export function useMods(): {
     cancelInstall,
     toggle,
     uninstall,
+    updateMod,
     clearReadmes
   }
 }

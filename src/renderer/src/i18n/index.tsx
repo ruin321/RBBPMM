@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useState } from 'rea
 import type React from 'react'
 import { en } from './locales/en'
 
-export type Locale = 'en' | 'zh-CN' | 'zh-TW' | 'ja' | 'ko' | 'fr' | 'de' | 'es' | 'pt' | 'ru'
+export type Locale = 'en' | 'zh-CN' | 'zh-TW' | 'ja' | 'ko' | 'fr' | 'de' | 'es' | 'pt' | 'ru' | 'fish'
 
 export interface LocaleDef {
   id: Locale
@@ -28,6 +28,13 @@ export type Messages = {
 }
 
 const zhCN: Required<Messages> = {
+  'nav.home': '主页',
+  'home.subtitle': '在这里一站式预览、安装和管理你的全部 Baldi 模组与材质包。 (＾▽＾)',
+  'home.configure': '选择游戏文件夹',
+  'home.modsDesc': '已安装的模组，可启用/禁用，出新版时一键更新。',
+  'home.browseDesc': '搜索 GameBanana 商店，安装社区模组。',
+  'home.texturesDesc': '查看与管理你已安装的材质包。',
+  'home.settingsDesc': '主题、字体、语言和游戏目录等设置。',
   'nav.mods': '模组',
   'nav.browse': '商店',
   'nav.textures': '材质包',
@@ -168,8 +175,14 @@ const zhCN: Required<Messages> = {
   'mods.launchSteamFail': '通过 Steam 启动失败',
   'mods.stop': '停止',
   'mods.stopFail': '停止游戏失败',
+  'mods.update': '更新',
+  'mods.updateAvailable': '有新版本啦，要不要更新一下？',
+  'mods.updateAvailableV': '出 v{version} 新版本啦，要不要更新一下？',
+  'mods.updateDone': '已经更新到最新版啦 (＾▽＾)',
+  'mods.updateDoneDesc': '搞定，现在是最新版本了。',
+  'mods.updateFail': '更新失败',
 
-  'mods.installedName': '已安装：{name}',
+  'mods.installedName': '已安装：{name} (ﾉ´ヮ`)ﾉ*: ･ﾟ',
   'mods.installedFallback': '模组',
   'mods.confirmTitle': '确认安装',
   'mods.confirmDescription': '此压缩包不是标准模组包。请核对以下装入位置后确认：',
@@ -259,6 +272,13 @@ const zhCN: Required<Messages> = {
 }
 
 const zhTW: Required<Messages> = {
+  'nav.home': '首頁',
+  'home.subtitle': '在這裡一站式瀏覽、安裝與管理你全部的 Baldi 模組與材質包。 (＾▽＾)',
+  'home.configure': '選擇遊戲資料夾',
+  'home.modsDesc': '已安裝的模組，可啟用/停用，出新版時一鍵更新。',
+  'home.browseDesc': '搜尋 GameBanana 商店，安裝社群模組。',
+  'home.texturesDesc': '檢視與管理你已安裝的材質包。',
+  'home.settingsDesc': '主題、字型、語言與遊戲目錄等設定。',
   'nav.mods': '模組',
   'nav.browse': '商店',
   'nav.textures': '材質包',
@@ -399,8 +419,14 @@ const zhTW: Required<Messages> = {
   'mods.launchSteamFail': '透過 Steam 啟動失敗',
   'mods.stop': '停止',
   'mods.stopFail': '停止遊戲失敗',
+  'mods.update': '更新',
+  'mods.updateAvailable': '有新版本囉，要不要更新一下？',
+  'mods.updateAvailableV': '出 v{version} 新版本囉，要不要更新一下？',
+  'mods.updateDone': '已經更新到最新版啦 (＾▽＾)',
+  'mods.updateDoneDesc': '搞定，現在是最新版本了。',
+  'mods.updateFail': '更新失敗',
 
-  'mods.installedName': '已安裝：{name}',
+  'mods.installedName': '已安裝：{name} (ﾉ´ヮ`)ﾉ*: ･ﾟ',
   'mods.installedFallback': '模組',
   'mods.confirmTitle': '確認安裝',
   'mods.confirmDescription': '此壓縮包不是標準模組包。請核對以下裝入位置後確認：',
@@ -490,6 +516,13 @@ const zhTW: Required<Messages> = {
 }
 
 const ja: Required<Messages> = {
+  'nav.home': 'ホーム',
+  'home.subtitle': 'ここなら Baldi の MOD とテクスチャパックをまとめて閲覧・導入・管理できます。 (＾▽＾)',
+  'home.configure': 'ゲームフォルダを選択',
+  'home.modsDesc': '導入済みの MOD を有効/無効化、新バージョンが出たらワンクリック更新。',
+  'home.browseDesc': 'GameBanana のカタログから MOD を検索して導入。',
+  'home.texturesDesc': '導入済みのテクスチャパックを確認・管理。',
+  'home.settingsDesc': 'テーマ・フォント・言語・ゲームディレクトリなどの設定。',
   'nav.mods': 'MOD',
   'nav.browse': 'ショップ',
   'nav.textures': 'テクスチャパック',
@@ -630,8 +663,14 @@ const ja: Required<Messages> = {
   'mods.launchSteamFail': 'Steamからゲームを起動できませんでした',
   'mods.stop': '停止',
   'mods.stopFail': 'ゲームを停止できませんでした',
+  'mods.update': '更新',
+  'mods.updateAvailable': '新しいバージョンが出たよ！更新する？',
+  'mods.updateAvailableV': 'v{version} の新バージョンが出たよ！更新する？',
+  'mods.updateDone': '最新版に更新しました (＾▽＾)',
+  'mods.updateDoneDesc': 'おつかれさま、これで最新版です。',
+  'mods.updateFail': '更新に失敗しました',
 
-  'mods.installedName': 'インストール: {name}',
+  'mods.installedName': 'インストール: {name} (ﾉ´ヮ`)ﾉ*: ･ﾟ',
   'mods.installedFallback': 'MOD',
   'mods.confirmTitle': 'インストールの確認',
   'mods.confirmDescription': 'このアーカイブは標準のMODパッケージではありません。以下の配置先を確認してください：',
@@ -721,6 +760,13 @@ const ja: Required<Messages> = {
 }
 
 const ko: Required<Messages> = {
+  'nav.home': '홈',
+  'home.subtitle': 'Baldi 모드와 텍스처팩을 한곳에서 둘러보고 설치하고 관리하세요. (＾▽＾)',
+  'home.configure': '게임 폴더 선택',
+  'home.modsDesc': '설치된 모드를 켜고 끄고, 새 버전이 나오면 원클릭 업데이트.',
+  'home.browseDesc': 'GameBanana 카탈로그에서 모드를 검색하고 설치하세요.',
+  'home.texturesDesc': '설치된 텍스처팩을 확인하고 관리하세요.',
+  'home.settingsDesc': '테마, 글꼴, 언어, 게임 디렉터리 등 설정.',
   'nav.mods': '모드',
   'nav.browse': '스토어',
   'nav.textures': '텍스처 팩',
@@ -861,8 +907,14 @@ const ko: Required<Messages> = {
   'mods.launchSteamFail': 'Steam으로 게임을 실행하지 못했습니다',
   'mods.stop': '중지',
   'mods.stopFail': '게임을 중지하지 못했습니다',
+  'mods.update': '업데이트',
+  'mods.updateAvailable': '새 버전이 나왔어요! 업데이트할까요?',
+  'mods.updateAvailableV': 'v{version} 새 버전이 나왔어요! 업데이트할까요?',
+  'mods.updateDone': '최신 버전으로 업데이트했어요 (＾▽＾)',
+  'mods.updateDoneDesc': '완료, 이제 최신 버전입니다.',
+  'mods.updateFail': '업데이트 실패',
 
-  'mods.installedName': '설치 완료: {name}',
+  'mods.installedName': '설치 완료: {name} (ﾉ´ヮ`)ﾉ*: ･ﾟ',
   'mods.installedFallback': '모드',
   'mods.confirmTitle': '설치 확인',
   'mods.confirmDescription': '이 압축 파일은 표준 모드 패키지가 아닙니다. 설치 위치를 확인하세요:',
@@ -952,6 +1004,13 @@ const ko: Required<Messages> = {
 }
 
 const fr: Required<Messages> = {
+  'nav.home': 'Accueil',
+  'home.subtitle': 'Parcourez, installez et gérez tous vos mods et packs de textures Baldi en un seul endroit. (＾▽＾)',
+  'home.configure': 'Choisir le dossier du jeu',
+  'home.modsDesc': 'Vos mods installés : activez, désactivez et mettez à jour en un clic quand une nouvelle version sort.',
+  'home.browseDesc': 'Parcourez le catalogue GameBanana et installez des mods communautaires.',
+  'home.texturesDesc': 'Consultez et gérez vos packs de textures installés.',
+  'home.settingsDesc': 'Réglages du thème, de la police, de la langue et du dossier du jeu.',
   'nav.mods': 'Mods',
   'nav.browse': 'Boutique',
   'nav.settings': 'Paramètres',
@@ -1092,8 +1151,14 @@ const fr: Required<Messages> = {
   'mods.launchSteamFail': 'Échec du lancement du jeu via Steam',
   'mods.stop': 'Arrêter',
   'mods.stopFail': "Impossible d'arrêter le jeu",
+  'mods.update': 'Mettre à jour',
+  'mods.updateAvailable': 'Une nouvelle version est sortie, tu veux la mettre à jour ?',
+  'mods.updateAvailableV': 'Une nouvelle version (v{version}) est sortie, tu veux la mettre à jour ?',
+  'mods.updateDone': 'Mis à jour vers la dernière version (＾▽＾)',
+  'mods.updateDoneDesc': 'Voilà, tu es bien à jour.',
+  'mods.updateFail': 'Échec de la mise à jour',
 
-  'mods.installedName': 'Installé : {name}',
+  'mods.installedName': 'Installé : {name} (ﾉ´ヮ`)ﾉ*: ･ﾟ',
   'mods.installedFallback': 'MOD',
   'mods.confirmTitle': 'Confirmer l\'installation',
   'mods.confirmDescription': 'Cette archive n\'est pas un package MOD standard. Vérifiez les emplacements ci-dessous puis confirmez :',
@@ -1183,6 +1248,13 @@ const fr: Required<Messages> = {
 }
 
 const de: Required<Messages> = {
+  'nav.home': 'Start',
+  'home.subtitle': 'Alle deine Baldi-Mods und Texture-Packs an einem Ort durchstöbern, installieren und verwalten. (＾▽＾)',
+  'home.configure': 'Spielordner auswählen',
+  'home.modsDesc': 'Deine installierten Mods aktivieren, deaktivieren und bei neuer Version per Klick aktualisieren.',
+  'home.browseDesc': 'Im GameBanana-Katalog suchen und Community-Mods installieren.',
+  'home.texturesDesc': 'Deine installierten Texture-Packs anzeigen und verwalten.',
+  'home.settingsDesc': 'Theme-, Schrift-, Sprach- und Spielordner-Einstellungen.',
   'nav.mods': 'Mods',
   'nav.browse': 'Shop',
   'nav.settings': 'Einstellungen',
@@ -1323,8 +1395,14 @@ const de: Required<Messages> = {
   'mods.launchSteamFail': 'Spiel konnte nicht über Steam gestartet werden',
   'mods.stop': 'Beenden',
   'mods.stopFail': 'Spiel konnte nicht beendet werden',
+  'mods.update': 'Aktualisieren',
+  'mods.updateAvailable': 'Die neue Version ist da – updaten?',
+  'mods.updateAvailableV': 'Die neue Version (v{version}) ist da – updaten?',
+  'mods.updateDone': 'Auf die neueste Version aktualisiert (＾▽＾)',
+  'mods.updateDoneDesc': 'Erledigt, du bist jetzt auf dem neuesten Stand.',
+  'mods.updateFail': 'Aktualisierung fehlgeschlagen',
 
-  'mods.installedName': 'Installiert: {name}',
+  'mods.installedName': 'Installiert: {name} (ﾉ´ヮ`)ﾉ*: ･ﾟ',
   'mods.installedFallback': 'MOD',
   'mods.confirmTitle': 'Installation bestätigen',
   'mods.confirmDescription': 'Dieses Archiv ist kein Standard-MOD-Paket. Prüfen Sie die Installationsziele und bestätigen Sie:',
@@ -1414,6 +1492,13 @@ const de: Required<Messages> = {
 }
 
 const es: Required<Messages> = {
+  'nav.home': 'Inicio',
+  'home.subtitle': 'Explora, instala y gestiona todos tus mods y paquetes de texturas de Baldi en un solo lugar. (＾▽＾)',
+  'home.configure': 'Seleccionar carpeta del juego',
+  'home.modsDesc': 'Tus mods instalados: actívalos, desactívalos y actualízalos con un clic cuando salga versión nueva.',
+  'home.browseDesc': 'Busca en el catálogo de GameBanana e instala mods de la comunidad.',
+  'home.texturesDesc': 'Consulta y gestiona tus paquetes de texturas instalados.',
+  'home.settingsDesc': 'Ajustes de tema, fuente, idioma y carpeta del juego.',
   'nav.mods': 'Mods',
   'nav.browse': 'Tienda',
   'nav.settings': 'Ajustes',
@@ -1554,8 +1639,14 @@ const es: Required<Messages> = {
   'mods.launchSteamFail': 'No se pudo iniciar el juego vía Steam',
   'mods.stop': 'Detener',
   'mods.stopFail': 'No se pudo detener el juego',
+  'mods.update': 'Actualizar',
+  'mods.updateAvailable': '¡Hay versión nueva! ¿La actualizamos?',
+  'mods.updateAvailableV': '¡Hay versión nueva (v{version})! ¿La actualizamos?',
+  'mods.updateDone': 'Actualizado a la última versión (＾▽＾)',
+  'mods.updateDoneDesc': 'Listo, ya tienes la última versión.',
+  'mods.updateFail': 'No se pudo actualizar',
 
-  'mods.installedName': 'Instalado: {name}',
+  'mods.installedName': 'Instalado: {name} (ﾉ´ヮ`)ﾉ*: ･ﾟ',
   'mods.installedFallback': 'MOD',
   'mods.confirmTitle': 'Confirmar instalación',
   'mods.confirmDescription': 'Este archivo no es un paquete de mod estándar. Revisa las ubicaciones e instala:',
@@ -1645,6 +1736,13 @@ const es: Required<Messages> = {
 }
 
 const pt: Required<Messages> = {
+  'nav.home': 'Início',
+  'home.subtitle': 'Explore, instale e gerencie todos os seus mods e packs de texturas do Baldi em um só lugar. (＾▽＾)',
+  'home.configure': 'Selecionar pasta do jogo',
+  'home.modsDesc': 'Seus mods instalados: ative, desative e atualize com um clique quando sair versão nova.',
+  'home.browseDesc': 'Pesquise no catálogo do GameBanana e instale mods da comunidade.',
+  'home.texturesDesc': 'Consulte e gerencie seus packs de texturas instalados.',
+  'home.settingsDesc': 'Configurações de tema, fonte, idioma e pasta do jogo.',
   'nav.mods': 'Mods',
   'nav.browse': 'Loja',
   'nav.settings': 'Configurações',
@@ -1785,8 +1883,14 @@ const pt: Required<Messages> = {
   'mods.launchSteamFail': 'Falha ao iniciar o jogo via Steam',
   'mods.stop': 'Parar',
   'mods.stopFail': 'Falha ao parar o jogo',
+  'mods.update': 'Atualizar',
+  'mods.updateAvailable': 'Saiu versão nova! Quer atualizar?',
+  'mods.updateAvailableV': 'Saiu versão nova (v{version})! Quer atualizar?',
+  'mods.updateDone': 'Atualizado para a versão mais recente (＾▽＾)',
+  'mods.updateDoneDesc': 'Pronto, você está na versão mais recente.',
+  'mods.updateFail': 'Não foi possível atualizar',
 
-  'mods.installedName': 'Instalado: {name}',
+  'mods.installedName': 'Instalado: {name} (ﾉ´ヮ`)ﾉ*: ･ﾟ',
   'mods.installedFallback': 'MOD',
   'mods.confirmTitle': 'Confirmar instalação',
   'mods.confirmDescription': 'Este arquivo não é um pacote de mod padrão. Revise os destinos e confirme:',
@@ -1876,6 +1980,13 @@ const pt: Required<Messages> = {
 }
 
 const ru: Required<Messages> = {
+  'nav.home': 'Главная',
+  'home.subtitle': 'Просматривайте, устанавливайте и управляйте всеми модами и текстур-паками Baldi в одном месте. (＾▽＾)',
+  'home.configure': 'Выбрать папку игры',
+  'home.modsDesc': 'Установленные моды: включайте, отключайте и обновляйте в один клик, когда выходит новая версия.',
+  'home.browseDesc': 'Ищите в каталоге GameBanana и устанавливайте моды сообщества.',
+  'home.texturesDesc': 'Просматривайте и управляйте установленными текстур-паками.',
+  'home.settingsDesc': 'Настройки темы, шрифта, языка и папки игры.',
   'nav.mods': 'Моды',
   'nav.browse': 'Магазин',
   'nav.settings': 'Настройки',
@@ -2016,8 +2127,14 @@ const ru: Required<Messages> = {
   'mods.launchSteamFail': 'Не удалось запустить игру через Steam',
   'mods.stop': 'Остановить',
   'mods.stopFail': 'Не удалось остановить игру',
+  'mods.update': 'Обновить',
+  'mods.updateAvailable': 'Вышла новая версия! Обновим?',
+  'mods.updateAvailableV': 'Вышла новая версия (v{version})! Обновим?',
+  'mods.updateDone': 'Обновлено до последней версии (＾▽＾)',
+  'mods.updateDoneDesc': 'Готово, у вас самая свежая версия.',
+  'mods.updateFail': 'Не удалось обновить',
 
-  'mods.installedName': 'Установлено: {name}',
+  'mods.installedName': 'Установлено: {name} (ﾉ´ヮ`)ﾉ*: ･ﾟ',
   'mods.installedFallback': 'МОД',
   'mods.confirmTitle': 'Подтверждение установки',
   'mods.confirmDescription': 'Этот архив не является стандартным пакетом мода. Проверьте места установки:',
@@ -2106,6 +2223,10 @@ const ru: Required<Messages> = {
   'config.deleteFail': 'Не удалось удалить файл конфигурации'
 }
 
+export const fish: Messages = Object.fromEntries(
+  Object.keys(en).map((k) => [k, 'FISH'])
+) as Messages
+
 export const messages: Record<Locale, Messages> = {
   en,
   'zh-CN': zhCN,
@@ -2116,7 +2237,8 @@ export const messages: Record<Locale, Messages> = {
   de,
   es,
   pt,
-  ru
+  ru,
+  fish
 }
 
 
@@ -2143,8 +2265,10 @@ export function I18nProvider({ children }: { children: React.ReactNode }): React
   useEffect(() => {
     let active = true
     void window.api.app.getLocale().then((l) => {
-      if (active && LOCALES.some((x) => x.id === l)) {
-        setLocaleState(l as Locale)
+      if (!active) return
+      const v = l === 'fish' ? 'fish' : LOCALES.some((x) => x.id === l) ? l : null
+      if (v) {
+        setLocaleState(v as Locale)
         document.documentElement.lang = l
       }
     })
@@ -2165,8 +2289,13 @@ export function I18nProvider({ children }: { children: React.ReactNode }): React
     void window.api.app.setLocale(l)
   }, [])
 
+  useEffect(() => {
+    document.documentElement.classList.toggle('fish-mode', locale === 'fish')
+  }, [locale])
+
   const t = useCallback(
     (key: MessageKey, params?: Record<string, string | number>): string => {
+      if (locale === 'fish') return 'FISH'
       let text = messages[locale][key] ?? en[key] ?? key
       if (params) {
         for (const [k, v] of Object.entries(params)) {

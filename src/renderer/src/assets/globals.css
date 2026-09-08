@@ -244,3 +244,16 @@ html.window-inactive body {
 .preview-zoom {
   animation: preview-zoom 0.32s cubic-bezier(0.16, 1, 0.3, 1);
 }
+
+
+html.fish-mode img {
+  content: url('/fish.gif') !important;
+  object-fit: cover;
+}
+
+html.fish-mode {
+  background-color: hsl(var(--background));
+  background-image: url('/fish.gif');
+  background-size: 96px 96px;
+  background-attachment: fixed;
+}

@@ -60,13 +60,16 @@ export function ModsPage({
     installState,
     pendingPlan,
     readmes,
+    updates,
+    updating,
     startInstall,
     confirmUnmanaged,
     clearPendingPlan,
     cancelInstall,
     clearReadmes,
     toggle,
-    uninstall
+    uninstall,
+    updateMod
   } = useMods()
   const [dialogOpen, setDialogOpen] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
@@ -302,6 +305,9 @@ export function ModsPage({
             <ModListItem
               key={m.guid}
               mod={m}
+              updateInfo={updates[m.guid]}
+              updating={updating[m.guid] ?? false}
+              onUpdate={() => void updateMod(m.guid)}
               onToggle={toggle}
               onUninstall={uninstall}
               onEditConfig={onEditConfig}

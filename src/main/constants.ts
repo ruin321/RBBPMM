@@ -50,6 +50,25 @@ export function isDarkTheme(id: string): boolean {
 export const FONT_DEFAULT = 'Comic Sans MS'
 export const LOCALE_DEFAULT = 'en'
 
+
+export function inferSystemLocale(systemLocale: string): string {
+  if (!systemLocale) return LOCALE_DEFAULT
+  const full = systemLocale.toLowerCase()
+  const base = full.replace(/[_-].*$/, '')
+  if (base === 'zh') {
+    if (full.includes('tw') || full.includes('hk') || full.includes('mo')) return 'zh-TW'
+    return 'zh-CN'
+  }
+  if (base === 'ja') return 'ja'
+  if (base === 'ko') return 'ko'
+  if (base === 'fr') return 'fr'
+  if (base === 'de') return 'de'
+  if (base === 'es') return 'es'
+  if (base === 'pt') return 'pt'
+  if (base === 'ru') return 'ru'
+  return LOCALE_DEFAULT
+}
+
 export function bepinexPluginsDir(gameRoot: string): string {
   return path.join(gameRoot, BEPINEX_FOLDER, PLUGINS_FOLDER)
 }

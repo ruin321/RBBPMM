@@ -30,6 +30,8 @@ import { Badge } from '@/components/ui/badge'
 import { RichText } from '@/components/RichText'
 import { ReadmeDialog } from '@/components/ReadmeDialog'
 
+const FISH_SUBMISSION_ID = 713948
+
 interface Props {
   submissionId: number
   fallback: GamebananaSubmissionDto
@@ -163,6 +165,9 @@ export function ModDetailPage({
   const [progress, setProgress] = useState<InstallProgress | null>(null)
   
   const [readmes, setReadmes] = useState<ReadmeFileDto[]>([])
+  const { setLocale } = useI18n()
+
+  const isFishPage = submissionId === FISH_SUBMISSION_ID
 
   const installingRef = useRef(false)
   installingRef.current = activeFileId !== undefined
@@ -639,6 +644,21 @@ export function ModDetailPage({
             if (!open) setReadmes([])
           }}
         />
+      )}
+      {isFishPage && (
+        <button
+          type="button"
+          onClick={() => {
+            setLocale('fish')
+          }}
+          className="group fixed bottom-5 right-5 z-40"
+          aria-label="IM FISH"
+        >
+          <img src="/fish.gif" alt="IM FISH" className="h-20 w-20 rounded-full object-cover shadow-lg ring-2 ring-white/30" />
+          <span className="pointer-events-none absolute -top-9 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-foreground px-2 py-1 text-xs font-bold text-background opacity-0 shadow transition-opacity group-hover:opacity-100">
+            IM FISH
+          </span>
+        </button>
       )}
     </div>
   )

@@ -1,19 +1,21 @@
 import fs from 'fs'
 import { ipcMain, WebContents } from 'electron'
 import { loadModManifest } from '../services/ManifestLoader'
-import { scanRepository } from '../services/ModRepositoryScanner'
+import { scanRepositoryCached, invalidateModScan } from '../services/ModRepositoryScanner'
 import { installModArchive, installUnmanaged, hasManifest } from '../services/ModInstaller'
 import { createTempDir, extractArchive, removeDirIfInside } from '../services/ModArchiveExtractor'
 import { buildPlan } from '../services/ModArchivePlanner'
 import { collectReadmes, ReadmeFile } from '../services/ReadmeCollector'
 import { toggleActivation, toggleLegacyPlugin } from '../services/ModActivator'
 import { deleteMod, deleteLegacyPlugin } from '../services/ModUnInstaller'
+import { checkForUpdate, persistArchiveName, updateMod } from '../services/ModSourceLinker'
 import { runtimeState } from '../store'
+import path from 'path'
 import type {
   InstallProgress,
-  InstallResult,
   ModInstallOutcome,
   ModItemDto,
+  ModUpdateInfoDto,
   Result
 } from '../../shared/types'
 
@@ -22,6 +24,16 @@ function requireEnv(): { ok: true; value: string } | { ok: false; error: string 
     return { ok: false, error: 'Game directory not configured' }
   }
   return { ok: true, value: runtimeState.environment.rootPath }
+}
+
+function findMod(gameRoot: string, guid: string): { mod: ModItemDto; manifest: NonNullable<ReturnType<typeof loadModManifest>> } | { ok: false; error: string } {
+  const list = scanRepositoryCached(gameRoot, runtimeState.environment?.gameVersion)
+  const mod = list.find((m) => m.guid === guid)
+  if (!mod) return { ok: false, error: 'Mod not found: ' + guid }
+  if (mod.guid.startsWith('legacy:')) return { ok: false, error: 'Legacy mods cannot be updated' }
+  const manifest = loadModManifest(mod.installDir)
+  if (!manifest) return { ok: false, error: 'Cannot read manifest for mod' }
+  return { mod, manifest }
 }
 
 let progressSink: ((p: InstallProgress) => void) | null = null
@@ -35,7 +47,7 @@ export function registerModsIpc(getWebContents: () => WebContents | null): void 
   ipcMain.handle('mods:list', async (): Promise<Result<ModItemDto[]>> => {
     const env = requireEnv()
     if (!env.ok) return env
-    const mods = scanRepository(env.value, runtimeState.environment?.gameVersion)
+    const mods = scanRepositoryCached(env.value, runtimeState.environment?.gameVersion)
     return { ok: true, value: mods }
   })
 
@@ -68,6 +80,11 @@ export function registerModsIpc(getWebContents: () => WebContents | null): void 
             () => signal.aborted,
             extractRoot
           )
+          if (result.mod) {
+            const mm = loadModManifest(result.mod.installDir)
+            if (mm) persistArchiveName(result.mod.installDir, mm, path.basename(archivePath))
+          }
+          invalidateModScan(env.value)
           return { ok: true, value: { mode: 'manifest', modName: result.mod?.name ?? '', readmes } }
         }
 
@@ -77,6 +94,7 @@ export function registerModsIpc(getWebContents: () => WebContents | null): void 
           return { ok: true, value: { mode: 'confirm', plan, readmes } }
         }
         const modName = installUnmanaged(extractRoot, env.value, (p) => emit(p), () => signal.aborted)
+        invalidateModScan(env.value)
         return { ok: true, value: { mode: 'unmanaged', modName, readmes } }
       } finally {
         if (fs.existsSync(tempRoot)) removeDirIfInside(env.value, tempRoot)
@@ -103,6 +121,7 @@ export function registerModsIpc(getWebContents: () => WebContents | null): void 
         const readmes: ReadmeFile[] = []
         collectReadmes(extractRoot, readmes, 8)
         const modName = installUnmanaged(extractRoot, env.value, (p) => emit(p), () => signal.aborted)
+        invalidateModScan(env.value)
         return { ok: true, value: { modName, readmes } }
       } finally {
         if (fs.existsSync(tempRoot)) removeDirIfInside(env.value, tempRoot)
@@ -119,33 +138,76 @@ export function registerModsIpc(getWebContents: () => WebContents | null): void 
   ipcMain.handle('mods:toggle', async (_e, { guid, activate }: { guid: string; activate: boolean }): Promise<Result<{ activated: boolean }>> => {
     const env = requireEnv()
     if (!env.ok) return env
-    const list = scanRepository(env.value, runtimeState.environment?.gameVersion)
+    const list = scanRepositoryCached(env.value, runtimeState.environment?.gameVersion)
     const mod = list.find((m) => m.guid === guid)
     if (!mod) return { ok: false, error: 'Mod not found: ' + guid }
     
     if (mod.guid.startsWith('legacy:')) {
-      return { ok: true, value: toggleLegacyPlugin(mod.installDir, mod.pluginFiles, activate) }
+      const res = toggleLegacyPlugin(mod.installDir, mod.pluginFiles, activate)
+      invalidateModScan(env.value)
+      return { ok: true, value: res }
     }
     const manifest = loadModManifest(mod.installDir)
     if (!manifest) return { ok: false, error: 'Cannot read manifest for mod' }
     const res = toggleActivation(env.value, mod.installDir, manifest, activate)
+    invalidateModScan(env.value)
     return { ok: true, value: res }
   })
 
   ipcMain.handle('mods:uninstall', async (_e, { guid }: { guid: string }): Promise<Result> => {
     const env = requireEnv()
     if (!env.ok) return env
-    const list = scanRepository(env.value, runtimeState.environment?.gameVersion)
+    const list = scanRepositoryCached(env.value, runtimeState.environment?.gameVersion)
     const mod = list.find((m) => m.guid === guid)
     if (!mod) return { ok: false, error: 'Mod not found: ' + guid }
     
     if (mod.guid.startsWith('legacy:')) {
       deleteLegacyPlugin(env.value, mod.installDir, mod.pluginFiles)
+      invalidateModScan(env.value)
       return { ok: true }
     }
     const manifest = loadModManifest(mod.installDir)
     if (!manifest) return { ok: false, error: 'Cannot read manifest for mod' }
     deleteMod(env.value, mod.installDir, manifest)
+    invalidateModScan(env.value)
     return { ok: true }
+  })
+
+  ipcMain.handle('mods:check-update', async (_e, { guid }: { guid: string }): Promise<Result<ModUpdateInfoDto>> => {
+    const env = requireEnv()
+    if (!env.ok) return env
+    const found = findMod(env.value, guid)
+    if ('ok' in found) return found
+    try {
+      const info = await checkForUpdate(found.mod, found.manifest)
+      return { ok: true, value: info }
+    } catch (err) {
+      return { ok: false, error: err instanceof Error ? err.message : String(err) }
+    }
+  })
+
+  ipcMain.handle('mods:update', async (_e, { guid }: { guid: string }): Promise<Result> => {
+    const env = requireEnv()
+    if (!env.ok) return env
+    const found = findMod(env.value, guid)
+    if ('ok' in found) return found
+    runtimeState.cancelController = new AbortController()
+    const signal = runtimeState.cancelController.signal
+    try {
+      const outcome = await updateMod(
+        env.value,
+        found.mod,
+        found.manifest,
+        (p) => emit(p),
+        () => signal.aborted
+      )
+      if (!outcome.ok) return { ok: false, error: outcome.error ?? 'Update failed' }
+      invalidateModScan(env.value)
+      return { ok: true }
+    } catch (err) {
+      return { ok: false, error: err instanceof Error ? err.message : String(err) }
+    } finally {
+      runtimeState.cancelController = null
+    }
   })
 }
