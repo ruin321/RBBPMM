@@ -4,7 +4,7 @@
   "version": "0.1.1",
   "description": "Baldi's Basics Plus mod manager",
   "main": "./out/main/index.js",
-  "author": "RUIN321 GAMES",
+  "author": { "name": "RUIN321 GAMES", "email": "ruin321games@users.noreply.github.com" },
   "license": "MIT",
   "private": true,
   "build": {

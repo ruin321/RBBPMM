@@ -15,13 +15,13 @@ jobs:
         include:
           - os: windows-latest
             name: windows
-            cmd: npx electron-builder --win zip
+            cmd: npx electron-builder --win zip --publish never
           - os: macos-latest
             name: macos
-            cmd: npx electron-builder --mac dmg zip
+            cmd: npx electron-builder --mac dmg zip --publish never
           - os: ubuntu-latest
             name: linux
-            cmd: npx electron-builder --linux AppImage deb
+            cmd: npx electron-builder --linux AppImage deb --publish never
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
