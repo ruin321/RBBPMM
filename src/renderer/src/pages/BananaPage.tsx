@@ -262,7 +262,7 @@ export function BananaPage({ onInstalled }: Props): React.JSX.Element {
           />
         </div>
       ) : (
-        <section className="space-y-6">
+        <section className="fade-in space-y-6">
           <PageHeader icon={<Store className="h-6 w-6" />} title={t('banana.title')} />
 
           {}

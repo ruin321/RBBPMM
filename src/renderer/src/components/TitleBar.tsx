@@ -28,10 +28,10 @@ export function TitleBar(): JSX.Element {
         </span>
       </div>
 
-      <div className="titlebar-no-drag relative flex h-full items-center pr-1">
+      <div className="titlebar-no-drag relative flex h-full items-center gap-0.5 pr-1.5">
         <button
           type="button"
-          className="flex h-full w-[46px] items-center justify-center text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground active:bg-foreground/10"
+          className="group flex h-[26px] w-8 items-center justify-center rounded-md text-muted-foreground transition-[background-color,color,transform] duration-150 hover:bg-foreground/10 hover:text-foreground active:scale-90"
           onClick={() => void window.api.window.minimize()}
           aria-label="minimize"
         >
@@ -39,7 +39,7 @@ export function TitleBar(): JSX.Element {
         </button>
         <button
           type="button"
-          className="flex h-full w-[46px] items-center justify-center text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground active:bg-foreground/10"
+          className="group flex h-[26px] w-8 items-center justify-center rounded-md text-muted-foreground transition-[background-color,color,transform] duration-150 hover:bg-foreground/10 hover:text-foreground active:scale-90"
           onClick={() => void window.api.window.toggleMaximize()}
           aria-label="maximize"
         >
@@ -51,7 +51,7 @@ export function TitleBar(): JSX.Element {
         </button>
         <button
           type="button"
-          className="flex h-full w-[46px] items-center justify-center text-muted-foreground transition-colors hover:bg-destructive hover:text-destructive-foreground active:bg-destructive/80"
+          className="group flex h-[26px] w-8 items-center justify-center rounded-md text-muted-foreground transition-[background-color,color,transform] duration-150 hover:bg-destructive hover:text-destructive-foreground active:scale-90"
           onClick={() => void window.api.window.close()}
           aria-label="close"
         >
