@@ -6,6 +6,7 @@ import { net } from 'electron'
 import type {
   GamebananaAlternateSourceDto,
   GamebananaCommentDto,
+  GamebananaCommentsDto,
   GamebananaFileDto,
   GamebananaRequirementDto,
   GamebananaSearchResult,
@@ -372,21 +373,23 @@ export async function getSubmission(
 
 
 
-export async function getComments(submissionId: number): Promise<GamebananaCommentDto[]> {
-  if (!Number.isFinite(submissionId) || submissionId <= 0) return []
+export async function getComments(submissionId: number): Promise<GamebananaCommentsDto> {
+  if (!Number.isFinite(submissionId) || submissionId <= 0) return { total: 0, items: [] }
   try {
-    
     const doc = await getJson(`${API_BASE}Mod/${submissionId}/Posts`)
     const records = doc['_aRecords']
-    if (!Array.isArray(records)) return []
-    const out: GamebananaCommentDto[] = []
-    for (const r of records) {
-      const c = parseComment(r)
-      if (c) out.push(c)
+    const meta = ok(doc['_aMetadata']) ? doc['_aMetadata'] : undefined
+    const total = asNum(meta?.['_nRecordCount'])
+    const items: GamebananaCommentDto[] = []
+    if (Array.isArray(records)) {
+      for (const r of records) {
+        const c = parseComment(r)
+        if (c) items.push(c)
+      }
     }
-    return out
+    return { total, items }
   } catch {
-    return []
+    return { total: 0, items: [] }
   }
 }
 

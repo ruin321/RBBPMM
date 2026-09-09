@@ -1,7 +1,7 @@
 {
   "name": "ruin321s-baldi-mod-manager",
   "productName": "Ruin321's Baldi's Basics Plus Mod Manager",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Baldi's Basics Plus mod manager",
   "main": "./out/main/index.js",
   "author": { "name": "RUIN321 GAMES", "email": "ruin321games@users.noreply.github.com" },
@@ -18,6 +18,18 @@
       {
         "from": "resources/7z",
         "to": "7z"
+      },
+      {
+        "from": "resources/BepInEx.zip",
+        "to": "BepInEx.zip"
+      }
+    ],
+    "protocols": [
+      {
+        "name": "Ruin321's Baldi's Basics Plus Mod Manager",
+        "schemes": [
+          "rbbpmm"
+        ]
       }
     ],
     "win": {

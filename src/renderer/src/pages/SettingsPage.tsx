@@ -20,6 +20,7 @@ interface Props {
   onSelectFont: (font: string) => void
   themeId: string
   onSelectTheme: (id: string) => void
+  onSetup: () => void
 }
 
 export function SettingsPage({
@@ -30,7 +31,8 @@ export function SettingsPage({
   fonts,
   onSelectFont,
   themeId,
-  onSelectTheme
+  onSelectTheme,
+  onSetup
 }: Props): React.JSX.Element {
   const { t } = useI18n()
   const handleSelect = async (): Promise<boolean> => {
@@ -43,7 +45,7 @@ export function SettingsPage({
   return (
     <div className="mx-auto w-full max-w-3xl space-y-6">
       <PageHeader icon={<FolderSearch className="h-6 w-6" />} title={t('settings.title')} />
-      <GameDirCard env={env} loading={loading} onSelect={handleSelect} />
+      <GameDirCard env={env} loading={loading} onSelect={handleSelect} onSetup={onSetup} />
       <LanguagePicker />
       <ThemeCard themeId={themeId} onChange={onSelectTheme} />
       <FontPicker font={font} fonts={fonts} onSelect={onSelectFont} />

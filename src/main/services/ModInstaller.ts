@@ -267,12 +267,13 @@ export function installUnmanaged(
   isCancelled?: () => boolean
 ): string {
   const targets: InstallTargets = collectTargets(extractRoot)
-  if (targets.modded.length === 0 && targets.plugins.length === 0) {
+  if (targets.modded.length === 0 && targets.plugins.length === 0 && targets.patchers.length === 0) {
     throw new Error('No installable files found in archive')
   }
   const modName = deriveModName(targets)
   const moddedRoot = path.resolve(gameRoot, MODDED_REL)
   const pluginsRoot = path.resolve(bepinexPluginsDir(gameRoot))
+  const patchersRoot = path.resolve(bepinexPatchersDir(gameRoot))
 
   const created: string[] = []
   const rollback = (): void => {
@@ -318,6 +319,21 @@ export function installUnmanaged(
         fs.copyFileSync(extra, extraDest)
         if (!existedExtra) created.push(extraDest)
       }
+    }
+
+    
+    for (const patcher of targets.patchers) {
+      if (isCancelled?.()) throw new Error('install cancelled')
+      const destRel = patcher.destRel.includes('/')
+        ? path.join(...patcher.destRel.split('/'))
+        : patcher.destRel
+      const dest = path.resolve(patchersRoot, destRel)
+      if (!isInside(patchersRoot, dest)) throw new Error(`patcher dest escapes: ${dest}`)
+      if (!isInside(gameRoot, dest)) throw new Error(`dest outside game root: ${dest}`)
+      fs.mkdirSync(path.dirname(dest), { recursive: true })
+      const existed = fs.existsSync(dest)
+      fs.copyFileSync(patcher.src, dest)
+      if (!existed) created.push(dest)
     }
 
     onProgress?.({ stage: 'done', percent: 100, message: modName })

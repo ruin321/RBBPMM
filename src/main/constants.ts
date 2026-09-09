@@ -2,6 +2,29 @@ import path from 'path'
 
 
 export const GAME_EXE_NAME = 'BALDI.exe'
+
+export const GAME_EXE_CANDIDATES: Record<NodeJS.Platform, string[]> = {
+  win32: ['BALDI.exe'],
+  linux: ['BALDI.x86_64', 'BALDI'],
+  darwin: ['BALDI'],
+  aix: [GAME_EXE_NAME],
+  android: [GAME_EXE_NAME],
+  freebsd: ['BALDI.x86_64', 'BALDI'],
+  haiku: ['BALDI'],
+  openbsd: [GAME_EXE_NAME],
+  sunos: [GAME_EXE_NAME],
+  netbsd: [GAME_EXE_NAME],
+  cygwin: [GAME_EXE_NAME]
+}
+
+export function platformExeNames(platform: NodeJS.Platform = process.platform): string[] {
+  return GAME_EXE_CANDIDATES[platform] ?? [GAME_EXE_NAME]
+}
+
+export function isGameExeName(name: string, platform: NodeJS.Platform = process.platform): boolean {
+  const lower = name.toLowerCase()
+  return platformExeNames(platform).some((c) => lower === c.toLowerCase())
+}
 export const GAME_DATA_FOLDER = 'BALDI_Data'
 export const GAME_VERSION_FILE = 'globalgamemanagers'
 

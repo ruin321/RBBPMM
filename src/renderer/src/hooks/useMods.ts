@@ -140,6 +140,7 @@ export function useMods(): {
 
   const cancelInstall = useCallback(async () => {
     await window.api.mods.cancelInstall()
+    setInstallState({ status: 'idle' })
   }, [])
 
   const clearReadmes = useCallback(() => {

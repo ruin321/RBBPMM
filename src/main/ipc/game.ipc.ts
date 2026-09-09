@@ -9,7 +9,7 @@ import type { GameEnvironment, Result } from '../../shared/types'
 const STEAM_APPID = '1275890'
 
 function envResult(env: GameEnvironment | null): Result<GameEnvironment> {
-  if (!env) return { ok: false, error: 'Not a valid Baldi\'s Basics Plus installation (need BALDI.exe with BALDI_Data)' }
+  if (!env) return { ok: false, error: 'Not a valid Baldi\'s Basics Plus installation (missing the game executable or BALDI_Data folder)' }
   return { ok: true, value: env }
 }
 
@@ -28,10 +28,11 @@ export function registerGameIpc(): void {
   })
 
   ipcMain.handle('game:select-dir', async (): Promise<Result<GameEnvironment>> => {
+    const isWin = process.platform === 'win32'
     const res = await dialog.showOpenDialog({
-      title: 'Select BALDI.exe',
+      title: 'Select the Baldi\'s Basics Plus executable',
       properties: ['openFile'],
-      filters: [{ name: 'Executable', extensions: ['exe'] }]
+      filters: isWin ? [{ name: 'Executable', extensions: ['exe'] }] : []
     })
     if (res.canceled || res.filePaths.length === 0) {
       return { ok: false, error: 'cancelled' }

@@ -26,6 +26,6 @@ export function registerUiIpc(): void {
   })
 
   ipcMain.handle('ui:open-external', async (_e, { url }: { url: string }): Promise<void> => {
-    if (url && /^https?:\/\//i.test(url)) shell.openExternal(url)
+    if (url && /^https?:\/\//.test(url)) shell.openExternal(url)
   })
 }

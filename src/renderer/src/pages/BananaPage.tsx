@@ -34,6 +34,8 @@ import { PageHeader } from '@/components/PageHeader'
 interface Props {
   
   onInstalled?: (isTexturePack: boolean) => void
+  initialSubmissionId?: number | null
+  onInitialConsumed?: () => void
 }
 
 
@@ -53,7 +55,7 @@ function fmtDate(ts?: number): string {
   return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`
 }
 
-export function BananaPage({ onInstalled }: Props): React.JSX.Element {
+export function BananaPage({ onInstalled, initialSubmissionId, onInitialConsumed }: Props): React.JSX.Element {
   const { t } = useI18n()
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState<number>(BALDI_COMMUNITY_CATEGORY_ID)
@@ -185,6 +187,15 @@ export function BananaPage({ onInstalled }: Props): React.JSX.Element {
     void runSearch('')
     
   }, [])
+
+  
+  useEffect(() => {
+    if (initialSubmissionId == null) return
+    if (!Number.isFinite(initialSubmissionId)) return
+    openSubmission(initialSubmissionId)
+    onInitialConsumed?.()
+    
+  }, [initialSubmissionId])
 
   
   const openFromList = (sub: GamebananaSubmissionDto): void => {

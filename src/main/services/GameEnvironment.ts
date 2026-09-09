@@ -1,9 +1,9 @@
 import fs from 'fs'
 import path from 'path'
 import {
-  GAME_EXE_NAME,
   GAME_DATA_FOLDER,
-  GAME_VERSION_FILE
+  GAME_VERSION_FILE,
+  isGameExeName
 } from '../constants'
 import type { GameEnvironment } from '../../shared/types'
 
@@ -46,7 +46,7 @@ export function tryReadGameVersion(dataFolder: string): string | null {
 export function resolveEnvironment(exePath: string): GameEnvironment | null {
   const executablePath = path.resolve(exePath)
   const name = path.basename(executablePath)
-  if (name.toLowerCase() !== GAME_EXE_NAME.toLowerCase()) return null
+  if (!isGameExeName(name)) return null
   if (!fs.existsSync(executablePath)) return null
   const rootPath = path.dirname(executablePath)
   const dataFolder = path.join(rootPath, GAME_DATA_FOLDER)

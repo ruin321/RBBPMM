@@ -92,6 +92,22 @@ export interface InstallProgress {
   message?: string
 }
 
+export interface OpenUrlPayload {
+  action: string
+  id?: number
+  raw: string
+}
+
+export interface ToolboxDirDto {
+  key: string
+  path: string
+}
+
+export interface ToolboxCleanupDto {
+  removed: number
+  details: string[]
+}
+
 export type Result<T = void> = { ok: true; value?: T } | { ok: false; error: string }
 
 export interface SecurityWarning {
@@ -156,6 +172,11 @@ export interface GamebananaCommentDto {
   date?: string
   
   replyCount?: number
+}
+
+export interface GamebananaCommentsDto {
+  total: number
+  items: GamebananaCommentDto[]
 }
 
 

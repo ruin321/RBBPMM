@@ -3,7 +3,7 @@ import fs from 'fs'
 import path from 'path'
 import { installModArchive, installUnmanaged, hasManifest } from '../services/ModInstaller'
 import { createTempDir, extractArchive } from '../services/ModArchiveExtractor'
-import { installTexturePacksFromRoot, findPackDirs } from '../services/TexturePackService'
+import { installTexturePacksFromRoot, findPackDirs, hasModStructureInRoot } from '../services/TexturePackService'
 import {
   downloadMod,
   getComments,
@@ -19,6 +19,7 @@ import { invalidateModScan } from '../services/ModRepositoryScanner'
 import { TEXTURE_PACK_CATEGORY_ID } from '../../shared/types'
 import type {
   GamebananaCommentDto,
+  GamebananaCommentsDto,
   GamebananaSearchResult,
   GamebananaSubmissionDto,
   InstallProgress,
@@ -70,7 +71,7 @@ export function registerBananaIpc(getWebContents: () => WebContents | null): voi
 
   ipcMain.handle(
     'banana:get-comments',
-    async (_e, { submissionId }: { submissionId: number }): Promise<Result<GamebananaCommentDto[]>> => {
+    async (_e, { submissionId }: { submissionId: number }): Promise<Result<GamebananaCommentsDto>> => {
       const value = await getComments(submissionId)
       return { ok: true, value }
     }
@@ -103,11 +104,12 @@ export function registerBananaIpc(getWebContents: () => WebContents | null): voi
           return { ok: false, error: 'This mod has no downloadable files' }
         }
         
+        const realFiles = allFiles.filter((f) => f.id > 0 && !!f.downloadUrl)
+        
         const file =
-          (fileId ? allFiles.find((f) => f.id === fileId) : undefined) ??
-          [...allFiles]
-            .sort((a, b) => b.id - a.id)
-            .find((f) => f.id > 0) ??
+          (fileId && fileId > 0 ? realFiles.find((f) => f.id === fileId) : undefined) ??
+          [...realFiles].sort((a, b) => b.id - a.id)[0] ??
+          allFiles.find((f) => f.id > 0) ??
           allFiles[0]
 
         
@@ -137,8 +139,34 @@ export function registerBananaIpc(getWebContents: () => WebContents | null): voi
           const extractRoot = await extractArchive(tmpFile, exTemp)
 
           const packDirs = findPackDirs(extractRoot)
-          debugLog('banana:install detected packDirs =', packDirs.length, 'categoryId =', submission.categoryId)
-          if (submission.categoryId === TEXTURE_PACK_CATEGORY_ID || packDirs.length > 0) {
+          const modStructure = hasModStructureInRoot(extractRoot)
+          debugLog('banana:install detected packDirs =', packDirs.length, 'categoryId =', submission.categoryId, 'modStructure =', modStructure)
+          if (modStructure) {
+            
+            if (hasManifest(extractRoot)) {
+              result = await installModArchive(
+                env.value,
+                tmpFile,
+                runtimeState.environment?.gameVersion,
+                (p) => emit(p),
+                () => signal.aborted,
+                extractRoot
+              )
+              if (result.mod) {
+                const mm = loadModManifest(result.mod.installDir)
+                if (mm) {
+                  try {
+                    await linkKnownSubmission(result.mod, mm, submission, file)
+                  } catch {
+                  }
+                }
+              }
+            } else {
+              installUnmanaged(extractRoot, env.value, (p) => emit(p), () => signal.aborted)
+              result = { mod: undefined, warnings: [] }
+            }
+            invalidateModScan(env.value)
+          } else if (submission.categoryId === TEXTURE_PACK_CATEGORY_ID || packDirs.length > 0) {
             debugLog('banana:install routing to Texture Packs install')
             const packResult = await installTexturePacksFromRoot(
               env.value,
@@ -151,25 +179,6 @@ export function registerBananaIpc(getWebContents: () => WebContents | null): voi
               texturePacks: packResult.installed,
               readmes: packResult.readmes
             }
-          } else if (hasManifest(extractRoot)) {
-            result = await installModArchive(
-              env.value,
-              tmpFile,
-              runtimeState.environment?.gameVersion,
-              (p) => emit(p),
-              () => signal.aborted,
-              extractRoot
-            )
-            if (result.mod) {
-              const mm = loadModManifest(result.mod.installDir)
-              if (mm) {
-                try {
-                  await linkKnownSubmission(result.mod, mm, submission, file)
-                } catch {
-                }
-              }
-            }
-            invalidateModScan(env.value)
           } else {
             installUnmanaged(extractRoot, env.value, (p) => emit(p), () => signal.aborted)
             invalidateModScan(env.value)

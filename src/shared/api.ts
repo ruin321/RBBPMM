@@ -1,6 +1,7 @@
 import type {
   ConfigFileDto,
   GamebananaCommentDto,
+  GamebananaCommentsDto,
   GameEnvironment,
   GamebananaSearchResult,
   GamebananaSubmissionDto,
@@ -9,11 +10,14 @@ import type {
   ModInstallOutcome,
   ModItemDto,
   ModUpdateInfoDto,
+  OpenUrlPayload,
   ReadmeFileDto,
   Result,
   TexturePackInstallResult,
   TexturePackListResult,
-  TexturePackProgress
+  TexturePackProgress,
+  ToolboxCleanupDto,
+  ToolboxDirDto
 } from './types'
 
 export interface AppApi {
@@ -42,7 +46,7 @@ export interface AppApi {
       Promise<Result<GamebananaSearchResult>>,
     install: (submissionId: number, fileId?: number) => Promise<Result<InstallResult>>
     get: (submissionId: number) => Promise<Result<GamebananaSubmissionDto>>
-    getComments: (submissionId: number) => Promise<Result<GamebananaCommentDto[]>>
+    getComments: (submissionId: number) => Promise<Result<GamebananaCommentsDto>>
     getPostReplies: (postId: number) => Promise<Result<GamebananaCommentDto[]>>
   }
   ui: {
@@ -58,6 +62,15 @@ export interface AppApi {
     isMaximized: () => Promise<boolean>
     registerMaximizeEvents: () => Promise<void>
     onMaximizedChanged: (cb: (maximized: boolean) => void) => () => void
+    prankSize: () => Promise<void>
+    jiggle: () => Promise<void>
+    skew: () => Promise<void>
+  }
+  toolbox: {
+    dirs: () => Promise<Result<ToolboxDirDto[]>>
+    openDir: (path: string) => Promise<boolean>
+    readLog: () => Promise<Result<{ text: string }>>
+    cleanup: () => Promise<Result<ToolboxCleanupDto>>
   }
   configs: {
     list: () => Promise<Result<ConfigFileDto[]>>
@@ -69,6 +82,15 @@ export interface AppApi {
     install: (archivePath: string) => Promise<Result<TexturePackInstallResult>>
     uninstall: (folderName: string) => Promise<Result>
     probe: (archivePath: string) => Promise<Result<boolean>>
+  }
+  setup: {
+    status: () => Promise<Result<{ hasBepInEx: boolean }>>
+    installBepInEx: () => Promise<Result<boolean>>
+    installDevApi: () => Promise<Result<InstallResult>>
+    installAll: () => Promise<Result<InstallResult>>
+    onProgress: (cb: (p: InstallProgress) => void) => () => void
+    onDevApiProgress: (cb: (p: InstallProgress) => void) => () => void
+    onInstallAllProgress: (cb: (p: InstallProgress) => void) => () => void
   }
   app: {
     getTheme: () => Promise<string>
@@ -91,5 +113,6 @@ export interface AppApi {
     onGameCleared: (cb: () => void) => () => void
     onInstallProgress: (cb: (p: InstallProgress) => void) => () => void
     onTexturePackProgress: (cb: (p: TexturePackProgress) => void) => () => void
+    onOpenUrl: (cb: (url: OpenUrlPayload) => void) => () => void
   }
 }

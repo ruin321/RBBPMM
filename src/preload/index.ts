@@ -45,7 +45,16 @@ const api: AppApi = {
       const handler = (_e: unknown, v: unknown): void => cb(Boolean(v))
       ipcRenderer.on('window:maximized-changed', handler)
       return () => ipcRenderer.removeListener('window:maximized-changed', handler)
-    }
+    },
+    prankSize: () => ipcRenderer.invoke('window:prank-size'),
+    jiggle: () => ipcRenderer.invoke('window:jiggle'),
+    skew: () => ipcRenderer.invoke('window:skew')
+  },
+  toolbox: {
+    dirs: () => ipcRenderer.invoke('toolbox:dirs'),
+    openDir: (p) => ipcRenderer.invoke('toolbox:open-dir', { path: p }),
+    readLog: () => ipcRenderer.invoke('toolbox:read-log'),
+    cleanup: () => ipcRenderer.invoke('toolbox:cleanup')
   },
   configs: {
     list: () => ipcRenderer.invoke('configs:list'),
@@ -58,6 +67,27 @@ const api: AppApi = {
     install: (archivePath) => ipcRenderer.invoke('textures:install', { archivePath }),
     uninstall: (folderName) => ipcRenderer.invoke('textures:uninstall', { folderName }),
     probe: (archivePath) => ipcRenderer.invoke('textures:probe', { archivePath })
+  },
+  setup: {
+    status: () => ipcRenderer.invoke('setup:status'),
+    installBepInEx: () => ipcRenderer.invoke('setup:bepinex'),
+    installDevApi: () => ipcRenderer.invoke('setup:install-dev-api'),
+    installAll: () => ipcRenderer.invoke('setup:install-all'),
+    onProgress: (cb) => {
+      const handler = (_e: unknown, p: unknown): void => cb(p as never)
+      ipcRenderer.on('setup:bepinex-progress', handler)
+      return () => ipcRenderer.removeListener('setup:bepinex-progress', handler)
+    },
+    onDevApiProgress: (cb) => {
+      const handler = (_e: unknown, p: unknown): void => cb(p as never)
+      ipcRenderer.on('setup:devapi-progress', handler)
+      return () => ipcRenderer.removeListener('setup:devapi-progress', handler)
+    },
+    onInstallAllProgress: (cb) => {
+      const handler = (_e: unknown, p: unknown): void => cb(p as never)
+      ipcRenderer.on('setup:install-all-progress', handler)
+      return () => ipcRenderer.removeListener('setup:install-all-progress', handler)
+    }
   },
   app: {
     getTheme: () => ipcRenderer.invoke('app:get-theme'),
@@ -103,6 +133,11 @@ const api: AppApi = {
       const handler = (_e: unknown, p: unknown): void => cb(p as never)
       ipcRenderer.on('textures:install-progress', handler)
       return () => ipcRenderer.removeListener('textures:install-progress', handler)
+    },
+    onOpenUrl: (cb) => {
+      const handler = (_e: unknown, url: unknown): void => cb(url as never)
+      ipcRenderer.on('app:open-url', handler)
+      return () => ipcRenderer.removeListener('app:open-url', handler)
     }
   }
 }

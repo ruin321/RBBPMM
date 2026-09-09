@@ -45,10 +45,16 @@ export function InstallModDialog({
   const { t } = useI18n()
   const [busy, setBusy] = useState(false)
 
-  const cancel = async (): Promise<void> => {
-    setBusy(true)
-    await onCancel()
-    setBusy(false)
+  const handleOpenChange = (o: boolean): void => {
+    if (!o && status === 'running') {
+      setBusy(true)
+      void onCancel().finally(() => {
+        setBusy(false)
+        onOpenChange(false)
+      })
+      return
+    }
+    onOpenChange(o)
   }
 
   const stageText = (p: InstallProgress): string => {
@@ -59,7 +65,7 @@ export function InstallModDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
         className="sm:max-w-md"
         onInteractOutside={(e) => {
@@ -92,7 +98,7 @@ export function InstallModDialog({
         )}
         <DialogFooter>
           {status === 'running' ? (
-            <Button variant="outline" onClick={() => void cancel()} disabled={busy}>
+            <Button variant="outline" onClick={() => handleOpenChange(false)} disabled={busy}>
               {t('dialog.cancel')}
             </Button>
           ) : (

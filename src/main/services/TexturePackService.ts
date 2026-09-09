@@ -84,6 +84,7 @@ export async function probeTexturePackArchive(archivePath: string): Promise<bool
   const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'bbp-probe-'))
   try {
     await extractArchiveAsync(archivePath, tempRoot)
+    if (hasModStructureInRoot(tempRoot)) return false
     const packDirs = findPackDirs(tempRoot)
     debugLog('probeTexturePackArchive packDirs =', packDirs.length)
     return packDirs.length > 0
@@ -169,6 +170,16 @@ function packDto(dir: string, folderName: string, meta: ReturnType<typeof readPa
     version: meta?.version,
     description: meta?.description
   }
+}
+
+
+export function hasModStructureInRoot(root: string): boolean {
+  return (
+    fs.existsSync(path.join(root, 'BepInEx', 'plugins')) ||
+    fs.existsSync(path.join(root, 'BALDI_Data', 'StreamingAssets', 'Modded')) ||
+    fs.existsSync(path.join(root, 'Mod', 'BepInEx')) ||
+    fs.existsSync(path.join(root, 'Mod', 'BALDI_Data'))
+  )
 }
 
 

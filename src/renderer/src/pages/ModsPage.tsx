@@ -207,7 +207,8 @@ export function ModsPage({
         : 'done'
 
   return (
-    <div className="mx-auto w-full max-w-3xl space-y-6">
+    <>
+      <div className="mx-auto w-full max-w-3xl space-y-6">
       <PageHeader
         icon={<Package className="h-6 w-6" />}
         title={t('mods.title')}
@@ -349,6 +350,7 @@ export function ModsPage({
           }}
         />
       )}
-    </div>
+      </div>
+    </>
   )
 }

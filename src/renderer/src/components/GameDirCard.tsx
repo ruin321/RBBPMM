@@ -1,4 +1,4 @@
-import { FolderOpen, FolderSearch, MonitorCog } from 'lucide-react'
+import { FolderOpen, FolderSearch, MonitorCog, Wrench } from 'lucide-react'
 import type { GameEnvironment } from '@shared/types'
 import { useI18n } from '@/i18n'
 import { Button } from '@/components/ui/button'
@@ -10,9 +10,10 @@ interface Props {
   env: GameEnvironment | null
   loading: boolean
   onSelect: () => Promise<boolean>
+  onSetup?: () => void
 }
 
-export function GameDirCard({ env, loading, onSelect }: Props): React.JSX.Element {
+export function GameDirCard({ env, loading, onSelect, onSetup }: Props): React.JSX.Element {
   const { t } = useI18n()
   return (
     <Card className="w-full">
@@ -50,6 +51,12 @@ export function GameDirCard({ env, loading, onSelect }: Props): React.JSX.Elemen
                 <FolderOpen className="mr-1 h-4 w-4" />
                 {t('dir.openFolder')}
               </Button>
+              {onSetup && (
+                <Button variant="outline" size="sm" onClick={() => onSetup()}>
+                  <Wrench className="mr-1 h-4 w-4" />
+                  {t('settings.setup')}
+                </Button>
+              )}
             </div>
           </div>
         ) : (

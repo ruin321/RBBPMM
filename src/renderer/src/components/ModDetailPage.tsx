@@ -17,6 +17,7 @@ import {
 import { toast } from 'sonner'
 import type {
   GamebananaCommentDto,
+  GamebananaCommentsDto,
   GamebananaFileDto,
   GamebananaRequirementDto,
   GamebananaSubmissionDto,
@@ -112,12 +113,12 @@ function CommentItem({ comment }: { comment: GamebananaCommentDto }): React.JSX.
   }
 
   return (
-    <div className="rounded-lg border bg-card p-3">
+    <div className="min-w-0 break-words rounded-lg border bg-card p-3">
       <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
-        <span className="font-medium text-foreground">{comment.author}</span>
+        <span className="min-w-0 truncate font-medium text-foreground">{comment.author}</span>
         {comment.date && <span className="shrink-0">{comment.date}</span>}
       </div>
-      <p className="mt-1 whitespace-pre-line text-sm">{commentText(comment.body)}</p>
+      <p className="mt-1 whitespace-pre-line break-words text-sm">{commentText(comment.body)}</p>
       {replyCount > 0 && (
         <button
           type="button"
@@ -157,7 +158,7 @@ export function ModDetailPage({
 }: Props): React.JSX.Element {
   const { t } = useI18n()
   const [sub, setSub] = useState<GamebananaSubmissionDto | null>(null)
-  const [comments, setComments] = useState<GamebananaCommentDto[] | null>(null)
+  const [comments, setComments] = useState<GamebananaCommentsDto | null>(null)
   const [loading, setLoading] = useState(false)
   const [imgIndex, setImgIndex] = useState(0)
   
@@ -189,7 +190,7 @@ export function ModDetailPage({
     })
     void window.api.banana.getComments(submissionId).then((r) => {
       if (!active) return
-      setComments(r.ok ? (r.value ?? []) : [])
+      setComments(r.ok && r.value ? r.value : { total: 0, items: [] })
     })
     const off = window.api.app.onInstallProgress((p) => {
       if (installingRef.current) setProgress(p)
@@ -219,19 +220,20 @@ export function ModDetailPage({
 
   const display = sub ?? fallback
   const files: GamebananaFileDto[] = sub?.files ?? []
+  const visibleFiles = files.filter((f) => f.id > 0)
   const archivedFiles: GamebananaFileDto[] = sub?.archivedFiles ?? []
   const requirements: GamebananaRequirementDto[] = sub?.requirements ?? []
   const images = sub?.images?.length ? sub.images : fallback.thumbnailUrl ? [fallback.thumbnailUrl] : []
   const hero = images[imgIndex] ?? sub?.thumbnailUrl ?? fallback.thumbnailUrl
   const installing = activeFileId !== undefined
-  const totalFiles = files.length + archivedFiles.length
+  const totalFiles = visibleFiles.length + archivedFiles.filter((f) => f.id > 0).length
 
   const install = async (fileId?: number): Promise<void> => {
     if (installing) {
       toast.error(t('detail.busy'))
       return
     }
-    setActiveFileId(fileId ?? files[0]?.id)
+    setActiveFileId(fileId ?? visibleFiles[0]?.id ?? files[0]?.id)
     setProgress(null)
     try {
       const r = await window.api.banana.install(submissionId, fileId)
@@ -349,12 +351,12 @@ export function ModDetailPage({
                 <Download className="h-4 w-4 text-primary" />
                 {t('detail.files')}
               </h2>
-              {files.length === 0 ? (
+              {visibleFiles.length === 0 ? (
                 <p className="text-sm text-muted-foreground">{t('detail.noVersions')}</p>
               ) : (
                 <ul className="divide-y rounded-lg border">
-                  {files.map((f) => {
-                    const running = activeFileId === f.id || (files.length === 1 && installing)
+                  {visibleFiles.map((f) => {
+                    const running = activeFileId === f.id || (visibleFiles.length === 1 && installing)
                     return (
                       <li key={f.id} className="flex items-center justify-between gap-3 p-3">
                         <div className="min-w-0 space-y-0.5">
@@ -564,18 +566,18 @@ export function ModDetailPage({
             <section className="space-y-2">
               <h2 className="flex items-center gap-2 text-base font-semibold">
                 <MessageSquare className="h-4 w-4 text-primary" />
-                {t('detail.comments')} ({comments === null ? '…' : comments.length})
+                {t('detail.comments')} ({comments === null ? '…' : comments.total})
               </h2>
               {comments === null ? (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Loader2 className="h-4 w-4 animate-spin" />
                   {t('detail.loadingComments')}
                 </div>
-              ) : comments.length === 0 ? (
+              ) : comments.items.length === 0 ? (
                 <p className="text-sm text-muted-foreground">{t('detail.noComments')}</p>
               ) : (
                 <div className="space-y-3">
-                  {comments.map((c) => (
+                  {comments.items.map((c) => (
                     <CommentItem key={c.id} comment={c} />
                   ))}
                 </div>

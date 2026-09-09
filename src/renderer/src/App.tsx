@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import type React from 'react'
 import {
   Package,
@@ -12,7 +12,11 @@ import {
   Palette,
   PanelLeftClose,
   PanelLeftOpen,
-  Home
+  Home,
+  Wrench,
+  PackageX,
+  Wand2,
+  Loader2
 } from 'lucide-react'
 import { Toaster } from 'sonner'
 import { useGame } from '@/hooks/useGame'
@@ -26,13 +30,15 @@ import { SettingsPage } from '@/pages/SettingsPage'
 import { BananaPage } from '@/pages/BananaPage'
 import { ConfigsPage } from '@/pages/ConfigsPage'
 import { TexturePacksPage } from '@/pages/TexturePacksPage'
+import { ToolboxPage } from '@/pages/ToolboxPage'
 import { AboutDialog } from '@/components/AboutDialog'
 import { SplashScreen } from '@/components/SplashScreen'
 import { TitleBar } from '@/components/TitleBar'
 import { FishSplash } from '@/components/FishSplash'
+import { SetupWizardDialog } from '@/components/SetupWizardDialog'
 import { cn } from '@/lib/utils'
 
-type Page = 'home' | 'mods' | 'browse' | 'textures' | 'settings' | 'config'
+type Page = 'home' | 'mods' | 'browse' | 'textures' | 'settings' | 'config' | 'toolbox'
 
 
 interface ConfigRequest {
@@ -56,6 +62,22 @@ export function App(): React.JSX.Element {
   const [textureDropPath, setTextureDropPath] = useState<string | null>(null)
   const [navOpen, setNavOpen] = useState(true)
   const [cfgRequest, setCfgRequest] = useState<ConfigRequest | null>(null)
+  const [deepLinkId, setDeepLinkId] = useState<number | null>(null)
+  const [setupOpen, setSetupOpen] = useState(false)
+  const [bepReady, setBepReady] = useState<boolean | null>(null)
+
+  const checkSetup = useCallback(async (): Promise<void> => {
+    const r = await window.api.setup.status()
+    if (r.ok) setBepReady(r.value?.hasBepInEx ?? false)
+  }, [])
+
+  const requestSetupIfNeeded = useCallback(async (): Promise<void> => {
+    const r = await window.api.setup.status()
+    if (r.ok) {
+      setBepReady(r.value?.hasBepInEx ?? false)
+      if (r.value && !r.value.hasBepInEx) setSetupOpen(true)
+    }
+  }, [])
 
   
   const [navPrefLoaded, setNavPrefLoaded] = useState(false)
@@ -89,6 +111,31 @@ export function App(): React.JSX.Element {
     }
   }, [])
 
+  useEffect(() => {
+    const applyMax = (m: boolean): void => {
+      document.documentElement.classList.toggle('self-maximized', m)
+    }
+    void window.api.window.isMaximized().then(applyMax)
+    return window.api.window.onMaximizedChanged(applyMax)
+  }, [])
+
+  useEffect(() => {
+    return window.api.app.onOpenUrl((payload) => {
+      if (payload.action === 'install' && payload.id) {
+        setDeepLinkId(payload.id)
+        setPage('browse')
+      }
+    })
+  }, [])
+
+  useEffect(() => {
+    void checkSetup()
+  }, [checkSetup])
+
+  useEffect(() => {
+    if (page === 'browse') void checkSetup()
+  }, [page, checkSetup])
+
   const handleDrop = (e: React.DragEvent): void => {
     e.preventDefault()
     setDragging(false)
@@ -112,7 +159,7 @@ export function App(): React.JSX.Element {
   }
 
   return (
-    <div className="flex h-full flex-col overflow-hidden">
+    <div className="app-root flex h-full flex-col overflow-hidden">
       <TitleBar />
       <div
         className="relative flex flex-1 select-none overflow-hidden"
@@ -129,7 +176,7 @@ export function App(): React.JSX.Element {
       {}
       <aside
         className={
-          'flex flex-col gap-1 border-r bg-muted/40 py-4 transition-[width] duration-200 ease-out ' +
+          'flex flex-col gap-1 overflow-hidden border-r bg-muted/40 py-4 transition-[width] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] will-change-[width] ' +
           (navOpen ? 'w-48' : 'w-16')
         }
       >
@@ -167,6 +214,9 @@ export function App(): React.JSX.Element {
           <NavButton active={page === 'settings'} onClick={() => setPage('settings')} label={t('nav.settings')} open={navOpen}>
             <Settings className="h-5 w-5" />
           </NavButton>
+          <NavButton active={page === 'toolbox'} onClick={() => setPage('toolbox')} label={t('nav.toolbox')} open={navOpen}>
+            <Wrench className="h-5 w-5" />
+          </NavButton>
         </div>
 
         <div className="flex-1" />
@@ -191,7 +241,10 @@ export function App(): React.JSX.Element {
             onStop={stop}
             onSelectDir={async () => {
               const ok = await select()
-              if (ok) setPage('mods')
+              if (ok) {
+                setPage('mods')
+                void requestSetupIfNeeded()
+              }
               return ok
             }}
             onNavigate={setPage}
@@ -211,13 +264,39 @@ export function App(): React.JSX.Element {
             }}
           />
         ) : page === 'browse' ? (
-          <BananaPage onInstalled={(isTexture) => setPage(isTexture ? 'textures' : 'mods')} />
+          bepReady === null ? (
+            <div className="flex h-full items-center justify-center text-muted-foreground">
+              <Loader2 className="h-6 w-6 animate-spin" />
+            </div>
+          ) : bepReady === false ? (
+            <div className="flex h-full flex-col items-center justify-center gap-4 text-center">
+              <PackageX className="h-12 w-12 text-muted-foreground" />
+              <div className="max-w-md space-y-2">
+                <h2 className="text-xl font-semibold">{t('banana.notReadyTitle')}</h2>
+                <p className="text-sm text-muted-foreground">{t('banana.notReadyDesc')}</p>
+              </div>
+              <Button onClick={() => setSetupOpen(true)}>
+                <Wand2 className="mr-1 h-4 w-4" />
+                {t('banana.notReadyInstall')}
+              </Button>
+            </div>
+          ) : (
+            <BananaPage
+              onInstalled={() => {
+                
+              }}
+              initialSubmissionId={deepLinkId}
+              onInitialConsumed={() => setDeepLinkId(null)}
+            />
+          )
         ) : page === 'textures' ? (
           <TexturePacksPage
             env={env}
             dropPath={textureDropPath}
             onDropConsumed={() => setTextureDropPath(null)}
           />
+        ) : page === 'toolbox' ? (
+          <ToolboxPage onSetup={() => setSetupOpen(true)} env={env} />
         ) : page === 'config' ? (
           <ConfigsPage
             externalCfgPath={cfgRequest?.cfgPath}
@@ -234,6 +313,7 @@ export function App(): React.JSX.Element {
             onSelectFont={setFont}
             themeId={themeId}
             onSelectTheme={setThemeId}
+            onSetup={() => setSetupOpen(true)}
           />
         )}
       </main>
@@ -248,6 +328,14 @@ export function App(): React.JSX.Element {
       )}
 
       <AboutDialog open={aboutOpen} onOpenChange={setAboutOpen} />
+      <SetupWizardDialog
+        open={setupOpen}
+        onOpenChange={(o) => {
+          setSetupOpen(o)
+          if (!o) void checkSetup()
+        }}
+        env={env}
+      />
 
       {}
       {splashOn ? <SplashScreen onDone={() => setSplashOn(false)} /> : null}
@@ -262,13 +350,15 @@ function NavButton({
   label,
   onClick,
   children,
-  open
+  open,
+  disabled
 }: {
   active?: boolean
   label?: string
   onClick?: () => void
   children: React.ReactNode
   open?: boolean
+  disabled?: boolean
 }): React.JSX.Element {
   return (
     <Button
@@ -277,16 +367,17 @@ function NavButton({
       onClick={onClick}
       aria-label={label}
       title={label}
+      disabled={disabled}
       className={cn(
-        'h-9 overflow-hidden transition-all duration-200 ease-out',
-        open ? 'w-full justify-start gap-2 px-2' : 'w-9 justify-center',
+        'h-9 overflow-hidden transition-[width] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]',
+        open ? 'w-full justify-start gap-2 px-2' : 'w-9 justify-center gap-0',
         active && 'bg-primary/15 text-primary'
       )}
     >
       <span className="inline-flex shrink-0">{children}</span>
       <span
         className={cn(
-          'overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-200 ease-out',
+          'overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]',
           open ? 'max-w-40 opacity-100' : 'max-w-0 opacity-0'
         )}
       >

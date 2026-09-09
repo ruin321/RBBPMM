@@ -166,6 +166,7 @@ function collectPlugins(
       const norm = parsePluginEntry(f.name)
       if (norm) out.push({ file: norm.file === f.name ? rel : path.join(prefix, norm.file), disabled: norm.disabled })
     } else if (f.isDirectory()) {
+      if (f.name.startsWith('.')) continue
       collectPlugins(path.join(dir, f.name), rel, out)
     }
   }
@@ -242,7 +243,7 @@ export function scanRepository(gameRoot: string, gameVersion?: string): ModItemD
 
   
   for (const entry of entries) {
-    if (!entry.isDirectory()) continue
+    if (!entry.isDirectory() || entry.name.startsWith('.')) continue
     const modRoot = path.join(pluginsDir, entry.name)
     const manifest = loadModManifest(modRoot)
     if (manifest) {

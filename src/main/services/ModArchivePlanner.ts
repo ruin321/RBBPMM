@@ -11,6 +11,8 @@ export interface InstallTargets {
   modded: { src: string; destRel: string }[]
   
   plugins: { src: string; destRel: string; extras: string[] }[]
+  
+  patchers: { src: string; destRel: string }[]
 }
 
 function pluginsRootCandidates(extractRoot: string): string[] {
@@ -22,6 +24,10 @@ function moddedRootCandidates(extractRoot: string): string[] {
     path.join(extractRoot, 'BALDI_Data', 'StreamingAssets', 'Modded'),
     path.join(extractRoot, 'Modded')
   ]
+}
+
+function patchersRootCandidates(extractRoot: string): string[] {
+  return [path.join(extractRoot, 'BepInEx', 'patchers'), path.join(extractRoot, 'patchers')]
 }
 
 function pluginTarget(absDll: string, rel: string): { src: string; destRel: string; extras: string[] } {
@@ -46,6 +52,17 @@ function walkDlls(dir: string, rel: string, into: { src: string; destRel: string
   }
 }
 
+function walkPatchers(dir: string, rel: string, into: { src: string; destRel: string }[]): void {
+  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+    if (e.isDirectory()) {
+      walkPatchers(path.join(dir, e.name), rel ? `${rel}/${e.name}` : e.name, into)
+    } else if (e.name.toLowerCase().endsWith(PLUGIN_EXT)) {
+      const r = rel ? `${rel}/${e.name}` : e.name
+      into.push({ src: path.join(dir, e.name), destRel: r })
+    }
+  }
+}
+
 
 
 
@@ -56,6 +73,14 @@ export function collectTargets(input: string): InstallTargets {
   
   
   let extractRoot = input
+  
+  const modWrap = path.join(extractRoot, 'Mod')
+  if (
+    path.resolve(modWrap) !== path.resolve(extractRoot) &&
+    (fs.existsSync(path.join(modWrap, 'BepInEx')) || fs.existsSync(path.join(modWrap, 'BALDI_Data')))
+  ) {
+    extractRoot = modWrap
+  }
   for (let depth = 0; depth < 5; depth++) {
     const isWrapper = (n: string): boolean =>
       n !== GMP_METADATA_FOLDER && n !== GMP_FALLBACK_METADATA_FOLDER && n !== TEMP_FOLDER
@@ -74,6 +99,7 @@ export function collectTargets(input: string): InstallTargets {
 
   const modded: InstallTargets['modded'] = []
   const plugins: InstallTargets['plugins'] = []
+  const patchers: InstallTargets['patchers'] = []
 
   const moddedRoots = moddedRootCandidates(extractRoot).filter((p) => fs.existsSync(p))
   for (const mr of moddedRoots) {
@@ -87,15 +113,19 @@ export function collectTargets(input: string): InstallTargets {
   const pluginRoots = pluginsRootCandidates(extractRoot).filter((p) => fs.existsSync(p))
   for (const pr of pluginRoots) walkDlls(pr, '', plugins)
 
+  const patchersRoots = patchersRootCandidates(extractRoot).filter((p) => fs.existsSync(p))
+  for (const pr of patchersRoots) walkPatchers(pr, '', patchers)
+
   const skipResolve = [
     ...moddedRoots.map((p) => path.resolve(p)),
-    ...pluginRoots.map((p) => path.resolve(p))
+    ...pluginRoots.map((p) => path.resolve(p)),
+    ...patchersRoots.map((p) => path.resolve(p))
   ]
 
   
   
-  if (pluginRoots.length > 0 || moddedRoots.length > 0) {
-    return { modded, plugins }
+  if (pluginRoots.length > 0 || moddedRoots.length > 0 || patchersRoots.length > 0) {
+    return { modded, plugins, patchers }
   }
 
   for (const e of fs.readdirSync(extractRoot, { withFileTypes: true })) {
@@ -113,7 +143,7 @@ export function collectTargets(input: string): InstallTargets {
     
   }
 
-  return { modded, plugins }
+  return { modded, plugins, patchers }
 }
 
 export function deriveModName(targets: InstallTargets): string {
