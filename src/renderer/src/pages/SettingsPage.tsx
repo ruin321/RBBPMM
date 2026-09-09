@@ -9,6 +9,8 @@ import { LanguagePicker } from '@/components/LanguagePicker'
 import { ResetSettingsCard } from '@/components/ResetSettingsCard'
 import { SplashToggleCard } from '@/components/SplashToggleCard'
 import { DebugLogCard } from '@/components/DebugLogCard'
+import { BaldiRetroCard } from '@/components/BaldiRetroCard'
+import { CustomStyleCard } from '@/components/CustomStyleCard'
 import { PageHeader } from '@/components/PageHeader'
 
 interface Props {
@@ -51,6 +53,8 @@ export function SettingsPage({
       <FontPicker font={font} fonts={fonts} onSelect={onSelectFont} />
       <SplashToggleCard />
       <DebugLogCard />
+      <BaldiRetroCard />
+      <CustomStyleCard />
       <ResetSettingsCard />
     </div>
   )

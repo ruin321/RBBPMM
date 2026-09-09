@@ -3,6 +3,8 @@ import path from 'path'
 
 export const GAME_EXE_NAME = 'BALDI.exe'
 
+export const GAME_LAUNCH_SCRIPT_NAMES = ['run_bepinex.sh', 'start.sh', 'baldi.sh', 'run-baldi.sh']
+
 export const GAME_EXE_CANDIDATES: Record<NodeJS.Platform, string[]> = {
   win32: ['BALDI.exe'],
   linux: ['BALDI.x86_64', 'BALDI'],

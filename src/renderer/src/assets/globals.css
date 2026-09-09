@@ -364,3 +364,47 @@ html.fish-mode {
   background-size: 96px 96px;
   background-attachment: fixed;
 }
+
+html.theme-baldi-school {
+  --radius: 0;
+}
+
+html.theme-baldi-school .rounded-lg,
+html.theme-baldi-school .rounded-md,
+html.theme-baldi-school .rounded-xl,
+html.theme-baldi-school .rounded-2xl,
+html.theme-baldi-school [class*='rounded-'] {
+  border-radius: 0;
+}
+
+html.theme-baldi-school .border,
+html.theme-baldi-school [class*='border'] {
+  border-width: 2px;
+  border-style: solid;
+}
+
+html.baldi-art body {
+  background-image:
+    linear-gradient(rgba(48, 36, 18, 0.36), rgba(48, 36, 18, 0.44)),
+    url('/baldi/saloon_wall.png');
+  background-size: 240px 240px;
+  background-repeat: repeat;
+  background-attachment: fixed;
+}
+
+html.baldi-art .app-root {
+  background-color: transparent;
+}
+
+html.custom-bg body {
+  background-image:
+    linear-gradient(rgba(24, 20, 14, 0.4), rgba(24, 20, 14, 0.5)),
+    var(--custom-bg, none);
+  background-size: auto;
+  background-repeat: repeat;
+  background-attachment: fixed;
+}
+
+html.custom-bg .app-root {
+  background-color: transparent;
+}

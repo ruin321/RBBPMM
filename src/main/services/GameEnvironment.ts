@@ -3,6 +3,7 @@ import path from 'path'
 import {
   GAME_DATA_FOLDER,
   GAME_VERSION_FILE,
+  GAME_LAUNCH_SCRIPT_NAMES,
   isGameExeName
 } from '../constants'
 import type { GameEnvironment } from '../../shared/types'
@@ -54,4 +55,55 @@ export function resolveEnvironment(exePath: string): GameEnvironment | null {
   const gameVersion = tryReadGameVersion(dataFolder)
   if (gameVersion === null) return null
   return { rootPath, dataFolder, executablePath, gameVersion }
+}
+
+export function resolveLaunchScript(rootPath: string): string | null {
+  for (const candidate of GAME_LAUNCH_SCRIPT_NAMES) {
+    const full = path.join(rootPath, candidate)
+    if (fs.existsSync(full)) return full
+  }
+  try {
+    const entries = fs.readdirSync(rootPath, { withFileTypes: true })
+    for (const entry of entries) {
+      if (entry.isFile() && entry.name.toLowerCase().endsWith('.sh')) {
+        return path.join(rootPath, entry.name)
+      }
+    }
+  } catch {
+    return null
+  }
+  return null
+}
+
+function findGameExecutable(rootPath: string): string | null {
+  try {
+    const entries = fs.readdirSync(rootPath, { withFileTypes: true })
+    for (const entry of entries) {
+      if (!entry.isFile()) continue
+      if (isGameExeName(entry.name)) return path.join(rootPath, entry.name)
+    }
+  } catch {
+    return null
+  }
+  return null
+}
+
+export function resolveEnvironmentFromAny(p: string): GameEnvironment | null {
+  const resolved = path.resolve(p)
+  const stat = fs.existsSync(resolved) ? fs.statSync(resolved) : null
+  if (!stat) return null
+  let exePath: string | null = null
+  if (stat.isFile()) {
+    if (isGameExeName(path.basename(resolved))) {
+      exePath = resolved
+    } else {
+      const root = path.dirname(resolved)
+      if (!resolveLaunchScript(root)) return null
+      exePath = findGameExecutable(root)
+    }
+  } else {
+    exePath = findGameExecutable(resolved)
+  }
+  if (!exePath) return null
+  return resolveEnvironment(exePath)
 }

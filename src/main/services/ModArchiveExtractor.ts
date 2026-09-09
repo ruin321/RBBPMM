@@ -32,14 +32,11 @@ function resolve7za(): string {
   const arch = process.arch === 'ia32' ? 'ia32' : process.arch === 'arm64' ? 'arm64' : 'x64'
   const candidates: string[] = []
 
-  
-  const bundled7z = app.isPackaged
-    ? path.join(process.resourcesPath, '7z', '7z.exe')
-    : path.join(app.getAppPath(), 'resources', '7z', '7z.exe')
-  if (fs.existsSync(bundled7z)) candidates.push(bundled7z)
-
-  
   if (process.platform === 'win32') {
+    const bundled7z = app.isPackaged
+      ? path.join(process.resourcesPath, '7z', '7z.exe')
+      : path.join(app.getAppPath(), 'resources', '7z', '7z.exe')
+    if (fs.existsSync(bundled7z)) candidates.push(bundled7z)
     const localAppData = process.env['LOCALAPPDATA'] || ''
     const programFiles = process.env['ProgramFiles'] || ''
     const programFilesX86 = process.env['ProgramFiles(x86)'] || ''
@@ -50,13 +47,20 @@ function resolve7za(): string {
     )
   }
 
+  if (app.isPackaged) candidates.unshift(path.join(process.resourcesPath, '7zip-bin', platformSubdir(process.platform, arch)))
   candidates.push(path7za)
-  if (app.isPackaged) candidates.unshift(path.join(process.resourcesPath, '7za', '7za.exe'))
-  candidates.push(path.join(app.getAppPath(), 'node_modules', '7zip-bin', 'win', arch, '7za.exe'))
+  candidates.push(path.join(app.getAppPath(), 'node_modules', '7zip-bin', platformSubdir(process.platform, arch)))
   for (const c of candidates) {
     if (c && fs.existsSync(c)) return c
   }
   return path7za
+}
+
+function platformSubdir(platform: NodeJS.Platform, arch: string): string {
+  const os = platform === 'win32' ? 'win' : platform === 'darwin' ? 'mac' : 'linux'
+  const a = arch === 'x64' ? 'x64' : 'x86'
+  const bin = platform === 'win32' ? '7za.exe' : '7za'
+  return path.join(os, a, bin)
 }
 
 

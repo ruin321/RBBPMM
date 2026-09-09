@@ -22,6 +22,8 @@ import { Toaster } from 'sonner'
 import { useGame } from '@/hooks/useGame'
 import { useTheme } from '@/hooks/useTheme'
 import { useFont } from '@/hooks/useFont'
+import { useBaldiRetro } from '@/hooks/useBaldiRetro'
+import { useCustomStyle } from '@/hooks/useCustomStyle'
 import { useI18n } from '@/i18n'
 import { Button } from '@/components/ui/button'
 import { HomePage } from '@/pages/HomePage'
@@ -36,6 +38,7 @@ import { SplashScreen } from '@/components/SplashScreen'
 import { TitleBar } from '@/components/TitleBar'
 import { FishSplash } from '@/components/FishSplash'
 import { SetupWizardDialog } from '@/components/SetupWizardDialog'
+import { DeepLinkInstallDialog } from '@/components/DeepLinkInstallDialog'
 import { cn } from '@/lib/utils'
 
 type Page = 'home' | 'mods' | 'browse' | 'textures' | 'settings' | 'config' | 'toolbox'
@@ -55,6 +58,8 @@ export function App(): React.JSX.Element {
   const { isDark, toggle, themeId, setThemeId } = useTheme()
   const { env, loading, select, launch, launchSteam, running, stop } = useGame()
   const { font, fonts, setFont } = useFont()
+  useBaldiRetro()
+  useCustomStyle()
   const { t } = useI18n()
   const [aboutOpen, setAboutOpen] = useState(false)
   const [dragging, setDragging] = useState(false)
@@ -62,7 +67,7 @@ export function App(): React.JSX.Element {
   const [textureDropPath, setTextureDropPath] = useState<string | null>(null)
   const [navOpen, setNavOpen] = useState(true)
   const [cfgRequest, setCfgRequest] = useState<ConfigRequest | null>(null)
-  const [deepLinkId, setDeepLinkId] = useState<number | null>(null)
+  const [deepLinkInstall, setDeepLinkInstall] = useState<{ submissionId: number; fileId?: number } | null>(null)
   const [setupOpen, setSetupOpen] = useState(false)
   const [bepReady, setBepReady] = useState<boolean | null>(null)
 
@@ -122,8 +127,7 @@ export function App(): React.JSX.Element {
   useEffect(() => {
     return window.api.app.onOpenUrl((payload) => {
       if (payload.action === 'install' && payload.id) {
-        setDeepLinkId(payload.id)
-        setPage('browse')
+        setDeepLinkInstall({ submissionId: payload.id, fileId: payload.fileId })
       }
     })
   }, [])
@@ -285,8 +289,6 @@ export function App(): React.JSX.Element {
               onInstalled={() => {
                 
               }}
-              initialSubmissionId={deepLinkId}
-              onInitialConsumed={() => setDeepLinkId(null)}
             />
           )
         ) : page === 'textures' ? (
@@ -336,6 +338,14 @@ export function App(): React.JSX.Element {
         }}
         env={env}
       />
+      {deepLinkInstall && (
+        <DeepLinkInstallDialog
+          key={`${deepLinkInstall.submissionId}:${deepLinkInstall.fileId ?? ''}`}
+          submissionId={deepLinkInstall.submissionId}
+          fileId={deepLinkInstall.fileId}
+          onDone={() => setDeepLinkInstall(null)}
+        />
+      )}
 
       {}
       {splashOn ? <SplashScreen onDone={() => setSplashOn(false)} /> : null}

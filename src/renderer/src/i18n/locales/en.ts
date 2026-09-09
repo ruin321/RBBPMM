@@ -118,6 +118,19 @@ export const en = {
   'debug.desc': 'Print key workflow logs to the main process console when enabled.',
   'debug.enable': 'Enable debug logging',
 
+  'baldiRetro.title': 'Baldi Retro Art',
+  'baldiRetro.desc': 'Use textures extracted from the game for a vintage 90s look.',
+
+  'baldiRetro.enable': 'Enable retro textures',
+  'customStyle.title': 'Custom Look',
+  'customStyle.desc': 'Pick a background image and inject your own CSS for a fully personalized look.',
+  'customStyle.bgLabel': 'Background image:',
+  'customStyle.pickBg': 'Pick image',
+  'customStyle.clearBg': 'Clear',
+  'customStyle.cssLabel': 'Custom CSS:',
+  'customStyle.cssPlaceholder': '/* write your own CSS */',
+  'customStyle.cssHint': 'Applied live as you type. It runs on top of the current theme and the retro art toggle.',
+
   'banana.title': 'Browse GameBanana',
   'banana.notReadyTitle': 'BepInEx & BB+ Dev API required',
   'banana.notReadyDesc': 'The store is unavailable until you install BepInEx and the BB+ Dev API.',
@@ -187,6 +200,8 @@ export const en = {
   'detail.selectVersion': 'Version',
   'detail.noVersions': 'No downloadable files.',
   'detail.install': 'Install',
+  'detail.deeplinkTitle': 'Install Mod',
+  'detail.deeplinkBody': 'Ready to install {name}?',
   'detail.loadingComments': 'Loading comments...',
   'detail.noComments': 'No comments yet.',
   'detail.comments': 'Comments',

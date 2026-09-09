@@ -95,6 +95,7 @@ export interface InstallProgress {
 export interface OpenUrlPayload {
   action: string
   id?: number
+  fileId?: number
   raw: string
 }
 

@@ -28,9 +28,10 @@ function parseProtocolUrl(url: string): OpenUrlPayload | null {
   if (!clean.toLowerCase().startsWith(`${PROTOCOL}://`)) return null
   let rest = clean.slice(PROTOCOL.length + 3)
   rest = rest.split('?')[0].replace(/\/+$/, '')
-  const [action = '', idRaw] = rest.split('/')
+  const [action = '', idRaw, fileIdRaw] = rest.split('/')
   const id = idRaw && /^\d+$/.test(idRaw) ? Number(idRaw) : undefined
-  return { action, id, raw: clean }
+  const fileId = fileIdRaw && /^\d+$/.test(fileIdRaw) ? Number(fileIdRaw) : undefined
+  return { action, id, fileId, raw: clean }
 }
 
 function pushOpenUrl(payload: OpenUrlPayload): void {

@@ -1,6 +1,6 @@
 import { ipcMain, dialog, shell } from 'electron'
 import { spawn } from 'child_process'
-import { resolveEnvironment } from '../services/GameEnvironment'
+import { resolveEnvironment, resolveEnvironmentFromAny, resolveLaunchScript } from '../services/GameEnvironment'
 import { isGameRunning, stopGame } from '../services/GameProcess'
 import { getStoredExePath, setStoredExePath, runtimeState } from '../store'
 import type { GameEnvironment, Result } from '../../shared/types'
@@ -17,7 +17,7 @@ function loadCurrentEnv(): GameEnvironment | null {
   if (runtimeState.environment) return runtimeState.environment
   const exe = getStoredExePath()
   if (!exe) return null
-  const env = resolveEnvironment(exe)
+  const env = process.platform === 'win32' ? resolveEnvironment(exe) : resolveEnvironmentFromAny(exe)
   if (env) runtimeState.environment = env
   return env
 }
@@ -31,13 +31,15 @@ export function registerGameIpc(): void {
     const isWin = process.platform === 'win32'
     const res = await dialog.showOpenDialog({
       title: 'Select the Baldi\'s Basics Plus executable',
-      properties: ['openFile'],
+      properties: isWin ? ['openFile'] : ['openFile', 'openDirectory'],
       filters: isWin ? [{ name: 'Executable', extensions: ['exe'] }] : []
     })
     if (res.canceled || res.filePaths.length === 0) {
       return { ok: false, error: 'cancelled' }
     }
-    const env = resolveEnvironment(res.filePaths[0])
+    const env = isWin
+      ? resolveEnvironment(res.filePaths[0])
+      : resolveEnvironmentFromAny(res.filePaths[0])
     if (!env) return envResult(null)
     runtimeState.environment = env
     setStoredExePath(env.executablePath)
@@ -45,7 +47,9 @@ export function registerGameIpc(): void {
   })
 
   ipcMain.handle('game:set-dir', async (_e, { exePath }: { exePath: string }): Promise<Result<GameEnvironment>> => {
-    const env = resolveEnvironment(exePath)
+    const env = process.platform === 'win32'
+      ? resolveEnvironment(exePath)
+      : resolveEnvironmentFromAny(exePath)
     if (!env) return envResult(null)
     runtimeState.environment = env
     setStoredExePath(env.executablePath)
@@ -57,12 +61,20 @@ export function registerGameIpc(): void {
     if (!env) return { ok: false, error: 'Game directory not configured' }
     return new Promise((resolve) => {
       try {
-        const child = spawn(env.executablePath, [], {
-          cwd: env.rootPath,
-          detached: true,
-          stdio: 'ignore',
-          windowsHide: false
-        })
+        const isWin = process.platform === 'win32'
+        const launchScript = !isWin ? resolveLaunchScript(env.rootPath) : null
+        const child = launchScript
+          ? spawn('/bin/sh', [launchScript], {
+              cwd: env.rootPath,
+              detached: true,
+              stdio: 'ignore'
+            })
+          : spawn(env.executablePath, [], {
+              cwd: env.rootPath,
+              detached: true,
+              stdio: 'ignore',
+              windowsHide: false
+            })
         child.on('error', (err) => {
           resolve({ ok: false, error: err.message })
         })
