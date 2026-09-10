@@ -69,7 +69,9 @@ export function ModsPage({
     clearReadmes,
     toggle,
     uninstall,
-    updateMod
+    updateMod,
+    pins,
+    setPinned
   } = useMods()
   const [dialogOpen, setDialogOpen] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
@@ -109,16 +111,18 @@ export function ModsPage({
     })
 
     return list.sort((a, b) => {
-      
       const ta = isTrashed(a) ? 1 : 0
       const tb = isTrashed(b) ? 1 : 0
       if (ta !== tb) return ta - tb
+      const pa = pins[a.guid] ? 1 : 0
+      const pb = pins[b.guid] ? 1 : 0
+      if (pa !== pb) return pb - pa
       if (sortKey === 'name') return a.name.localeCompare(b.name)
       const at = (b.installedAt ?? 0) - (a.installedAt ?? 0)
       if (at !== 0) return at
       return a.name.localeCompare(b.name)
     })
-  }, [mods, search, timeFilter, sortKey])
+  }, [mods, search, timeFilter, sortKey, pins])
 
   
   const sentinelRef = useRef<HTMLDivElement>(null)
@@ -311,6 +315,8 @@ export function ModsPage({
               onUpdate={() => void updateMod(m.guid)}
               onToggle={toggle}
               onUninstall={uninstall}
+              onSetPinned={(v) => setPinned(m.guid, v)}
+              pinned={!!pins[m.guid]}
               onEditConfig={onEditConfig}
             />
           ))}

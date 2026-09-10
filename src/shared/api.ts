@@ -7,6 +7,7 @@ import type {
   GamebananaSubmissionDto,
   InstallProgress,
   InstallResult,
+  LevelStudioPrereqItem,
   ModInstallOutcome,
   ModItemDto,
   ModUpdateInfoDto,
@@ -17,7 +18,8 @@ import type {
   TexturePackListResult,
   TexturePackProgress,
   ToolboxCleanupDto,
-  ToolboxDirDto
+  ToolboxDirDto,
+  CustomLevelDto
 } from './types'
 
 export interface AppApi {
@@ -37,7 +39,7 @@ export interface AppApi {
       Promise<Result<{ modName: string; readmes: ReadmeFileDto[] }>>
     cancelInstall: () => Promise<void>
     uninstall: (guid: string) => Promise<Result>
-    toggle: (guid: string, activate: boolean) => Promise<Result<{ activated: boolean }>>
+    toggle: (guid: string, activate: boolean, installDir?: string) => Promise<Result<{ activated: boolean }>>
     checkUpdate: (guid: string) => Promise<Result<ModUpdateInfoDto>>
     update: (guid: string) => Promise<Result>
   }
@@ -48,6 +50,7 @@ export interface AppApi {
     get: (submissionId: number) => Promise<Result<GamebananaSubmissionDto>>
     getComments: (submissionId: number) => Promise<Result<GamebananaCommentsDto>>
     getPostReplies: (postId: number) => Promise<Result<GamebananaCommentDto[]>>
+    levelStudioPrereq: () => Promise<Result<LevelStudioPrereqItem[]>>
   }
   ui: {
     pickZip: () => Promise<Result<{ path: string }>>
@@ -82,6 +85,11 @@ export interface AppApi {
     install: (archivePath: string) => Promise<Result<TexturePackInstallResult>>
     uninstall: (folderName: string) => Promise<Result>
     probe: (archivePath: string) => Promise<Result<boolean>>
+  }
+  customLevel: {
+    list: () => Promise<Result<CustomLevelDto[]>>
+    toggle: (fileName: string, enabled: boolean) => Promise<Result>
+    delete: (fileName: string) => Promise<Result>
   }
   setup: {
     status: () => Promise<Result<{ hasBepInEx: boolean }>>

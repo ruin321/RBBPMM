@@ -11,13 +11,32 @@ import { debugLog } from '../logger'
 
 function isZipFormat(archivePath: string): boolean {
   const lower = archivePath.toLowerCase()
-  return (
+  if (
     lower.endsWith('.zip') ||
     lower.endsWith('.jar') ||
     lower.endsWith('.apk') ||
     lower.endsWith('.bbmod') ||
     lower.endsWith('.gmp')
-  )
+  ) {
+    return true
+  }
+  return startsWithZipMagic(archivePath)
+}
+
+function startsWithZipMagic(archivePath: string): boolean {
+  try {
+    const fd = fs.openSync(archivePath, 'r')
+    const buf = Buffer.alloc(4)
+    let n = 0
+    try {
+      n = fs.readSync(fd, buf, 0, 4, 0)
+    } finally {
+      fs.closeSync(fd)
+    }
+    return n >= 2 && buf[0] === 0x50 && buf[1] === 0x4b
+  } catch {
+    return false
+  }
 }
 
 
@@ -87,18 +106,22 @@ export async function extractArchive(archivePath: string, extractRoot: string): 
 
 export async function extractArchiveAsync(archivePath: string, extractRoot: string): Promise<string> {
   debugLog('extractArchiveAsync:', archivePath, '->', extractRoot)
-  fs.mkdirSync(extractRoot, { recursive: true })
-  await new Promise<void>((resolve, reject) => {
-    const child = spawn(resolve7za(), ['x', archivePath, `-o${extractRoot}`, '-y'], {
-      windowsHide: true,
-      stdio: 'ignore'
+  if (isZipFormat(archivePath)) {
+    fs.mkdirSync(extractRoot, { recursive: true })
+    extractZipSync(archivePath, extractRoot)
+  } else {
+    await new Promise<void>((resolve, reject) => {
+      const child = spawn(resolve7za(), ['x', archivePath, `-o${extractRoot}`, '-y'], {
+        windowsHide: true,
+        stdio: 'ignore'
+      })
+      child.on('error', (err) => reject(new Error(`7za failed to start: ${err.message}`)))
+      child.on('close', (code) => {
+        if (code === 0) resolve()
+        else reject(new Error(`Extract failed (7za exit ${code}): ${archivePath}`))
+      })
     })
-    child.on('error', (err) => reject(new Error(`7za failed to start: ${err.message}`)))
-    child.on('close', (code) => {
-      if (code === 0) resolve()
-      else reject(new Error(`Extract failed (7za exit ${code}): ${archivePath}`))
-    })
-  })
+  }
   verifyInsideRoot(extractRoot)
   const root = locateGmpRoot(extractRoot)
   debugLog('extractArchiveAsync done, gmp root =', root)

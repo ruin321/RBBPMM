@@ -10,9 +10,11 @@ import { registerToolboxIpc } from './ipc/toolbox.ipc'
 import { registerAppIpc, applyFontToRenderer, applyThemeToRenderer } from './ipc/app.ipc'
 import { registerConfigsIpc } from './ipc/configs.ipc'
 import { registerTexturesIpc } from './ipc/textures.ipc'
+import { registerCustomLevelIpc } from './ipc/customLevel.ipc'
 import { registerSetupIpc } from './ipc/setup.ipc'
 import { getStoredExePath, getTheme, getFontFamily } from './store'
 import { isDarkTheme } from './constants'
+import { initLogFile, logFilePath, logInfo } from './logger'
 import { resolveEnvironment } from './services/GameEnvironment'
 import { runtimeState } from './store'
 import type { OpenUrlPayload } from '../shared/types'
@@ -140,6 +142,8 @@ if (!gotLock) {
   })
 
   app.whenReady().then(() => {
+    initLogFile(app.getPath('logs'))
+    logInfo('app ready, logs at', logFilePath())
     
     const exe = getStoredExePath()
     if (exe) runtimeState.environment = resolveEnvironment(exe)
@@ -153,6 +157,7 @@ if (!gotLock) {
     registerAppIpc()
     registerConfigsIpc()
     registerTexturesIpc()
+    registerCustomLevelIpc()
     registerSetupIpc(() => mainWindow?.webContents ?? null)
 
     createWindow()

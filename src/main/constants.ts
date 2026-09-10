@@ -45,8 +45,8 @@ export const TEXTURE_PACK_README_PATTERN = /^readme.*\.txt$/i
 export const PROTECTED_TEXTURE_PACK_FOLDERS = new Set(['core'])
 
 
-export const GMP_METADATA_FOLDER = '.gmp'
-export const GMP_FALLBACK_METADATA_FOLDER = '_gmp'
+export const GMP_METADATA_FOLDER = '.rbbpmm'
+export const GMP_FALLBACK_METADATA_FOLDER = '_rbbpmm'
 
 export const MANIFEST_FILE = 'manifest.json'
 export const METADATA_FILE = '.metadata'

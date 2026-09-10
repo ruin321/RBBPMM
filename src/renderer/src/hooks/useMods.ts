@@ -26,6 +26,8 @@ export function useMods(): {
   uninstall: (guid: string) => Promise<boolean>
   updateMod: (guid: string) => Promise<boolean>
   clearReadmes: () => void
+  pins: Record<string, true>
+  setPinned: (guid: string, pinned: boolean) => void
 } {
   const { t } = useI18n()
   const [mods, setMods] = useState<ModItemDto[]>([])
@@ -35,6 +37,14 @@ export function useMods(): {
   const [readmes, setReadmes] = useState<ReadmeFileDto[]>([])
   const [updates, setUpdates] = useState<Record<string, ModUpdateInfoDto>>({})
   const [updating, setUpdating] = useState<Record<string, boolean>>({})
+  const PIN_KEY = 'rbbpmm.pinned'
+  const [pins, setPins] = useState<Record<string, true>>(() => {
+    try {
+      return JSON.parse(window.localStorage.getItem(PIN_KEY) ?? '{}')
+    } catch {
+      return {}
+    }
+  })
   const pendingArchive = useRef<string | null>(null)
   const mounted = useRef(true)
 
@@ -147,16 +157,31 @@ export function useMods(): {
     setReadmes([])
   }, [])
 
+  const setPinned = useCallback((guid: string, pinned: boolean) => {
+    setPins((prev) => {
+      const next = { ...prev }
+      if (pinned) next[guid] = true
+      else delete next[guid]
+      try {
+        window.localStorage.setItem(PIN_KEY, JSON.stringify(next))
+      } catch {
+        /* ignore quota / serialization errors */
+      }
+      return next
+    })
+  }, [])
+
   const toggle = useCallback(
     async (guid: string, activate: boolean): Promise<boolean> => {
-      const r = await window.api.mods.toggle(guid, activate)
+      const target = mods.find((m) => m.guid === guid)
+      const r = await window.api.mods.toggle(guid, activate, target?.installDir)
       if (r.ok) {
-        await refresh()
+        setMods((prev) => prev.map((m) => (m.guid === guid ? { ...m, activated: activate } : m)))
         return true
       }
       return false
     },
-    [refresh]
+    [mods]
   )
 
   const uninstall = useCallback(
@@ -208,6 +233,8 @@ export function useMods(): {
     toggle,
     uninstall,
     updateMod,
-    clearReadmes
+    clearReadmes,
+    pins,
+    setPinned
   }
 }

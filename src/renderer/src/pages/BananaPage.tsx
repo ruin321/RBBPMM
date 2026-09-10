@@ -9,9 +9,14 @@ import {
   Store,
   X
 } from 'lucide-react'
-import type { GamebananaSubmissionDto } from '@shared/types'
-import { BALDI_COMMUNITY_CATEGORY_ID, TEXTURE_PACK_CATEGORY_ID } from '@shared/types'
+import type { GamebananaSubmissionDto, LevelStudioPrereqItem } from '@shared/types'
+import {
+  BALDI_COMMUNITY_CATEGORY_ID,
+  LEVEL_STUDIO_CATEGORY_ID,
+  TEXTURE_PACK_CATEGORY_ID
+} from '@shared/types'
 import { useI18n } from '@/i18n'
+import type { MessageKey } from '@/i18n'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -56,6 +61,11 @@ function fmtDate(ts?: number): string {
 
 export function BananaPage({ onInstalled, initialSubmissionId, onInitialConsumed }: Props): React.JSX.Element {
   const { t } = useI18n()
+  const prereqLabel: Record<LevelStudioPrereqItem['nameKey'], MessageKey> = {
+    devApi: 'levelStudio.prereq.devApi',
+    levelStudio: 'levelStudio.prereq.levelStudio',
+    loader: 'levelStudio.prereq.loader'
+  }
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState<number>(BALDI_COMMUNITY_CATEGORY_ID)
   const [page, setPage] = useState(1)
@@ -69,6 +79,8 @@ export function BananaPage({ onInstalled, initialSubmissionId, onInitialConsumed
   const [paused, setPaused] = useState(false)
   
   const [needTextureDep, setNeedTextureDep] = useState(false)
+  
+  const [lsPrereq, setLsPrereq] = useState<LevelStudioPrereqItem[] | null>(null)
   
   type NavEntry = { id: number; fallback: GamebananaSubmissionDto }
   const [entries, setEntries] = useState<NavEntry[]>([])
@@ -227,7 +239,26 @@ export function BananaPage({ onInstalled, initialSubmissionId, onInitialConsumed
         return
       }
     }
+    if (cat === LEVEL_STUDIO_CATEGORY_ID) {
+      const pr = await window.api.banana.levelStudioPrereq()
+      if (pr.ok && pr.value && pr.value.some((p) => !p.installed)) {
+        setLsPrereq(pr.value)
+        return
+      }
+    }
     void runSearch('', cat)
+  }
+
+  
+  const recheckLevelStudio = async (): Promise<void> => {
+    const pr = await window.api.banana.levelStudioPrereq()
+    if (pr.ok && pr.value && pr.value.some((p) => !p.installed)) {
+      setLsPrereq(pr.value)
+      return
+    }
+    setLsPrereq(null)
+    setCategory(LEVEL_STUDIO_CATEGORY_ID)
+    void runSearch('', LEVEL_STUDIO_CATEGORY_ID)
   }
 
   
@@ -328,7 +359,8 @@ export function BananaPage({ onInstalled, initialSubmissionId, onInitialConsumed
               ariaLabel={t('banana.catFilter')}
               options={[
                 { value: String(BALDI_COMMUNITY_CATEGORY_ID), label: t('banana.catMods') },
-                { value: String(TEXTURE_PACK_CATEGORY_ID), label: t('banana.catTextures') }
+                { value: String(TEXTURE_PACK_CATEGORY_ID), label: t('banana.catTextures') },
+                { value: String(LEVEL_STUDIO_CATEGORY_ID), label: t('banana.catLevelStudio') }
               ]}
             />
           </div>
@@ -492,6 +524,76 @@ export function BananaPage({ onInstalled, initialSubmissionId, onInitialConsumed
               }}
             >
               {t('textureDep.go')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {}
+      <Dialog
+        open={lsPrereq !== null}
+        onOpenChange={(open) => {
+          if (!open) setLsPrereq(null)
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Package className="h-5 w-5 text-primary" />
+              {t('banana.levelStudio.title')}
+            </DialogTitle>
+            <DialogDescription asChild>
+              <div className="pt-2">
+                <p className="text-sm text-foreground">{t('banana.levelStudio.desc')}</p>
+                {lsPrereq && lsPrereq.some((p) => !p.installed) && (
+                  <p className="mt-2 flex items-center gap-1 text-sm text-amber-500">
+                    {t('banana.levelStudio.missing')}
+                  </p>
+                )}
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+
+          {lsPrereq && (
+            <ul className="space-y-2">
+              {lsPrereq.map((p) => (
+                <li
+                  key={p.modId}
+                  className="flex items-center justify-between gap-2 rounded-md border px-3 py-2"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">{t(prereqLabel[p.nameKey])}</p>
+                    <p className="text-[11px] text-muted-foreground">GameBanana #{p.modId}</p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2">
+                    {p.installed ? (
+                      <Badge variant="secondary">{t('banana.levelStudio.installed')}</Badge>
+                    ) : (
+                      <Badge variant="outline">{t('banana.levelStudio.notInstalled')}</Badge>
+                    )}
+                    {!p.installed && (
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          setLsPrereq(null)
+                          openSubmission(p.modId)
+                        }}
+                      >
+                        {t('banana.levelStudio.install')}
+                      </Button>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="ghost">{t('dialog.close')}</Button>
+            </DialogClose>
+            <Button onClick={() => void recheckLevelStudio()}>
+              {t('banana.levelStudio.retry')}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -10,6 +10,7 @@ import {
   FileArchive,
   SlidersHorizontal,
   Palette,
+  Map as MapIcon,
   PanelLeftClose,
   PanelLeftOpen,
   Home,
@@ -37,9 +38,10 @@ import { TitleBar } from '@/components/TitleBar'
 import { FishSplash } from '@/components/FishSplash'
 import { SetupWizardDialog } from '@/components/SetupWizardDialog'
 import { DeepLinkInstallDialog } from '@/components/DeepLinkInstallDialog'
+import { CustomLevelsPage } from '@/pages/CustomLevelsPage'
 import { cn } from '@/lib/utils'
 
-type Page = 'home' | 'mods' | 'browse' | 'textures' | 'settings' | 'config' | 'toolbox'
+type Page = 'home' | 'mods' | 'browse' | 'textures' | 'maps' | 'settings' | 'config' | 'toolbox'
 
 
 interface ConfigRequest {
@@ -66,6 +68,7 @@ export function App(): React.JSX.Element {
   const [deepLinkInstall, setDeepLinkInstall] = useState<{ submissionId: number; fileId?: number } | null>(null)
   const [setupOpen, setSetupOpen] = useState(false)
   const [bepReady, setBepReady] = useState<boolean | null>(null)
+  const [installedMods, setInstalledMods] = useState<{ name: string }[]>([])
 
   const checkSetup = useCallback(async (): Promise<void> => {
     const r = await window.api.setup.status()
@@ -136,6 +139,33 @@ export function App(): React.JSX.Element {
     if (page === 'browse') void checkSetup()
   }, [page, checkSetup])
 
+  useEffect(() => {
+    void window.api.mods.list().then((r) => {
+      if (r.ok && r.value) setInstalledMods(r.value)
+    })
+  }, [page])
+
+  const mapTabVisible = installedMods.some((m) => {
+    const n = (m.name || '').toLowerCase()
+    return (
+      n.includes('level studio') ||
+      n.includes('pluslevelstudio') ||
+      n.includes('plusstudylevel')
+    )
+  })
+  const texturesTabVisible = installedMods.some((m) =>
+    (m.name || '').toLowerCase().includes('balditexturepacks')
+  )
+
+  useEffect(() => {
+    if (
+      (page === 'textures' && !texturesTabVisible) ||
+      (page === 'maps' && !mapTabVisible)
+    ) {
+      setPage('mods')
+    }
+  }, [page, texturesTabVisible, mapTabVisible])
+
   const handleDrop = (e: React.DragEvent): void => {
     e.preventDefault()
     setDragging(false)
@@ -176,7 +206,7 @@ export function App(): React.JSX.Element {
       {}
       <aside
         className={
-          'flex flex-col gap-1 overflow-hidden border-r bg-muted/40 py-4 transition-[width] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] will-change-[width] ' +
+          'flex flex-col gap-1 overflow-hidden border-r bg-muted/40 py-4 transition-[width] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ' +
           (navOpen ? 'w-48' : 'w-16')
         }
       >
@@ -205,9 +235,16 @@ export function App(): React.JSX.Element {
           <NavButton active={page === 'browse'} onClick={() => setPage('browse')} label={t('nav.browse')} open={navOpen}>
             <Store className="h-5 w-5" />
           </NavButton>
-          <NavButton active={page === 'textures'} onClick={() => setPage('textures')} label={t('nav.textures')} open={navOpen}>
-            <Palette className="h-5 w-5" />
-          </NavButton>
+          {texturesTabVisible ? (
+            <NavButton active={page === 'textures'} onClick={() => setPage('textures')} label={t('nav.textures')} open={navOpen}>
+              <Palette className="h-5 w-5" />
+            </NavButton>
+          ) : null}
+          {mapTabVisible ? (
+            <NavButton active={page === 'maps'} onClick={() => setPage('maps')} label={t('nav.maps')} open={navOpen}>
+              <MapIcon className="h-5 w-5" />
+            </NavButton>
+          ) : null}
           <NavButton active={page === 'config'} onClick={() => setPage('config')} label={t('nav.config')} open={navOpen}>
             <SlidersHorizontal className="h-5 w-5" />
           </NavButton>
@@ -287,6 +324,8 @@ export function App(): React.JSX.Element {
               }}
             />
           )
+        ) : page === 'maps' ? (
+          <CustomLevelsPage modInstalled={mapTabVisible} />
         ) : page === 'textures' ? (
           <TexturePacksPage
             env={env}
@@ -375,8 +414,8 @@ function NavButton({
       title={label}
       disabled={disabled}
       className={cn(
-        'h-9 overflow-hidden transition-[width] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]',
-        open ? 'w-full justify-start gap-2 px-2' : 'w-9 justify-center gap-0',
+        'flex h-9 items-center overflow-hidden rounded-md transition-[width,padding,gap] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]',
+        open ? 'w-full justify-start gap-2 px-2' : 'w-9 justify-center gap-0 px-0',
         active && 'bg-primary/15 text-primary'
       )}
     >

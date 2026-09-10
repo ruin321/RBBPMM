@@ -15,8 +15,8 @@ import { getSubmission, searchMods, downloadMod } from './GamebananaService'
 import { installModArchive } from './ModInstaller'
 import { createTempDir, extractArchive } from './ModArchiveExtractor'
 
-const GMP_METADATA_FOLDER = '.gmp'
-const GMP_FALLBACK_METADATA_FOLDER = '_gmp'
+const GMP_METADATA_FOLDER = '.rbbpmm'
+const GMP_FALLBACK_METADATA_FOLDER = '_rbbpmm'
 const METADATA_FILE = '.metadata'
 
 function normalizeName(n: string): string {

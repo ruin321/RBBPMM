@@ -3,6 +3,28 @@
 
 export const BALDI_COMMUNITY_CATEGORY_ID = 4609
 export const TEXTURE_PACK_CATEGORY_ID = 28929
+export const LEVEL_STUDIO_CATEGORY_ID = 28926
+
+export interface LevelStudioPrereqItem {
+  modId: number
+  nameKey: string
+  installed: boolean
+}
+
+export interface LevelStudioInstallResult {
+  playables: string[]
+  readmes: ReadmeFileDto[]
+}
+
+export interface CustomLevelDto {
+  fileName: string
+  name: string
+  author: string
+  type: string
+  size: number
+  enabled: boolean
+  thumbnail?: string
+}
 
 export interface GameEnvironment {
   rootPath: string
@@ -123,6 +145,8 @@ export interface InstallResult {
   texturePacks?: TexturePackDto[]
   
   readmes?: ReadmeFileDto[]
+  
+  levelStudio?: LevelStudioInstallResult
 }
 
 

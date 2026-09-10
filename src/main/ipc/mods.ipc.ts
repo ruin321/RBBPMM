@@ -9,6 +9,8 @@ import { collectReadmes, ReadmeFile } from '../services/ReadmeCollector'
 import { toggleActivation, toggleLegacyPlugin } from '../services/ModActivator'
 import { deleteMod, deleteLegacyPlugin } from '../services/ModUnInstaller'
 import { checkForUpdate, persistArchiveName, updateMod } from '../services/ModSourceLinker'
+import { isInside } from '../services/PathGuard'
+import { BEPINEX_FOLDER, PLUGINS_FOLDER } from '../constants'
 import { runtimeState } from '../store'
 import path from 'path'
 import type {
@@ -135,9 +137,23 @@ export function registerModsIpc(getWebContents: () => WebContents | null): void 
     runtimeState.cancelController?.abort()
   })
 
-  ipcMain.handle('mods:toggle', async (_e, { guid, activate }: { guid: string; activate: boolean }): Promise<Result<{ activated: boolean }>> => {
+  ipcMain.handle('mods:toggle', async (_e, { guid, activate, installDir }: { guid: string; activate: boolean; installDir?: string }): Promise<Result<{ activated: boolean }>> => {
     const env = requireEnv()
     if (!env.ok) return env
+    const isLegacy = guid.startsWith('legacy:')
+    const pluginsDir = path.join(env.value, BEPINEX_FOLDER, PLUGINS_FOLDER)
+    const directDir =
+      !isLegacy &&
+      installDir &&
+      isInside(pluginsDir, path.resolve(installDir)) &&
+      fs.existsSync(installDir)
+    if (directDir) {
+      const manifest = loadModManifest(installDir)
+      if (!manifest) return { ok: false, error: 'Cannot read manifest for mod' }
+      const res = toggleActivation(env.value, installDir, manifest, activate)
+      invalidateModScan(env.value)
+      return { ok: true, value: res }
+    }
     const list = scanRepositoryCached(env.value, runtimeState.environment?.gameVersion)
     const mod = list.find((m) => m.guid === guid)
     if (!mod) return { ok: false, error: 'Mod not found: ' + guid }

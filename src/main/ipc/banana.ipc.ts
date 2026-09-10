@@ -4,6 +4,7 @@ import path from 'path'
 import { installModArchive, installUnmanaged, hasManifest } from '../services/ModInstaller'
 import { createTempDir, extractArchive } from '../services/ModArchiveExtractor'
 import { installTexturePacksFromRoot, findPackDirs, hasModStructureInRoot } from '../services/TexturePackService'
+import { installLevelStudioPlayable } from '../services/LevelStudioInstaller'
 import {
   downloadMod,
   getComments,
@@ -15,8 +16,8 @@ import { runtimeState } from '../store'
 import { debugLog, debugError } from '../logger'
 import { linkKnownSubmission } from '../services/ModSourceLinker'
 import { loadModManifest } from '../services/ManifestLoader'
-import { invalidateModScan } from '../services/ModRepositoryScanner'
-import { TEXTURE_PACK_CATEGORY_ID } from '../../shared/types'
+import { invalidateModScan, scanRepositoryCached } from '../services/ModRepositoryScanner'
+import { LEVEL_STUDIO_CATEGORY_ID, TEXTURE_PACK_CATEGORY_ID } from '../../shared/types'
 import type {
   GamebananaCommentDto,
   GamebananaCommentsDto,
@@ -24,6 +25,7 @@ import type {
   GamebananaSubmissionDto,
   InstallProgress,
   InstallResult,
+  LevelStudioPrereqItem,
   Result
 } from '../../shared/types'
 
@@ -85,6 +87,41 @@ export function registerBananaIpc(getWebContents: () => WebContents | null): voi
     }
   )
 
+  const LEVEL_STUDIO_PREREQS: { modId: number; nameKey: string; patterns: RegExp[] }[] = [
+    { modId: 383711, nameKey: 'devApi', patterns: [/mtm101baldapi/i] },
+    { modId: 617565, nameKey: 'loader', patterns: [/plusstudiolevelloader/i] },
+    { modId: 617567, nameKey: 'levelStudio', patterns: [/pluslevelstudio/i, /levelstudio/i] }
+  ]
+
+  function matchInstalled(target: string | undefined, patterns: RegExp[]): boolean {
+    if (!target) return false
+    return patterns.some((p) => p.test(target))
+  }
+
+  function checkLevelStudioPrereq(gameRoot: string): LevelStudioPrereqItem[] {
+    const mods = scanRepositoryCached(gameRoot, runtimeState.environment?.gameVersion)
+    return LEVEL_STUDIO_PREREQS.map(({ modId, nameKey, patterns }) => {
+      const installed = mods.some((m) => {
+        const names = [m.name, m.identifyName, m.dllFile, m.dllDirectory, ...(m.pluginFiles ?? [])]
+        return names.some((n) => matchInstalled(n, patterns))
+      })
+      return { modId, nameKey, installed }
+    })
+  }
+
+  ipcMain.handle(
+    'banana:levelstudio-prereq',
+    async (): Promise<Result<LevelStudioPrereqItem[]>> => {
+      const env = requireEnv()
+      if (!env.ok) return env
+      try {
+        return { ok: true, value: checkLevelStudioPrereq(env.value) }
+      } catch (err) {
+        return { ok: false, error: err instanceof Error ? err.message : String(err) }
+      }
+    }
+  )
+
   ipcMain.handle(
     'banana:install',
     async (
@@ -141,7 +178,16 @@ export function registerBananaIpc(getWebContents: () => WebContents | null): voi
           const packDirs = findPackDirs(extractRoot)
           const modStructure = hasModStructureInRoot(extractRoot)
           debugLog('banana:install detected packDirs =', packDirs.length, 'categoryId =', submission.categoryId, 'modStructure =', modStructure)
-          if (modStructure) {
+          if (submission.categoryId === LEVEL_STUDIO_CATEGORY_ID) {
+            debugLog('banana:install routing to Level Studio Playables install')
+            const lsResult = await installLevelStudioPlayable(extractRoot)
+            result = {
+              mod: undefined,
+              warnings: [],
+              readmes: lsResult.readmes,
+              levelStudio: lsResult
+            }
+          } else if (modStructure) {
             
             if (hasManifest(extractRoot)) {
               result = await installModArchive(

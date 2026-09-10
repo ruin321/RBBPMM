@@ -1,4 +1,4 @@
-import { ClipboardList, Eye, FolderOpen, FolderPlus, MoreVertical, Package, RefreshCw, Sparkles, Trash2 } from 'lucide-react'
+import { ClipboardList, Eye, FolderOpen, FolderPlus, MoreVertical, Package, Pin, PinOff, RefreshCw, Sparkles, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import type { ModItemDto, ModUpdateInfoDto } from '@shared/types'
 import { useI18n } from '@/i18n'
@@ -33,6 +33,8 @@ interface Props {
   onUninstall: (guid: string) => Promise<boolean>
   
   onEditConfig?: (configFile?: string, search?: string) => void
+  pinned?: boolean
+  onSetPinned?: (pinned: boolean) => void
 }
 
 export function ModListItem({
@@ -42,7 +44,9 @@ export function ModListItem({
   onUpdate,
   onToggle,
   onUninstall,
-  onEditConfig
+  onEditConfig,
+  pinned,
+  onSetPinned
 }: Props): React.JSX.Element {
   const { t } = useI18n()
   const [busy, setBusy] = useState(false)
@@ -68,7 +72,8 @@ export function ModListItem({
   }
 
   return (
-    <Card className="w-full">
+    <Card className="relative w-full">
+      {pinned && <Pin className="absolute left-1 top-1 h-3.5 w-3.5 text-primary" />}
       <CardContent className="flex items-center gap-4 p-4">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
           <Package className="h-5 w-5" />
@@ -152,11 +157,21 @@ export function ModListItem({
                 {onEditConfig && (
                   <DropdownMenuItem
                     onClick={() => {
-                      onEditConfig(mod.configFile, mod.name)
+                      onEditConfig(mod.configFile, mod.identifyName || '')
                     }}
                   >
                     <ClipboardList className="mr-2 h-4 w-4" />
                     {t('list.editConfig')}
+                  </DropdownMenuItem>
+                )}
+                {onSetPinned && (
+                  <DropdownMenuItem onClick={() => onSetPinned(!pinned)}>
+                    {pinned ? (
+                      <PinOff className="mr-2 h-4 w-4" />
+                    ) : (
+                      <Pin className="mr-2 h-4 w-4" />
+                    )}
+                    {pinned ? t('list.unpin') : t('list.pin')}
                   </DropdownMenuItem>
                 )}
                 {mod.moddedFolder && (

@@ -17,7 +17,7 @@ const api: AppApi = {
     installUnmanaged: (archivePath) => ipcRenderer.invoke('mods:install-unmanaged', { archivePath }),
     cancelInstall: () => ipcRenderer.invoke('mods:install-cancel'),
     uninstall: (guid) => ipcRenderer.invoke('mods:uninstall', { guid }),
-    toggle: (guid, activate) => ipcRenderer.invoke('mods:toggle', { guid, activate }),
+    toggle: (guid, activate, installDir) => ipcRenderer.invoke('mods:toggle', { guid, activate, installDir }),
     checkUpdate: (guid) => ipcRenderer.invoke('mods:check-update', { guid }),
     update: (guid) => ipcRenderer.invoke('mods:update', { guid })
   },
@@ -27,7 +27,14 @@ const api: AppApi = {
     get: (submissionId) => ipcRenderer.invoke('banana:get', { submissionId }),
     install: (submissionId, fileId) => ipcRenderer.invoke('banana:install', { submissionId, fileId }),
     getComments: (submissionId) => ipcRenderer.invoke('banana:get-comments', { submissionId }),
-    getPostReplies: (postId) => ipcRenderer.invoke('banana:get-post-replies', { postId })
+    getPostReplies: (postId) => ipcRenderer.invoke('banana:get-post-replies', { postId }),
+    levelStudioPrereq: () => ipcRenderer.invoke('banana:levelstudio-prereq')
+  },
+  customLevel: {
+    list: () => ipcRenderer.invoke('customLevel:list'),
+    toggle: (fileName, enabled) =>
+      ipcRenderer.invoke('customLevel:toggle', { fileName, enabled }),
+    delete: (fileName) => ipcRenderer.invoke('customLevel:delete', { fileName })
   },
   ui: {
     pickZip: () => ipcRenderer.invoke('ui:pick-zip'),
