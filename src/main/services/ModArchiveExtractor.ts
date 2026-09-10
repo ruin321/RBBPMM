@@ -58,7 +58,16 @@ function resolve7za(): string {
   candidates.push(path7za)
   candidates.push(path.join(app.getAppPath(), 'node_modules', '7zip-bin', platformSubdir(process.platform, arch)))
   for (const c of candidates) {
-    if (c && fs.existsSync(c)) return c
+    if (c && fs.existsSync(c)) {
+      if (process.platform !== 'win32' && c.toLowerCase().endsWith('7zz')) {
+        try {
+          fs.chmodSync(c, 0o755)
+        } catch {
+          /* readonly mounts (e.g. AppImage) ignore chmod */
+        }
+      }
+      return c
+    }
   }
   return path7za
 }
