@@ -1,31 +1,17 @@
-name: Build
+name: Build Windows
 
 on:
   workflow_dispatch:
   push:
     branches: [main]
-    tags: ['v*', 'test-*']
+    tags: ['v*']
 
 permissions:
   contents: write
 
 jobs:
-  build:
-    name: build-${{ matrix.name }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: windows-latest
-            name: windows
-            cmd: npx electron-builder --win zip --publish never
-          - os: macos-latest
-            name: macos
-            cmd: npx electron-builder --mac dmg zip --publish never
-          - os: ubuntu-latest
-            name: linux
-            cmd: npx electron-builder --linux AppImage deb --publish never
-    runs-on: ${{ matrix.os }}
+  build-windows:
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -34,29 +20,28 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
-      - run: ${{ matrix.cmd }}
+      - run: npx electron-builder --win --publish never
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
       - uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.name }}
+          name: windows
           path: dist/*
           if-no-files-found: error
 
   release:
-    needs: build
+    needs: build-windows
     if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4
         with:
           path: artifacts
-          merge-multiple: false
+          merge-multiple: true
       - uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
           name: ${{ github.ref_name }}
-          files: artifacts/*/*
-          make_latest: ${{ !contains(github.ref_name, 'test') }}
+          files: artifacts
           draft: false
-          prerelease: ${{ contains(github.ref_name, 'test') }}
+          prerelease: false

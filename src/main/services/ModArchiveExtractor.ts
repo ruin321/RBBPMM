@@ -1,6 +1,6 @@
 import fs from 'fs'
 import path from 'path'
-import { spawn, execFileSync } from 'child_process'
+import { spawn } from 'child_process'
 import { app } from 'electron'
 import AdmZip from 'adm-zip'
 import { path7za } from '7zip-bin'
@@ -28,39 +28,9 @@ function isZipFormat(archivePath: string): boolean {
 
 
 
-function whichExe(name: string): string | null {
-  try {
-    const out = execFileSync('which', [name], { encoding: 'utf8' })
-    const p = out.split(/\r?\n/)[0].trim()
-    return p || null
-  } catch {
-    return null
-  }
-}
-
-function system7zCandidates(): string[] {
-  if (process.platform === 'win32') return []
-  const names = ['7z', '7za', '7zz']
-  const found: string[] = []
-  for (const n of names) {
-    const p = whichExe(n)
-    if (p && fs.existsSync(p)) found.push(p)
-  }
-  return found
-}
-
 function resolve7za(): string {
   const arch = process.arch === 'ia32' ? 'ia32' : process.arch === 'arm64' ? 'arm64' : 'x64'
-  const osSub = process.platform === 'win32' ? 'win' : process.platform === 'darwin' ? 'mac' : 'linux'
-  const binName = process.platform === 'win32' ? '7z.exe' : '7zz'
   const candidates: string[] = []
-
-  candidates.push(...system7zCandidates())
-
-  const bundled = app.isPackaged
-    ? path.join(process.resourcesPath, '7z', osSub, binName)
-    : path.join(app.getAppPath(), 'resources', '7z', osSub, binName)
-  if (fs.existsSync(bundled)) candidates.push(bundled)
 
   if (process.platform === 'win32') {
     const bundled7z = app.isPackaged
@@ -81,16 +51,7 @@ function resolve7za(): string {
   candidates.push(path7za)
   candidates.push(path.join(app.getAppPath(), 'node_modules', '7zip-bin', platformSubdir(process.platform, arch)))
   for (const c of candidates) {
-    if (c && fs.existsSync(c)) {
-      if (process.platform !== 'win32' && c.toLowerCase().endsWith('7zz')) {
-        try {
-          fs.chmodSync(c, 0o755)
-        } catch {
-          /* readonly mounts (e.g. AppImage) ignore chmod */
-        }
-      }
-      return c
-    }
+    if (c && fs.existsSync(c)) return c
   }
   return path7za
 }

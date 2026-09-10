@@ -22,16 +22,10 @@ export function detectBepInEx(gameRoot: string): boolean {
 
 export function bepinexArchivePath(): string | null {
   const candidates: string[] = []
-  const name =
-    process.platform === 'linux'
-      ? 'BepInEx-linux.zip'
-      : process.platform === 'darwin'
-        ? 'BepInEx-mac.zip'
-        : 'BepInEx.zip'
   if (app.isPackaged) {
-    candidates.push(path.join(process.resourcesPath, name))
+    candidates.push(path.join(process.resourcesPath, 'BepInEx.zip'))
   } else {
-    candidates.push(path.join(app.getAppPath(), 'resources', name))
+    candidates.push(path.join(app.getAppPath(), 'resources', 'BepInEx.zip'))
   }
   for (const c of candidates) {
     if (fs.existsSync(c)) return c
@@ -44,7 +38,13 @@ export async function installBepInEx(
   gameRoot: string,
   onProgress?: (p: InstallProgress) => void
 ): Promise<Result<boolean>> {
-  return installBepInExAll(gameRoot, onProgress)
+  if (process.platform === 'win32') {
+    return installBepInExWin32(gameRoot, onProgress)
+  }
+  return {
+    ok: false,
+    error: 'Automatic BepInEx installation is not supported on this platform. Please drop the BepInEx folder into the game directory manually.'
+  }
 }
 
 
@@ -78,7 +78,7 @@ function moveToGameRoot(tempRoot: string, gameRoot: string): void {
 }
 
 
-async function installBepInExAll(
+async function installBepInExWin32(
   gameRoot: string,
   onProgress?: (p: InstallProgress) => void
 ): Promise<Result<boolean>> {
@@ -92,12 +92,6 @@ async function installBepInExAll(
     await extractArchiveAsync(archive, tempRoot)
     emit(onProgress, 'Moving into game folder...', 60)
     moveToGameRoot(tempRoot, path.resolve(gameRoot))
-    if (process.platform !== 'win32') {
-      const script = path.join(path.resolve(gameRoot), 'run_bepinex.sh')
-      if (fs.existsSync(script)) {
-        fs.chmodSync(script, 0o755)
-      }
-    }
     emit(onProgress, 'BepInEx installed.', 100)
     return { ok: true, value: detectBepInEx(gameRoot) }
   } catch (err) {

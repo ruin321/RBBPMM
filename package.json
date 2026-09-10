@@ -22,14 +22,6 @@
       {
         "from": "resources/BepInEx.zip",
         "to": "BepInEx.zip"
-      },
-      {
-        "from": "resources/BepInEx-linux.zip",
-        "to": "BepInEx-linux.zip"
-      },
-      {
-        "from": "resources/BepInEx-mac.zip",
-        "to": "BepInEx-mac.zip"
       }
     ],
     "protocols": [
