@@ -44,7 +44,7 @@ export function tryReadGameVersion(dataFolder: string): string | null {
 }
 
 
-export function resolveEnvironment(exePath: string, launchScript?: string): GameEnvironment | null {
+export function resolveEnvironment(exePath: string): GameEnvironment | null {
   const executablePath = path.resolve(exePath)
   const name = path.basename(executablePath)
   if (!isGameExeName(name)) return null
@@ -54,7 +54,7 @@ export function resolveEnvironment(exePath: string, launchScript?: string): Game
   if (!fs.existsSync(dataFolder)) return null
   const gameVersion = tryReadGameVersion(dataFolder)
   if (gameVersion === null) return null
-  return { rootPath, dataFolder, executablePath, gameVersion, launchScript }
+  return { rootPath, dataFolder, executablePath, gameVersion }
 }
 
 export function resolveLaunchScript(rootPath: string): string | null {
@@ -88,23 +88,14 @@ function findGameExecutable(rootPath: string): string | null {
   return null
 }
 
-export function resolveEnvironmentFromAny(
-  p: string,
-  explicitScript?: string
-): GameEnvironment | null {
+export function resolveEnvironmentFromAny(p: string): GameEnvironment | null {
   const resolved = path.resolve(p)
   const stat = fs.existsSync(resolved) ? fs.statSync(resolved) : null
   if (!stat) return null
   let exePath: string | null = null
-  let launchScript: string | undefined = explicitScript
   if (stat.isFile()) {
-    const name = path.basename(resolved)
-    if (isGameExeName(name)) {
+    if (isGameExeName(path.basename(resolved))) {
       exePath = resolved
-    } else if (name.toLowerCase().endsWith('.sh')) {
-      launchScript = resolved
-      const root = path.dirname(resolved)
-      exePath = findGameExecutable(root)
     } else {
       const root = path.dirname(resolved)
       if (!resolveLaunchScript(root)) return null
@@ -114,5 +105,5 @@ export function resolveEnvironmentFromAny(
     exePath = findGameExecutable(resolved)
   }
   if (!exePath) return null
-  return resolveEnvironment(exePath, launchScript)
+  return resolveEnvironment(exePath)
 }

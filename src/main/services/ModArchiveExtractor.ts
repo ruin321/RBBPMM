@@ -30,7 +30,14 @@ function isZipFormat(archivePath: string): boolean {
 
 function resolve7za(): string {
   const arch = process.arch === 'ia32' ? 'ia32' : process.arch === 'arm64' ? 'arm64' : 'x64'
+  const osSub = process.platform === 'win32' ? 'win' : process.platform === 'darwin' ? 'mac' : 'linux'
+  const binName = process.platform === 'win32' ? '7z.exe' : '7zz'
   const candidates: string[] = []
+
+  const bundled = app.isPackaged
+    ? path.join(process.resourcesPath, '7z', osSub, binName)
+    : path.join(app.getAppPath(), 'resources', '7z', osSub, binName)
+  if (fs.existsSync(bundled)) candidates.push(bundled)
 
   if (process.platform === 'win32') {
     const bundled7z = app.isPackaged

@@ -9,7 +9,6 @@ export interface GameEnvironment {
   dataFolder: string
   executablePath: string
   gameVersion: string
-  launchScript?: string
 }
 
 

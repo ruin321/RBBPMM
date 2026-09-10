@@ -5,7 +5,6 @@ import type { GameEnvironment } from '../shared/types'
 
 interface StoreSchema {
   gameExePath?: string
-  gameLaunchScript?: string
   theme: string
   fontFamily?: string
   locale?: string
@@ -32,15 +31,6 @@ export function getStoredExePath(): string | undefined {
 export function setStoredExePath(p: string | undefined): void {
   if (p === undefined) store.delete('gameExePath')
   else store.set('gameExePath', p)
-}
-
-export function getStoredLaunchScript(): string | undefined {
-  return store.get('gameLaunchScript')
-}
-
-export function setStoredLaunchScript(p: string | undefined): void {
-  if (p === undefined) store.delete('gameLaunchScript')
-  else store.set('gameLaunchScript', p)
 }
 
 export function getTheme(): string {
@@ -114,7 +104,6 @@ export function resetAllSettings(): {
   setSplashEnabled(true)
   setDebugLogging(false)
   setStoredExePath(undefined)
-  setStoredLaunchScript(undefined)
   runtimeState.environment = null
   return {
     theme: THEME_DEFAULT,
