@@ -7,8 +7,6 @@ export interface ThemeDef {
   dark: boolean
   
   vars?: Record<string, string>
-  
-  className?: string
 }
 
 export const THEMES: ThemeDef[] = [
@@ -124,33 +122,6 @@ export const THEMES: ThemeDef[] = [
       '--ring': '340 80% 52%',
       '--accent': '340 55% 92%'
     }
-  },
-  {
-    id: 'baldi-school',
-    name: 'Baldi School',
-    dark: false,
-    className: 'theme-baldi-school',
-    vars: {
-      '--background': '45 40% 92%',
-      '--foreground': '30 25% 14%',
-      '--card': '42 42% 90%',
-      '--card-foreground': '30 25% 14%',
-      '--popover': '42 42% 92%',
-      '--popover-foreground': '30 25% 14%',
-      '--primary': '210 40% 38%',
-      '--primary-foreground': '0 0% 98%',
-      '--secondary': '200 30% 80%',
-      '--secondary-foreground': '30 25% 14%',
-      '--muted': '45 28% 80%',
-      '--muted-foreground': '28 14% 32%',
-      '--accent': '35 55% 60%',
-      '--accent-foreground': '30 25% 12%',
-      '--destructive': '0 78% 56%',
-      '--destructive-foreground': '0 0% 98%',
-      '--border': '205 35% 42%',
-      '--input': '205 35% 48%',
-      '--ring': '210 45% 40%'
-    }
   }
 ]
 
@@ -191,8 +162,4 @@ export function applyThemeToDom(id: string): void {
     if (v !== undefined) style.setProperty(k, v)
     else style.removeProperty(k)
   }
-  for (const t of THEMES) {
-    if (t.className) root.classList.remove(t.className)
-  }
-  if (def.className) root.classList.add(def.className)
 }

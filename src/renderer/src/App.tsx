@@ -22,8 +22,6 @@ import { Toaster } from 'sonner'
 import { useGame } from '@/hooks/useGame'
 import { useTheme } from '@/hooks/useTheme'
 import { useFont } from '@/hooks/useFont'
-import { useBaldiRetro } from '@/hooks/useBaldiRetro'
-import { useCustomStyle } from '@/hooks/useCustomStyle'
 import { useI18n } from '@/i18n'
 import { Button } from '@/components/ui/button'
 import { HomePage } from '@/pages/HomePage'
@@ -58,8 +56,6 @@ export function App(): React.JSX.Element {
   const { isDark, toggle, themeId, setThemeId } = useTheme()
   const { env, loading, select, launch, launchSteam, running, stop } = useGame()
   const { font, fonts, setFont } = useFont()
-  useBaldiRetro()
-  useCustomStyle()
   const { t } = useI18n()
   const [aboutOpen, setAboutOpen] = useState(false)
   const [dragging, setDragging] = useState(false)

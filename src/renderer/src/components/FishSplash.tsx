@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useI18n, type Locale } from '@/i18n'
+import fishGif from '@/assets/fish.gif'
 
 export function FishSplash(): React.JSX.Element {
   const { locale } = useI18n()
@@ -17,7 +18,7 @@ export function FishSplash(): React.JSX.Element {
     <div
       className="fixed inset-0 z-[200] flex cursor-pointer flex-col items-center justify-center overflow-hidden"
       onClick={() => setShow(false)}
-      style={{ backgroundImage: 'url(/fish.gif)', backgroundSize: '120px 120px' }}
+      style={{ backgroundImage: `url(${fishGif})`, backgroundSize: '120px 120px' }}
     >
       <div className="absolute inset-0 bg-black/30" />
       <span className="relative text-8xl font-black tracking-[0.2em] text-white drop-shadow-[0_4px_16px_rgba(0,0,0,0.8)] sm:text-9xl">

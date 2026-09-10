@@ -51,7 +51,6 @@ export interface AppApi {
   }
   ui: {
     pickZip: () => Promise<Result<{ path: string }>>
-    pickImage: () => Promise<Result<{ dataUrl: string }>>
     openFolder: (path: string) => Promise<void>
     revealFile: (path: string) => Promise<void>
     openExternal: (url: string) => Promise<void>
@@ -105,13 +104,6 @@ export interface AppApi {
     setSplash: (enabled: boolean) => Promise<void>
     getDebugLogging: () => Promise<boolean>
     setDebugLogging: (enabled: boolean) => Promise<void>
-    getBaldiRetro: () => Promise<boolean>
-    setBaldiRetro: (enabled: boolean) => Promise<void>
-    getCustomBg: () => Promise<string | undefined>
-    setCustomBg: (dataUrl: string) => Promise<void>
-    clearCustomBg: () => Promise<void>
-    getCustomCss: () => Promise<string | undefined>
-    setCustomCss: (css: string) => Promise<void>
     getNavOpen: () => Promise<boolean>
     setNavOpen: (open: boolean) => Promise<void>
     resetSettings: () => Promise<void>

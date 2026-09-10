@@ -36,7 +36,9 @@ export function GameDirCard({ env, loading, onSelect, onSetup }: Props): React.J
         ) : env ? (
           <div className="space-y-3">
             <div className="flex items-center justify-between rounded-lg bg-muted/50 px-3 py-2">
-              <code className="truncate text-sm text-muted-foreground">{env.executablePath}</code>
+              <code className="truncate text-sm text-muted-foreground">
+                {env.launchScript || env.executablePath}
+              </code>
               <Badge variant="success">{t('dir.valid')}</Badge>
             </div>
             <div className="flex flex-wrap items-center gap-2 text-sm">

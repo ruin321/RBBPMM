@@ -5,15 +5,13 @@ import type { GameEnvironment } from '../shared/types'
 
 interface StoreSchema {
   gameExePath?: string
+  gameLaunchScript?: string
   theme: string
   fontFamily?: string
   locale?: string
   fishPrevLocale?: string
   splashEnabled?: boolean
   debugLogging?: boolean
-  baldiRetro?: boolean
-  customBg?: string
-  customCss?: string
   navOpen?: boolean
 }
 
@@ -23,9 +21,6 @@ const store = new Store<StoreSchema>({
     fontFamily: FONT_DEFAULT,
     splashEnabled: true,
     debugLogging: false,
-    baldiRetro: false,
-    customBg: undefined,
-    customCss: undefined,
     navOpen: true
   }
 })
@@ -37,6 +32,15 @@ export function getStoredExePath(): string | undefined {
 export function setStoredExePath(p: string | undefined): void {
   if (p === undefined) store.delete('gameExePath')
   else store.set('gameExePath', p)
+}
+
+export function getStoredLaunchScript(): string | undefined {
+  return store.get('gameLaunchScript')
+}
+
+export function setStoredLaunchScript(p: string | undefined): void {
+  if (p === undefined) store.delete('gameLaunchScript')
+  else store.set('gameLaunchScript', p)
 }
 
 export function getTheme(): string {
@@ -88,32 +92,6 @@ export function setDebugLogging(v: boolean): void {
   store.set('debugLogging', v)
 }
 
-export function getBaldiRetro(): boolean {
-  return store.get('baldiRetro', false)
-}
-
-export function setBaldiRetro(v: boolean): void {
-  store.set('baldiRetro', v)
-}
-
-export function getCustomBg(): string | undefined {
-  return store.get('customBg')
-}
-
-export function setCustomBg(v: string | undefined): void {
-  if (v === undefined) store.delete('customBg')
-  else store.set('customBg', v)
-}
-
-export function getCustomCss(): string | undefined {
-  return store.get('customCss')
-}
-
-export function setCustomCss(v: string | undefined): void {
-  if (v === undefined) store.delete('customCss')
-  else store.set('customCss', v)
-}
-
 export function getNavOpen(): boolean {
   return store.get('navOpen', true)
 }
@@ -129,25 +107,21 @@ export function resetAllSettings(): {
   locale: string
   splashEnabled: boolean
   debugLogging: boolean
-  baldiRetro: boolean
 } {
   setTheme(THEME_DEFAULT)
   setFontFamily(FONT_DEFAULT)
   store.delete('locale')
   setSplashEnabled(true)
   setDebugLogging(false)
-  setBaldiRetro(false)
-  setCustomBg(undefined)
-  setCustomCss(undefined)
   setStoredExePath(undefined)
+  setStoredLaunchScript(undefined)
   runtimeState.environment = null
   return {
     theme: THEME_DEFAULT,
     fontFamily: FONT_DEFAULT,
     locale: inferSystemLocale(app.getLocale()),
     splashEnabled: true,
-    debugLogging: false,
-    baldiRetro: false
+    debugLogging: false
   }
 }
 

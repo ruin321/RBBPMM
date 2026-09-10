@@ -31,7 +31,6 @@ const api: AppApi = {
   },
   ui: {
     pickZip: () => ipcRenderer.invoke('ui:pick-zip'),
-    pickImage: () => ipcRenderer.invoke('ui:pick-image'),
     openFolder: (p) => ipcRenderer.invoke('ui:open-folder', { path: p }),
     revealFile: (p) => ipcRenderer.invoke('ui:reveal-file', { path: p }),
     openExternal: (url) => ipcRenderer.invoke('ui:open-external', { url })
@@ -102,13 +101,6 @@ const api: AppApi = {
     setSplash: (enabled) => ipcRenderer.invoke('app:set-splash', { enabled }),
     getDebugLogging: () => ipcRenderer.invoke('app:get-debug-logging'),
     setDebugLogging: (enabled) => ipcRenderer.invoke('app:set-debug-logging', { enabled }),
-    getBaldiRetro: () => ipcRenderer.invoke('app:get-baldi-retro'),
-    setBaldiRetro: (enabled) => ipcRenderer.invoke('app:set-baldi-retro', { enabled }),
-    getCustomBg: () => ipcRenderer.invoke('app:get-custom-bg'),
-    setCustomBg: (dataUrl) => ipcRenderer.invoke('app:set-custom-bg', { dataUrl }),
-    clearCustomBg: () => ipcRenderer.invoke('app:clear-custom-bg'),
-    getCustomCss: () => ipcRenderer.invoke('app:get-custom-css'),
-    setCustomCss: (css) => ipcRenderer.invoke('app:set-custom-css', { css }),
     getNavOpen: () => ipcRenderer.invoke('app:get-nav-open'),
     setNavOpen: (open) => ipcRenderer.invoke('app:set-nav-open', { open }),
     resetSettings: () => ipcRenderer.invoke('app:reset-settings'),

@@ -2,7 +2,7 @@ import { ipcMain, dialog, shell } from 'electron'
 import { spawn } from 'child_process'
 import { resolveEnvironment, resolveEnvironmentFromAny, resolveLaunchScript } from '../services/GameEnvironment'
 import { isGameRunning, stopGame } from '../services/GameProcess'
-import { getStoredExePath, setStoredExePath, runtimeState } from '../store'
+import { getStoredExePath, getStoredLaunchScript, setStoredExePath, setStoredLaunchScript, runtimeState } from '../store'
 import type { GameEnvironment, Result } from '../../shared/types'
 
 
@@ -17,7 +17,10 @@ function loadCurrentEnv(): GameEnvironment | null {
   if (runtimeState.environment) return runtimeState.environment
   const exe = getStoredExePath()
   if (!exe) return null
-  const env = process.platform === 'win32' ? resolveEnvironment(exe) : resolveEnvironmentFromAny(exe)
+  const storedScript = getStoredLaunchScript()
+  const env = process.platform === 'win32'
+    ? resolveEnvironment(exe)
+    : resolveEnvironmentFromAny(exe, storedScript)
   if (env) runtimeState.environment = env
   return env
 }
@@ -30,29 +33,39 @@ export function registerGameIpc(): void {
   ipcMain.handle('game:select-dir', async (): Promise<Result<GameEnvironment>> => {
     const isWin = process.platform === 'win32'
     const res = await dialog.showOpenDialog({
-      title: 'Select the Baldi\'s Basics Plus executable',
+      title: isWin
+        ? "Select the Baldi's Basics Plus executable"
+        : "Select the Baldi's Basics Plus launch script (.sh) or the game folder",
       properties: isWin ? ['openFile'] : ['openFile', 'openDirectory'],
-      filters: isWin ? [{ name: 'Executable', extensions: ['exe'] }] : []
+      filters: isWin
+        ? [{ name: 'Executable', extensions: ['exe'] }]
+        : [{ name: 'Launch script', extensions: ['sh'] }]
     })
     if (res.canceled || res.filePaths.length === 0) {
       return { ok: false, error: 'cancelled' }
     }
+    const picked = res.filePaths[0]
+    const isScript = !isWin && picked.toLowerCase().endsWith('.sh')
     const env = isWin
-      ? resolveEnvironment(res.filePaths[0])
-      : resolveEnvironmentFromAny(res.filePaths[0])
+      ? resolveEnvironment(picked)
+      : resolveEnvironmentFromAny(picked, isScript ? picked : undefined)
     if (!env) return envResult(null)
     runtimeState.environment = env
     setStoredExePath(env.executablePath)
+    setStoredLaunchScript(env.launchScript)
     return envResult(env)
   })
 
   ipcMain.handle('game:set-dir', async (_e, { exePath }: { exePath: string }): Promise<Result<GameEnvironment>> => {
-    const env = process.platform === 'win32'
+    const isWin = process.platform === 'win32'
+    const isScript = !isWin && exePath.toLowerCase().endsWith('.sh')
+    const env = isWin
       ? resolveEnvironment(exePath)
-      : resolveEnvironmentFromAny(exePath)
+      : resolveEnvironmentFromAny(exePath, isScript ? exePath : undefined)
     if (!env) return envResult(null)
     runtimeState.environment = env
     setStoredExePath(env.executablePath)
+    setStoredLaunchScript(env.launchScript)
     return envResult(env)
   })
 
@@ -62,7 +75,9 @@ export function registerGameIpc(): void {
     return new Promise((resolve) => {
       try {
         const isWin = process.platform === 'win32'
-        const launchScript = !isWin ? resolveLaunchScript(env.rootPath) : null
+        const launchScript = !isWin
+          ? env.launchScript ?? resolveLaunchScript(env.rootPath)
+          : null
         const child = launchScript
           ? spawn('/bin/sh', [launchScript], {
               cwd: env.rootPath,

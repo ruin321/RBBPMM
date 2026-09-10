@@ -1,6 +1,6 @@
 import { execFile } from 'child_process'
 import { ipcMain, BrowserWindow, nativeTheme } from 'electron'
-import { getFontFamily, getLocale, getTheme, setFontFamily, setLocale, setTheme, resetAllSettings, getSplashEnabled, setSplashEnabled, getDebugLogging, setDebugLogging, getBaldiRetro, setBaldiRetro, getCustomBg, setCustomBg, getCustomCss, setCustomCss, getNavOpen, setNavOpen } from '../store'
+import { getFontFamily, getLocale, getTheme, setFontFamily, setLocale, setTheme, resetAllSettings, getSplashEnabled, setSplashEnabled, getDebugLogging, setDebugLogging, getNavOpen, setNavOpen } from '../store'
 import { isDarkTheme } from '../constants'
 
 function syncNativeTheme(): void {
@@ -106,21 +106,6 @@ export function registerAppIpc(): void {
 
   ipcMain.handle('app:set-debug-logging', async (_e, { enabled }: { enabled: boolean }): Promise<void> => {
     setDebugLogging(enabled)
-  })
-  ipcMain.handle('app:get-baldi-retro', async (): Promise<boolean> => getBaldiRetro())
-  ipcMain.handle('app:set-baldi-retro', async (_e, { enabled }: { enabled: boolean }): Promise<void> => {
-    setBaldiRetro(enabled)
-  })
-  ipcMain.handle('app:get-custom-bg', async (): Promise<string | undefined> => getCustomBg())
-  ipcMain.handle('app:set-custom-bg', async (_e, { dataUrl }: { dataUrl: string }): Promise<void> => {
-    setCustomBg(dataUrl)
-  })
-  ipcMain.handle('app:clear-custom-bg', async (): Promise<void> => {
-    setCustomBg(undefined)
-  })
-  ipcMain.handle('app:get-custom-css', async (): Promise<string | undefined> => getCustomCss())
-  ipcMain.handle('app:set-custom-css', async (_e, { css }: { css: string }): Promise<void> => {
-    setCustomCss(css)
   })
 
   ipcMain.handle('app:get-nav-open', async (): Promise<boolean> => getNavOpen())

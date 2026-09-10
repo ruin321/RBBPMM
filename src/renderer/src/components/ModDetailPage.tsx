@@ -26,6 +26,7 @@ import type {
 } from '@shared/types'
 import { TEXTURE_PACK_CATEGORY_ID } from '@shared/types'
 import { useI18n } from '@/i18n'
+import fishGif from '@/assets/fish.gif'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { RichText } from '@/components/RichText'
@@ -315,6 +316,18 @@ export function ModDetailPage({
             <RichText text={display.name} />
           </h1>
           {display.version && <Badge variant="secondary">v{display.version}</Badge>}
+          {Number.isFinite(display.id) && display.id > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                window.open(`https://gamebanana.com/mods/${display.id}`, '_blank', 'noreferrer')
+              }
+            >
+              <ExternalLink className="h-4 w-4" />
+              {t('detail.browse')}
+            </Button>
+          )}
         </div>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
           <span className="inline-flex items-center gap-1">
@@ -656,7 +669,7 @@ export function ModDetailPage({
           className="group fixed bottom-5 right-5 z-40"
           aria-label="IM FISH"
         >
-          <img src="/fish.gif" alt="IM FISH" className="h-20 w-20 rounded-full object-cover shadow-lg ring-2 ring-white/30" />
+          <img src={fishGif} alt="IM FISH" className="h-20 w-20 rounded-full object-cover shadow-lg ring-2 ring-white/30" />
           <span className="pointer-events-none absolute -top-9 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-foreground px-2 py-1 text-xs font-bold text-background opacity-0 shadow transition-opacity group-hover:opacity-100">
             IM FISH
           </span>

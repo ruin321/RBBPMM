@@ -3,7 +3,6 @@ import {
   CalendarDays,
   Download,
   Eye,
-  ImageIcon,
   Loader2,
   Package,
   Search,
@@ -70,8 +69,6 @@ export function BananaPage({ onInstalled, initialSubmissionId, onInitialConsumed
   const [paused, setPaused] = useState(false)
   
   const [needTextureDep, setNeedTextureDep] = useState(false)
-  
-  const [preview, setPreview] = useState<string | null>(null)
   
   type NavEntry = { id: number; fallback: GamebananaSubmissionDto }
   const [entries, setEntries] = useState<NavEntry[]>([])
@@ -170,17 +167,25 @@ export function BananaPage({ onInstalled, initialSubmissionId, onInitialConsumed
   }
   useEffect(() => {
     const el = sentinelRef.current
-    if (!el) return
-    const io = new IntersectionObserver(
-      (entries) => {
-        if (entries.some((e) => e.isIntersecting)) maybeLoad()
-      },
-      { rootMargin: '300px 0px' }
-    )
-    io.observe(el)
-    return () => io.disconnect()
-    
-    
+    const scroller = mainEl()
+    const io = el
+      ? new IntersectionObserver(
+          (entries) => {
+            if (entries.some((e) => e.isIntersecting)) maybeLoad()
+          },
+          { root: scroller, rootMargin: '300px 0px' }
+        )
+      : null
+    if (el && io) io.observe(el)
+    const onScroll = (): void => {
+      if (!scroller) return
+      if (scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight - 320) maybeLoad()
+    }
+    if (scroller) scroller.addEventListener('scroll', onScroll, { passive: true })
+    return () => {
+      if (io) io.disconnect()
+      if (scroller) scroller.removeEventListener('scroll', onScroll)
+    }
   }, [items.length, hasMore, loading, loadingMore, paused])
 
   useEffect(() => {
@@ -358,12 +363,11 @@ export function BananaPage({ onInstalled, initialSubmissionId, onInitialConsumed
                         src={sub.thumbnailUrl}
                         alt={sub.name}
                         loading="lazy"
-                        className="h-full w-full cursor-zoom-in object-cover"
+                        className="h-full w-full object-cover"
                         onClick={(e) => {
                           e.stopPropagation()
-                          setPreview(sub.thumbnailUrl ?? null)
+                          openFromList(sub)
                         }}
-                        title={t('banana.preview')}
                         onError={(e) => {
                           ;(e.currentTarget as HTMLImageElement).style.display = 'none'
                         }}
@@ -489,30 +493,6 @@ export function BananaPage({ onInstalled, initialSubmissionId, onInitialConsumed
             >
               {t('textureDep.go')}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {}
-      <Dialog open={preview !== null} onOpenChange={(o) => !o && setPreview(null)}>
-        <DialogContent className="galaxy-bg max-w-4xl border-primary/20">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <ImageIcon className="h-5 w-5 text-primary" />
-              {t('banana.preview')}
-            </DialogTitle>
-          </DialogHeader>
-          {preview && (
-            <img
-              src={preview}
-              alt=""
-              className="preview-zoom w-full rounded-lg border bg-black/40 object-contain shadow-2xl"
-            />
-          )}
-          <DialogFooter>
-            <DialogClose asChild>
-              <Button variant="ghost">{t('dialog.close')}</Button>
-            </DialogClose>
           </DialogFooter>
         </DialogContent>
       </Dialog>

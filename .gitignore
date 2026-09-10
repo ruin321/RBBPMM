@@ -2,6 +2,7 @@ node_modules/
 dist/
 out/
 release/
+release_bundles/
 .trae/
 *.tsbuildinfo
 *.log
