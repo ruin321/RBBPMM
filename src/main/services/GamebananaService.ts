@@ -163,33 +163,84 @@ function parseFiles(node: unknown): GamebananaFileDto[] {
 
 
 
+const REQUEST_TIMEOUT_MS = 20000
+
+function timedFetch(
+  url: string,
+  init: { headers?: Record<string, string>; signal?: AbortSignal },
+  timeoutMs: number
+): Promise<Response> {
+  return new Promise<Response>((resolve, reject) => {
+    const ctrl = new AbortController()
+    const timer = setTimeout(() => ctrl.abort(), timeoutMs)
+    const onAbort = (): void => ctrl.abort()
+    init.signal?.addEventListener('abort', onAbort)
+    const cleanup = (): void => {
+      clearTimeout(timer)
+      init.signal?.removeEventListener('abort', onAbort)
+    }
+    fetch(url, { headers: init.headers, redirect: 'follow', signal: ctrl.signal }).then(
+      (res) => {
+        cleanup()
+        resolve(res)
+      },
+      (err) => {
+        cleanup()
+        reject(err)
+      }
+    )
+  })
+}
+
+function timedNetFetch(
+  url: string,
+  init: { headers?: Record<string, string>; signal?: AbortSignal },
+  timeoutMs: number
+): Promise<Response> {
+  return new Promise<Response>((resolve, reject) => {
+    const ctrl = new AbortController()
+    const timer = setTimeout(() => ctrl.abort(), timeoutMs)
+    const onAbort = (): void => ctrl.abort()
+    init.signal?.addEventListener('abort', onAbort)
+    const cleanup = (): void => {
+      clearTimeout(timer)
+      init.signal?.removeEventListener('abort', onAbort)
+    }
+    net.fetch(url, { headers: init.headers, redirect: 'follow', signal: ctrl.signal }).then(
+      (res) => {
+        cleanup()
+        resolve(res)
+      },
+      (err) => {
+        cleanup()
+        reject(err)
+      }
+    )
+  })
+}
+
 async function request(
   url: string,
   init: { headers?: Record<string, string>; signal?: AbortSignal }
 ): Promise<Response> {
   
-  for (let attempt = 0; ; attempt++) {
-    try {
-      let res: Response | undefined
-      if (net.isOnline?.()) {
-        try {
-          res = await net.fetch(url, {
-            headers: init.headers,
-            redirect: 'follow',
-            signal: init.signal
-          })
-        } catch {
-          
-        }
+  const strategies: Array<() => Promise<Response>> = [
+    () => timedFetch(url, init, REQUEST_TIMEOUT_MS),
+    () => timedNetFetch(url, init, REQUEST_TIMEOUT_MS)
+  ]
+  for (let attempt = 0; attempt < 2; attempt++) {
+    for (const run of strategies) {
+      try {
+        const res = await run()
+        if (res) return res
+      } catch (err) {
+        if (init.signal?.aborted) throw err
+        
       }
-      if (!res) res = await fetch(url, { headers: init.headers, redirect: 'follow', signal: init.signal })
-      return res
-    } catch (err) {
-      const aborted = init.signal?.aborted || (err instanceof DOMException && err.name === 'AbortError')
-      if (aborted || attempt >= 2) throw err
-      await new Promise((resolve) => setTimeout(resolve, 400 * (attempt + 1)))
     }
+    if (attempt < 1) await new Promise((resolve) => setTimeout(resolve, 400))
   }
+  throw new Error(`Request failed after retries: ${url}`)
 }
 
 async function getJson(url: string): Promise<Json> {
