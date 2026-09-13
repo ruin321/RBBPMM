@@ -1,0 +1,14 @@
+node_modules/
+dist/
+out/
+release/
+release_bundles/
+release_downloads/
+.trae/
+.workbuddy/
+electron.vite.config.*.mjs
+*.tsbuildinfo
+*.log
+/*.zip
+.DS_Store
+Thumbs.db
