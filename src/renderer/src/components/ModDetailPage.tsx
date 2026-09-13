@@ -9,6 +9,7 @@ import {
   Eye,
   Files,
   Gift,
+  History,
   Image as ImageIcon,
   Loader2,
   MessageSquare,
@@ -21,6 +22,7 @@ import type {
   GamebananaFileDto,
   GamebananaRequirementDto,
   GamebananaSubmissionDto,
+  GamebananaUpdatesDto,
   InstallProgress,
   ReadmeFileDto
 } from '@shared/types'
@@ -31,8 +33,34 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { RichText } from '@/components/RichText'
 import { ReadmeDialog } from '@/components/ReadmeDialog'
+import { AsciiScrollbar } from '@/components/AsciiScrollbar'
+import { BaldiChase } from '@/components/BaldiChase'
+import { MagneticCursor } from '@/components/MagneticCursor'
+import { GlitchPage } from '@/components/GlitchPage'
+import { RunawayButtons } from '@/components/RunawayButtons'
+import { MilkPage } from '@/components/MilkPage'
+import { JumpScare } from '@/components/JumpScare'
 
 const FISH_SUBMISSION_ID = 713948
+
+  
+const RETRO_SUBMISSION_ID = 716127
+
+  
+const BALDI_SUBMISSION_ID = 694067
+
+
+const CURSOR_SUBMISSION_ID = 710488
+
+const MAGNET_SUBMISSION_ID = 715561
+
+const GLITCH_SUBMISSION_ID = 713697
+
+const FLEE_SUBMISSION_ID = 714303
+
+const MILK_SUBMISSION_ID = 708588
+
+const JUMPSCARE_SUBMISSION_ID = 703263
 
 interface Props {
   submissionId: number
@@ -82,6 +110,11 @@ function fmtCount(n?: number): string {
   if (n === undefined || n === null) return '–'
   if (n >= 1000) return `${(n / 1000).toFixed(1)}k`
   return String(n)
+}
+
+function fmtDate(ts?: number): string {
+  if (!ts) return ''
+  return new Date(ts * 1000).toLocaleDateString()
 }
 
 
@@ -160,6 +193,7 @@ export function ModDetailPage({
   const { t } = useI18n()
   const [sub, setSub] = useState<GamebananaSubmissionDto | null>(null)
   const [comments, setComments] = useState<GamebananaCommentsDto | null>(null)
+  const [updates, setUpdates] = useState<GamebananaUpdatesDto | null>(null)
   const [loading, setLoading] = useState(false)
   const [imgIndex, setImgIndex] = useState(0)
   
@@ -170,6 +204,14 @@ export function ModDetailPage({
   const { setLocale } = useI18n()
 
   const isFishPage = submissionId === FISH_SUBMISSION_ID
+  const isRetroPage = submissionId === RETRO_SUBMISSION_ID
+  const isBaldiPage = submissionId === BALDI_SUBMISSION_ID
+  const isCursorPage = submissionId === CURSOR_SUBMISSION_ID
+  const isMagnetPage = submissionId === MAGNET_SUBMISSION_ID
+  const isGlitchPage = submissionId === GLITCH_SUBMISSION_ID
+  const isFleePage = submissionId === FLEE_SUBMISSION_ID
+  const isMilkPage = submissionId === MILK_SUBMISSION_ID
+  const isJumpscarePage = submissionId === JUMPSCARE_SUBMISSION_ID
 
   const installingRef = useRef(false)
   installingRef.current = activeFileId !== undefined
@@ -179,6 +221,7 @@ export function ModDetailPage({
     setLoading(true)
     setSub(null)
     setComments(null)
+    setUpdates(null)
     setImgIndex(0)
     setProgress(null)
 
@@ -192,6 +235,10 @@ export function ModDetailPage({
     void window.api.banana.getComments(submissionId).then((r) => {
       if (!active) return
       setComments(r.ok && r.value ? r.value : { total: 0, items: [] })
+    })
+    void window.api.banana.getUpdates(submissionId).then((r) => {
+      if (!active) return
+      setUpdates(r.ok && r.value ? r.value : { total: 0, items: [] })
     })
     const off = window.api.app.onInstallProgress((p) => {
       if (installingRef.current) setProgress(p)
@@ -265,7 +312,26 @@ export function ModDetailPage({
   }
 
   return (
-    <div className="space-y-6">
+    <div
+      className={[
+        'space-y-6',
+        isRetroPage ? 'retro-page' : '',
+        // 这个类只是一枚挂点：真正的 cursor 规则写在 globals.css 的 main:has(.cursor-710488) 上
+        isCursorPage ? 'cursor-710488' : '',
+        // 同上，挂点而已：cursor:none 规则写在 globals.css 的 main:has(.magnet-715561) 上
+        isMagnetPage ? 'magnet-715561' : '',
+        // 挂点：GlitchPage 拿它找活动范围
+        isGlitchPage ? 'glitch-713697' : '',
+        // 挂点：RunawayButtons 拿它找活动范围（按钮逃跑）
+        isFleePage ? 'flee-714303' : '',
+        // 挂点：MilkPage 拿它翻转整页 + 找活动范围（牛奶）
+        isMilkPage ? 'milk-708588' : '',
+        // 挂点：JumpScare 找活动范围（突脸）
+        isJumpscarePage ? 'scare-703263' : ''
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
       {}
       <header className="sticky top-0 z-20 flex items-center gap-2 rounded-lg border bg-background/90 px-2 py-1.5 backdrop-blur">
         {historyDepth > 1 && level >= 1 && (
@@ -312,7 +378,7 @@ export function ModDetailPage({
       {}
       <div className="space-y-2">
         <div className="flex flex-wrap items-center gap-2">
-          <h1 className="text-2xl font-bold leading-tight">
+          <h1 className="min-w-0 break-words text-2xl font-bold leading-tight">
             <RichText text={display.name} />
           </h1>
           {display.version && <Badge variant="secondary">v{display.version}</Badge>}
@@ -567,7 +633,7 @@ export function ModDetailPage({
                 <ImageIcon className="h-4 w-4 text-primary" />
                 {t('detail.description')}
               </h2>
-              <div className="text-sm leading-relaxed text-muted-foreground">
+              <div className="min-w-0 break-words text-sm leading-relaxed text-muted-foreground">
                 {sub?.description ? (
                   <RichText text={sub.description} />
                 ) : (
@@ -575,6 +641,85 @@ export function ModDetailPage({
                 )}
               </div>
             </section>
+
+            {updates !== null && updates.items.length > 0 && (
+              <section className="space-y-2">
+                <h2 className="flex items-center gap-2 text-base font-semibold">
+                  <History className="h-4 w-4 text-primary" />
+                  {t('detail.updates')} ({updates.total})
+                </h2>
+                <ul className="divide-y rounded-lg border">
+                  {updates.items.map((u, idx) => (
+                    <li key={u.id}>
+                      {/* 只有最新一条默认展开，其余折叠（open 是首帧值，用户手动展开后 React 不会回弹） */}
+                      <details className="group" open={idx === 0}>
+                        <summary className="flex min-w-0 cursor-pointer list-none flex-wrap items-center gap-2 p-3 text-sm font-medium [&::-webkit-details-marker]:hidden">
+                          <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-90" />
+                          {}
+                          <span className="min-w-0 break-words">
+                            {u.title || t('detail.untitledUpdate')}
+                          </span>
+                          {u.version && <Badge variant="outline">{u.version}</Badge>}
+                          {u.dateAdded ? (
+                            <span className="text-xs font-normal text-muted-foreground">
+                              {fmtDate(u.dateAdded)}
+                            </span>
+                          ) : null}
+                        </summary>
+                        <div className="min-w-0 space-y-2 border-t p-3">
+                          {u.changeLog.length > 0 && (
+                            <ul className="space-y-1">
+                              {u.changeLog.map((c, i) => (
+                                <li key={i} className="flex min-w-0 items-start gap-2 text-xs">
+                                  {c.category ? (
+                                    <span className="shrink-0 rounded border px-1 text-[10px] uppercase leading-5 text-muted-foreground">
+                                      {c.category}
+                                    </span>
+                                  ) : null}
+                                  {}
+                                  <span className="min-w-0 flex-1 break-words leading-5 text-muted-foreground">
+                                    {c.text}
+                                  </span>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                          {u.body && (
+                            <div className="min-w-0 break-words text-sm leading-relaxed text-muted-foreground">
+                              <RichText text={u.body} />
+                            </div>
+                          )}
+                          {u.fileNames.length > 0 && (
+                            <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+                              {u.fileNames.map((n) => (
+                                <span
+                                  key={n}
+                                  className="inline-flex min-w-0 max-w-full items-center gap-1 rounded border px-1.5 py-0.5 text-xs text-muted-foreground"
+                                >
+                                  <Package className="h-3 w-3 shrink-0" />
+                                  {}
+                                  <span className="min-w-0 break-all">{n}</span>
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                          {u.url && (
+                            <button
+                              type="button"
+                              onClick={() => window.open(u.url, '_blank', 'noreferrer')}
+                              className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                            >
+                              <ExternalLink className="h-3 w-3" />
+                              {t('detail.openPage')}
+                            </button>
+                          )}
+                        </div>
+                      </details>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
 
             <section className="space-y-2">
               <h2 className="flex items-center gap-2 text-base font-semibold">
@@ -660,6 +805,13 @@ export function ModDetailPage({
           }}
         />
       )}
+      {isRetroPage && <AsciiScrollbar />}
+      {isBaldiPage && <BaldiChase />}
+      {isMagnetPage && <MagneticCursor />}
+      {isGlitchPage && <GlitchPage />}
+      {isFleePage && <RunawayButtons />}
+      {isMilkPage && <MilkPage />}
+      {isJumpscarePage && <JumpScare />}
       {isFishPage && (
         <button
           type="button"

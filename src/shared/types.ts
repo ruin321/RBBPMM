@@ -87,6 +87,8 @@ export interface ModItemDto {
   configFile?: string
 
   gamebananaSource?: GamebananaSourceDto
+
+  group?: string
 }
 
 export interface GamebananaSourceDto {
@@ -118,6 +120,9 @@ export interface OpenUrlPayload {
   action: string
   id?: number
   fileId?: number
+  url?: string
+  modType?: string
+  modId?: number
   raw: string
 }
 
@@ -202,6 +207,39 @@ export interface GamebananaCommentDto {
 export interface GamebananaCommentsDto {
   total: number
   items: GamebananaCommentDto[]
+}
+
+
+export interface GamebananaUpdateChangeDto {
+  
+  text: string
+  
+  category?: string
+}
+
+
+export interface GamebananaUpdateDto {
+  id: number
+  
+  title: string
+  url?: string
+  
+  dateAdded?: number
+  
+  version?: string
+  
+  body?: string
+  
+  authorName?: string
+  
+  changeLog: GamebananaUpdateChangeDto[]
+  
+  fileNames: string[]
+}
+
+export interface GamebananaUpdatesDto {
+  total: number
+  items: GamebananaUpdateDto[]
 }
 
 

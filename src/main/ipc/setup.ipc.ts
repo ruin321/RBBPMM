@@ -4,7 +4,6 @@ import { spawn } from 'child_process'
 import { detectBepInEx, installBepInEx } from '../services/BepInExSetup'
 import { installDevApi } from '../services/DevApiSetup'
 import { stopGame } from '../services/GameProcess'
-import { resolveLaunchScript } from '../services/GameEnvironment'
 import { bepinexPluginsDir } from '../constants'
 import { runtimeState } from '../store'
 import type { InstallProgress, InstallResult, Result } from '../../shared/types'
@@ -71,15 +70,12 @@ export function registerSetupIpc(getWebContents: () => WebContents | null): void
         send({ stage: 'launch', percent: 15, message: 'Launching the game once to initialize BepInEx...' })
         const exe = runtimeState.environment?.executablePath
         if (!exe) return { ok: false, error: 'Game directory not configured' }
-        const launchScript = process.platform !== 'win32' ? resolveLaunchScript(gameRoot) : null
-        const child = launchScript
-          ? spawn('/bin/sh', [launchScript], { cwd: gameRoot, detached: true, stdio: 'ignore' })
-          : spawn(exe, [], {
-              cwd: gameRoot,
-              detached: true,
-              stdio: 'ignore',
-              windowsHide: false
-            })
+        const child = spawn(exe, [], {
+          cwd: gameRoot,
+          detached: true,
+          stdio: 'ignore',
+          windowsHide: false
+        })
         child.on('error', () => {
         })
         child.unref()

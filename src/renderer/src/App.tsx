@@ -19,11 +19,13 @@ import {
   Wand2,
   Loader2
 } from 'lucide-react'
-import { Toaster } from 'sonner'
+import { toast, Toaster } from 'sonner'
 import { useGame } from '@/hooks/useGame'
 import { useTheme } from '@/hooks/useTheme'
 import { useFont } from '@/hooks/useFont'
 import { useI18n } from '@/i18n'
+import { initAnimations } from '@/hooks/useAnimations'
+import { TooltipProvider, WithTooltip } from '@/components/ui/tooltip'
 import { Button } from '@/components/ui/button'
 import { HomePage } from '@/pages/HomePage'
 import { ModsPage } from '@/pages/ModsPage'
@@ -65,10 +67,18 @@ export function App(): React.JSX.Element {
   const [textureDropPath, setTextureDropPath] = useState<string | null>(null)
   const [navOpen, setNavOpen] = useState(true)
   const [cfgRequest, setCfgRequest] = useState<ConfigRequest | null>(null)
-  const [deepLinkInstall, setDeepLinkInstall] = useState<{ submissionId: number; fileId?: number } | null>(null)
+  const [deepLinkInstall, setDeepLinkInstall] = useState<
+    | { submissionId: number; fileId?: number }
+    | { url: string; modType?: string; modId?: number }
+    | null
+  >(null)
   const [setupOpen, setSetupOpen] = useState(false)
   const [bepReady, setBepReady] = useState<boolean | null>(null)
   const [installedMods, setInstalledMods] = useState<{ name: string }[]>([])
+
+  useEffect(() => {
+    initAnimations()
+  }, [])
 
   const checkSetup = useCallback(async (): Promise<void> => {
     const r = await window.api.setup.status()
@@ -127,6 +137,12 @@ export function App(): React.JSX.Element {
     return window.api.app.onOpenUrl((payload) => {
       if (payload.action === 'install' && payload.id) {
         setDeepLinkInstall({ submissionId: payload.id, fileId: payload.fileId })
+      } else if (payload.action === 'install-url' && payload.url) {
+        setDeepLinkInstall({
+          url: payload.url,
+          modType: payload.modType,
+          modId: payload.modId
+        })
       }
     })
   }, [])
@@ -174,21 +190,39 @@ export function App(): React.JSX.Element {
       const path = (file as File & { path?: string }).path
       if (path) {
         
-        void window.api.textures.probe(path).then((r) => {
+        void window.api.textures.probe(path).then(async (r) => {
           
           if (r.ok && r.value) {
             setTextureDropPath(path)
             setPage('textures')
-          } else {
-            setDropPath(path)
-            setPage('mods')
+            return
           }
+          
+          if (mapTabVisible) {
+            const lr = await window.api.customLevel.probe(path)
+            if (lr.ok && lr.value) {
+              const ir = await window.api.customLevel.install(path)
+              if (ir.ok) {
+                toast.success(t('maps.installedToast'))
+                setPage('maps')
+              } else {
+                toast.error(`Install failed: ${ir.error}`)
+                setDropPath(path)
+                setPage('mods')
+              }
+              return
+            }
+          }
+          
+          setDropPath(path)
+          setPage('mods')
         })
       }
     }
   }
 
   return (
+    <TooltipProvider delayDuration={220}>
     <div className="app-root flex h-full flex-col overflow-hidden">
       <TitleBar />
       <div
@@ -212,17 +246,18 @@ export function App(): React.JSX.Element {
       >
         <div className={navOpen ? 'flex items-center justify-between gap-1 px-3' : 'flex flex-col items-center gap-2'}>
           <Package className={'shrink-0 text-primary transition-transform duration-200 ' + (navOpen ? 'h-7 w-7' : 'h-6 w-6')} />
+          <WithTooltip title={navOpen ? t('nav.collapse') : t('nav.expand')}>
           <Button
             variant="ghost"
             size="icon"
             onClick={toggleNav}
-            title={navOpen ? t('nav.collapse') : t('nav.expand')}
             className="h-9 w-9 shrink-0"
           >
             <span className="transition-transform duration-200 ease-out">
               {navOpen ? <PanelLeftClose className="h-5 w-5" /> : <PanelLeftOpen className="h-5 w-5" />}
             </span>
           </Button>
+          </WithTooltip>
         </div>
 
         <div className={navOpen ? 'mt-2 space-y-1' : 'mt-2 flex flex-col items-center gap-1'}>
@@ -375,9 +410,16 @@ export function App(): React.JSX.Element {
       />
       {deepLinkInstall && (
         <DeepLinkInstallDialog
-          key={`${deepLinkInstall.submissionId}:${deepLinkInstall.fileId ?? ''}`}
-          submissionId={deepLinkInstall.submissionId}
-          fileId={deepLinkInstall.fileId}
+          key={
+            'url' in deepLinkInstall
+              ? deepLinkInstall.url
+              : `${deepLinkInstall.submissionId}:${deepLinkInstall.fileId ?? ''}`
+          }
+          submissionId={'submissionId' in deepLinkInstall ? deepLinkInstall.submissionId : undefined}
+          fileId={'fileId' in deepLinkInstall ? deepLinkInstall.fileId : undefined}
+          url={'url' in deepLinkInstall ? deepLinkInstall.url : undefined}
+          modType={'modType' in deepLinkInstall ? deepLinkInstall.modType : undefined}
+          modId={'modId' in deepLinkInstall ? deepLinkInstall.modId : undefined}
           onDone={() => setDeepLinkInstall(null)}
         />
       )}
@@ -387,6 +429,7 @@ export function App(): React.JSX.Element {
       <FishSplash />
     </div>
     </div>
+    </TooltipProvider>
   )
 }
 
@@ -406,12 +449,12 @@ function NavButton({
   disabled?: boolean
 }): React.JSX.Element {
   return (
+    <WithTooltip title={label}>
     <Button
       variant="ghost"
       size="icon"
       onClick={onClick}
       aria-label={label}
-      title={label}
       disabled={disabled}
       className={cn(
         'flex h-9 items-center overflow-hidden rounded-md transition-[width,padding,gap] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]',
@@ -429,5 +472,6 @@ function NavButton({
         <span className="block truncate text-sm">{label}</span>
       </span>
     </Button>
+    </WithTooltip>
   )
 }

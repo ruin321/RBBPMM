@@ -3,29 +3,9 @@ import path from 'path'
 
 export const GAME_EXE_NAME = 'BALDI.exe'
 
-export const GAME_LAUNCH_SCRIPT_NAMES = ['run_bepinex.sh', 'start.sh', 'baldi.sh', 'run-baldi.sh']
 
-export const GAME_EXE_CANDIDATES: Record<NodeJS.Platform, string[]> = {
-  win32: ['BALDI.exe'],
-  linux: ['BALDI.x86_64', 'BALDI'],
-  darwin: ['BALDI'],
-  aix: [GAME_EXE_NAME],
-  android: [GAME_EXE_NAME],
-  freebsd: ['BALDI.x86_64', 'BALDI'],
-  haiku: ['BALDI'],
-  openbsd: [GAME_EXE_NAME],
-  sunos: [GAME_EXE_NAME],
-  netbsd: [GAME_EXE_NAME],
-  cygwin: [GAME_EXE_NAME]
-}
-
-export function platformExeNames(platform: NodeJS.Platform = process.platform): string[] {
-  return GAME_EXE_CANDIDATES[platform] ?? [GAME_EXE_NAME]
-}
-
-export function isGameExeName(name: string, platform: NodeJS.Platform = process.platform): boolean {
-  const lower = name.toLowerCase()
-  return platformExeNames(platform).some((c) => lower === c.toLowerCase())
+export function isGameExeName(name: string): boolean {
+  return name.toLowerCase() === GAME_EXE_NAME.toLowerCase()
 }
 export const GAME_DATA_FOLDER = 'BALDI_Data'
 export const GAME_VERSION_FILE = 'globalgamemanagers'
@@ -33,6 +13,7 @@ export const GAME_VERSION_FILE = 'globalgamemanagers'
 export const BEPINEX_FOLDER = 'BepInEx'
 export const PLUGINS_FOLDER = 'plugins'
 export const PATCHER_FOLDER = 'patchers'
+export const MODINFO_FOLDER = 'modInfo'
 export const BEPINEX_CONFIG_FOLDER = 'config'
 
 
@@ -100,6 +81,10 @@ export function bepinexPluginsDir(gameRoot: string): string {
 
 export function bepinexPatchersDir(gameRoot: string): string {
   return path.join(gameRoot, BEPINEX_FOLDER, PATCHER_FOLDER)
+}
+
+export function bepinexModInfoDir(gameRoot: string): string {
+  return path.join(gameRoot, BEPINEX_FOLDER, MODINFO_FOLDER)
 }
 
 

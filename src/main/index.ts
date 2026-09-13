@@ -27,8 +27,24 @@ let pendingUrl: OpenUrlPayload | null = null
 
 function parseProtocolUrl(url: string): OpenUrlPayload | null {
   const clean = url.trim()
-  if (!clean.toLowerCase().startsWith(`${PROTOCOL}://`)) return null
-  let rest = clean.slice(PROTOCOL.length + 3)
+  const lower = clean.toLowerCase()
+  if (!lower.startsWith(`${PROTOCOL}://`) && !lower.startsWith(`${PROTOCOL}:`)) return null
+
+  // strip scheme prefix (rbbpmm:// or rbbpmm:)
+  let rest = clean.slice(lower.startsWith(`${PROTOCOL}://`) ? PROTOCOL.length + 3 : PROTOCOL.length + 1)
+
+  // new format: rbbpmm:URL,MOD_TYPE,MOD_ID
+  const commaParts = rest.split(',')
+  if (commaParts.length >= 3) {
+    const urlPart = commaParts[0]
+    const modType = commaParts[1]
+    const modIdRaw = commaParts[2]
+    if (modIdRaw && /^\d+$/.test(modIdRaw.trim())) {
+      return { action: 'install-url', url: urlPart, modType, modId: Number(modIdRaw.trim()), raw: clean }
+    }
+  }
+
+  // legacy format: rbbpmm://install/{id}/{fileId}
   rest = rest.split('?')[0].replace(/\/+$/, '')
   const [action = '', idRaw, fileIdRaw] = rest.split('/')
   const id = idRaw && /^\d+$/.test(idRaw) ? Number(idRaw) : undefined
@@ -50,9 +66,13 @@ function handleSecondInstance(argv: string[]): void {
     if (mainWindow.isMinimized()) mainWindow.restore()
     mainWindow.focus()
   }
-  const url = argv.find((a) => a.toLowerCase().startsWith(`${PROTOCOL}://`))
+  const url = argv.find((a) => {
+    const al = a.toLowerCase()
+    return al.startsWith(`${PROTOCOL}://`) || al.startsWith(`${PROTOCOL}:`)
+  })
   if (!url) return
   const parsed = parseProtocolUrl(url)
+  logInfo('protocol second-instance url =', url, 'parsed =', JSON.stringify(parsed))
   if (parsed) pushOpenUrl(parsed)
 }
 
@@ -65,23 +85,16 @@ let mainWindow: BrowserWindow | null = null
 
 
 function windowIcon(): Electron.NativeImage | undefined {
-  if (process.platform !== 'win32') {
-    const pngPath = path.join(app.getAppPath(), 'resources', 'app-icon.png')
-    const png = nativeImage.createFromPath(pngPath)
-    if (!png.isEmpty()) return png
-    const empty = nativeImage.createEmpty()
-    return empty
-  }
-  const icoPath = path.join(app.getAppPath(), 'resources', 'apps.ico')
+  const icoPath = app.isPackaged
+    ? path.join(process.resourcesPath, 'apps.ico')
+    : path.join(app.getAppPath(), 'resources', 'apps.ico')
   const img = nativeImage.createFromPath(icoPath)
   return img.isEmpty() ? undefined : img
 }
 
 function createWindow(): void {
   syncNativeTheme()
-  const isWin11 =
-    process.platform === 'win32' && Number((os.release().split('.')[2] ?? '0')) >= 22000
-  const useMica = process.platform === 'win32' && isWin11
+  const useMica = Number(os.release().split('.')[2] ?? '0') >= 22000
   mainWindow = new BrowserWindow({
     width: 1080,
     height: 720,
@@ -95,8 +108,8 @@ function createWindow(): void {
     icon: windowIcon(),
     
     backgroundMaterial: useMica ? 'mica' : undefined,
-    backgroundColor: '#00000000',
-    transparent: !useMica && process.platform === 'win32',
+    backgroundColor: '#0b0b10',
+    transparent: false,
     webPreferences: {
       preload: path.join(__dirname, '../preload/index.js'),
       sandbox: false,
@@ -109,7 +122,7 @@ function createWindow(): void {
   const icon = windowIcon()
   if (icon) {
     mainWindow.setIcon(icon)
-    if (process.platform === 'win32') app.setAppUserModelId('Ruin321sBaldiModManager')
+    app.setAppUserModelId('Ruin321sBaldiModManager')
   }
 
   mainWindow.on('ready-to-show', () => mainWindow?.show())
@@ -131,7 +144,16 @@ const gotLock = app.requestSingleInstanceLock()
 if (!gotLock) {
   app.quit()
 } else {
-  app.setAsDefaultProtocolClient(PROTOCOL)
+  // Windows dev-mode protocol registration must pass the running script path as
+  // argv, otherwise Windows associates `rbbpmm:...` with a bare scheme resolved
+  // against system32, producing "Unable to find Electron app" errors.
+  if (process.defaultApp) {
+    if (process.argv.length >= 2) {
+      app.setAsDefaultProtocolClient(PROTOCOL, process.execPath, [path.resolve(process.argv[1])])
+    }
+  } else {
+    app.setAsDefaultProtocolClient(PROTOCOL)
+  }
 
   app.on('second-instance', (_e, argv) => handleSecondInstance(argv))
 
@@ -164,11 +186,6 @@ if (!gotLock) {
     mainWindow?.webContents.on('did-finish-load', () => {
       applyThemeToRenderer(mainWindow!.webContents, getTheme())
       applyFontToRenderer(mainWindow!.webContents, getFontFamily())
-      if (process.platform === 'win32' && Number((os.release().split('.')[2] ?? '0')) < 22000) {
-        void mainWindow?.webContents.executeJavaScript(
-          `document.documentElement.classList.add('self-rounded')`
-        )
-      }
       rendererReady = true
       if (pendingUrl) {
         const p = pendingUrl
@@ -182,7 +199,10 @@ if (!gotLock) {
     })
   })
 
-  const initialUrl = process.argv.find((a) => a.toLowerCase().startsWith(`${PROTOCOL}://`))
+  const initialUrl = process.argv.find((a) => {
+    const al = a.toLowerCase()
+    return al.startsWith(`${PROTOCOL}://`) || al.startsWith(`${PROTOCOL}:`)
+  })
   if (initialUrl) {
     const parsed = parseProtocolUrl(initialUrl)
     if (parsed) pushOpenUrl(parsed)
@@ -190,5 +210,5 @@ if (!gotLock) {
 }
 
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') app.quit()
+  app.quit()
 })

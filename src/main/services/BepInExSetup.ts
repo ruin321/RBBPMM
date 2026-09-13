@@ -34,20 +34,6 @@ export function bepinexArchivePath(): string | null {
 }
 
 
-export async function installBepInEx(
-  gameRoot: string,
-  onProgress?: (p: InstallProgress) => void
-): Promise<Result<boolean>> {
-  if (process.platform === 'win32') {
-    return installBepInExWin32(gameRoot, onProgress)
-  }
-  return {
-    ok: false,
-    error: 'Automatic BepInEx installation is not supported on this platform. Please drop the BepInEx folder into the game directory manually.'
-  }
-}
-
-
 function emit(onProgress: ((p: InstallProgress) => void) | undefined, message: string, percent = 0): void {
   onProgress?.({ stage: 'setup-bepinex', percent, message })
 }
@@ -78,7 +64,7 @@ function moveToGameRoot(tempRoot: string, gameRoot: string): void {
 }
 
 
-async function installBepInExWin32(
+export async function installBepInEx(
   gameRoot: string,
   onProgress?: (p: InstallProgress) => void
 ): Promise<Result<boolean>> {

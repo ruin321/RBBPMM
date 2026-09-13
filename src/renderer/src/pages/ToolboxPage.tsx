@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import type { GameEnvironment, ToolboxDirDto } from '@shared/types'
 import { useI18n, type MessageKey } from '@/i18n'
 import { Button } from '@/components/ui/button'
+import { WithTooltip } from '@/components/ui/tooltip'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { PageHeader } from '@/components/PageHeader'
 
@@ -241,14 +242,15 @@ export function ToolboxPage({ onSetup, env }: Props): React.JSX.Element {
           <CardTitle className="text-destructive">{t('toolbox.easterHeader')}</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-wrap gap-3">
-          <Button
-            variant="destructive"
-            onClick={() => prankEffect()}
-            title={t('toolbox.easterDoNot')}
-          >
-            <AlertTriangle className="mr-2 h-4 w-4" />
-            {t('toolbox.easterDoNot')}
-          </Button>
+          <WithTooltip title={t('toolbox.easterDoNot')}>
+            <Button
+              variant="destructive"
+              onClick={() => prankEffect()}
+            >
+              <AlertTriangle className="mr-2 h-4 w-4" />
+              {t('toolbox.easterDoNot')}
+            </Button>
+          </WithTooltip>
           <Button variant="outline" onClick={() => openUrlEasterEgg()}>
             <Link2 className="mr-2 h-4 w-4" />
             {t('toolbox.easterUrl')}

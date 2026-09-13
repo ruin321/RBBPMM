@@ -10,30 +10,15 @@ const README_PATTERN = /readme.*\.(md|txt)$/i
 const README_MAX_BYTES = 256 * 1024
 
 export function levelStudioPlayablesPath(): string {
-  if (process.platform === 'win32') {
-    return path.join(
-      os.homedir(),
-      'AppData',
-      'LocalLow',
-      'Basically Games',
-      "Baldi's Basics Plus",
-      'Level Studio',
-      'Playables'
-    )
-  }
-  if (process.platform === 'darwin') {
-    return path.join(
-      os.homedir(),
-      'Library',
-      'Application Support',
-      'Basically Games',
-      "Baldi's Basics Plus",
-      'Level Studio',
-      'Playables'
-    )
-  }
-  const base = process.env.XDG_DATA_HOME || path.join(os.homedir(), '.local', 'share')
-  return path.join(base, 'Basically Games', "Baldi's Basics Plus", 'Level Studio', 'Playables')
+  return path.join(
+    os.homedir(),
+    'AppData',
+    'LocalLow',
+    'Basically Games',
+    "Baldi's Basics Plus",
+    'Level Studio',
+    'Playables'
+  )
 }
 
 function entriesList(dir: string): fs.Dirent[] {
@@ -44,7 +29,7 @@ function entriesList(dir: string): fs.Dirent[] {
   }
 }
 
-function findPbplFiles(root: string, out: string[]): void {
+export function findPbplFiles(root: string, out: string[]): void {
   for (const entry of entriesList(root)) {
     const full = path.join(root, entry.name)
     if (entry.isDirectory()) {

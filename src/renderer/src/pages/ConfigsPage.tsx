@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
 import { Select } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
+import { WithTooltip } from '@/components/ui/tooltip'
 import {
   Dialog,
   DialogContent,
@@ -286,20 +287,21 @@ export function ConfigsPage({
                         </span>
                       </span>
                     </span>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setDeleteTarget(f)
-                      }}
-                      title={t('config.deleteHint')}
-                      className={cn(
-                        'shrink-0 rounded-md p-1.5 text-muted-foreground/60 transition-all hover:bg-destructive/10 hover:text-destructive',
-                        selected?.path === f.path ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-                      )}
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
+                    <WithTooltip title={t('config.deleteHint')}>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setDeleteTarget(f)
+                        }}
+                        className={cn(
+                          'shrink-0 rounded-md p-1.5 text-muted-foreground/60 transition-all hover:bg-destructive/10 hover:text-destructive',
+                          selected?.path === f.path ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                        )}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </WithTooltip>
                   </div>
                 ))
               )}

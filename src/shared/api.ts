@@ -5,8 +5,10 @@ import type {
   GameEnvironment,
   GamebananaSearchResult,
   GamebananaSubmissionDto,
+  GamebananaUpdatesDto,
   InstallProgress,
   InstallResult,
+  LevelStudioInstallResult,
   LevelStudioPrereqItem,
   ModInstallOutcome,
   ModItemDto,
@@ -47,8 +49,10 @@ export interface AppApi {
     search: (page: number, query?: string, category?: number) =>
       Promise<Result<GamebananaSearchResult>>,
     install: (submissionId: number, fileId?: number) => Promise<Result<InstallResult>>
+    installUrl: (url: string, modType?: string, modId?: number) => Promise<Result<InstallResult>>
     get: (submissionId: number) => Promise<Result<GamebananaSubmissionDto>>
     getComments: (submissionId: number) => Promise<Result<GamebananaCommentsDto>>
+    getUpdates: (submissionId: number) => Promise<Result<GamebananaUpdatesDto>>
     getPostReplies: (postId: number) => Promise<Result<GamebananaCommentDto[]>>
     levelStudioPrereq: () => Promise<Result<LevelStudioPrereqItem[]>>
   }
@@ -88,6 +92,8 @@ export interface AppApi {
   }
   customLevel: {
     list: () => Promise<Result<CustomLevelDto[]>>
+    probe: (archivePath: string) => Promise<Result<boolean>>
+    install: (archivePath: string) => Promise<Result<LevelStudioInstallResult>>
     toggle: (fileName: string, enabled: boolean) => Promise<Result>
     delete: (fileName: string) => Promise<Result>
   }

@@ -14,13 +14,39 @@ function moddedRoot(gameRoot: string): string {
 
 function dirInstalledAt(abs: string): number | undefined {
   try {
+    // Prefer the most recently modified .dll inside the install dir.
+    // A directory's birthtime/mtime can be stale (reused dir, extracted in place).
+    // DLL mtime is the reliable signal that a fresh install/update happened.
+    let newest = 0
+    const walk = (dir: string): void => {
+      let entries: fs.Dirent[]
+      try {
+        entries = fs.readdirSync(dir, { withFileTypes: true })
+      } catch {
+        return
+      }
+      for (const e of entries) {
+        const p = path.join(dir, e.name)
+        if (e.isDirectory()) {
+          walk(p)
+        } else if (/\.(dll|pdb)$/i.test(e.name)) {
+          try {
+            const m = fs.statSync(p).mtimeMs
+            if (m > newest) newest = m
+          } catch {
+            /* ignore */
+          }
+        }
+      }
+    }
+    walk(abs)
+    if (newest > 0) return Math.round(newest)
+
+    // Fallback to dir mtime (no dll found)
     const st = fs.statSync(abs)
-    
-    const b = st.birthtimeMs
-    if (Number.isFinite(b) && b > 0) return Math.round(b)
-    if (Number.isFinite(st.mtimeMs)) return Math.round(st.mtimeMs)
+    if (Number.isFinite(st.mtimeMs) && st.mtimeMs > 0) return Math.round(st.mtimeMs)
   } catch {
-    
+    /* ignore */
   }
   return undefined
 }
@@ -56,8 +82,18 @@ function findModdedFolder(gameRoot: string, names: (string | undefined)[]): stri
 function pluginDiskPath(pluginDir: string, rel: string): string {
   const direct = path.join(pluginDir, rel)
   if (fs.existsSync(direct)) return direct
-  for (const ext of ['.disabled', '.disable']) {
-    const alt = direct + ext
+  // 停用后的落盘文件名有两套写法：`X.dll.disabled` 与 `X.disabled`。
+  // ModActivator.renameDll 实际写的是后者（先把 .dll 去掉再拼后缀），
+  // 而这里原先只找前者 —— 于是停用后读不到 DLL，identifyName 和 Modded
+  // 关联会跟着一起丢失。两套都覆盖。
+  const stem = direct.replace(/\.dll$/i, '')
+  for (const alt of [
+    `${direct}.disabled`,
+    `${direct}.disable`,
+    `${stem}.disabled`,
+    `${stem}.disable`,
+    `${direct}.1`
+  ]) {
     if (fs.existsSync(alt)) return alt
   }
   return direct
@@ -78,13 +114,8 @@ function collectCandidates(pluginDir: string, pluginFiles: string[]): string[] {
   return out
 }
 
-function resolveIdentifyName(
-  title: string,
-  pluginDir: string,
-  pluginFiles: string[]
-): string | undefined {
-  if (MOD_GUID_OVERRIDES[title]) return MOD_GUID_OVERRIDES[title]
-  return collectCandidates(pluginDir, pluginFiles)[0]
+function resolveIdentifyName(title: string, candidates: string[]): string | undefined {
+  return MOD_GUID_OVERRIDES[title] ?? candidates[0]
 }
 
 const DISABLED = `.${DISABLED_EXTENSION}` 
@@ -142,15 +173,19 @@ export function buildModItem(
 function parsePluginEntry(name: string): { stem: string; file: string; disabled: boolean } | null {
   if (!name || name[0] === '.') return null
   const lc = name.toLowerCase()
+  
   if (lc.endsWith('.disabled') || lc.endsWith('.disable')) {
-    const raw = lc.endsWith('.disabled') ? name.slice(0, -9) : name.slice(0, -7)
-    if (raw.toLowerCase().endsWith('.dll'))
-      return { stem: raw.slice(0, -4), file: raw, disabled: true }
-    return null
+    const raw = lc.endsWith('.disabled') ? name.slice(0, -9) : name.slice(0, -8)
+    const stem = raw.toLowerCase().endsWith('.dll') ? raw.slice(0, -4) : raw
+    if (!stem) return null
+    return { stem, file: `${stem}.dll`, disabled: true }
   }
   if (lc.endsWith('.dll')) return { stem: name.slice(0, -4), file: name, disabled: false }
   const backup = /^(.*\.dll)\.\d+$/i.exec(name)
-  if (backup) return { stem: backup[1].slice(0, -4), file: name, disabled: true }
+  if (backup) return { stem: backup[1].slice(0, -4), file: backup[1], disabled: true }
+
+  // only .dll / .dll.N / .disable / .disabled count as (disabled) mods;
+  // every other non-dll file (.pdb, .txt, configs, logs ...) is ignored
   return null
 }
 
@@ -179,10 +214,12 @@ function buildLegacyItem(
   title: string,
   plugins: string[],
   activated: boolean,
-  identifyName?: string
+  identifyName?: string,
+  group?: string,
+  guidOverride?: string
 ): ModItemDto {
   return {
-    guid: `legacy:${title}`,
+    guid: guidOverride ?? `legacy:${title}`,
     name: title,
     author: 'BepInEx plugin',
     version: '',
@@ -196,7 +233,8 @@ function buildLegacyItem(
     supportsCurrentVersion: true,
     pluginFiles: plugins,
     assetPaths: [],
-    loose: false
+    loose: false,
+    group
   }
 }
 
@@ -221,6 +259,36 @@ export function invalidateModScan(gameRoot: string, gameVersion?: string): void 
   for (const k of SCAN_CACHE.keys()) {
     if (k.startsWith(prefix)) SCAN_CACHE.delete(k)
   }
+}
+
+/**
+ * 就地更新缓存里某个 mod 的条目，而不是把整份扫描结果作废。
+ *
+ * 启用/停用只改了磁盘上的文件名，属于「已知的定点变化」，没有必要为此付一次
+ * 全量重扫（那会在主进程同步跑，直接表现为界面冻结）。传进来的 apply 直接修改
+ * 传入的副本，随后自动重算派生字段。
+ *
+ * 返回是否真的命中了缓存条目：没命中说明缓存本来就是空的，调用方无需处理。
+ */
+export function patchModScanEntry(
+  gameRoot: string,
+  guid: string,
+  apply: (mod: ModItemDto) => void
+): boolean {
+  const prefix = String(gameRoot).toLowerCase()
+  let hit = false
+  for (const [key, entry] of SCAN_CACHE) {
+    if (!key.startsWith(prefix)) continue
+    const idx = entry.mods.findIndex((m) => m.guid === guid)
+    if (idx < 0) continue
+    // 换成新对象再改，避免调用方已经拿到的旧引用被就地改写
+    const next: ModItemDto = { ...entry.mods[idx] }
+    apply(next)
+    applyResolvedPaths(gameRoot, next)
+    entry.mods[idx] = next
+    hit = true
+  }
+  return hit
 }
 
 export function scanRepositoryCached(gameRoot: string, gameVersion?: string): ModItemDto[] {
@@ -257,19 +325,35 @@ export function scanRepository(gameRoot: string, gameVersion?: string): ModItemD
     }
     const plugins = collectPlugins(modRoot)
     if (plugins.length === 0) continue
-    const activeFiles = plugins.filter((x) => !x.disabled).map((x) => x.file)
-    const activated = activeFiles.length > 0
     
-    const pluginFiles = activeFiles.length ? activeFiles : plugins.map((x) => x.file)
-    const item = buildLegacyItem(
-      modRoot,
-      entry.name,
-      pluginFiles,
-      activated,
-      resolveIdentifyName(entry.name, modRoot, pluginFiles)
-    )
-    mods.push(item)
-    legacyMetas.push({ item, candidates: collectCandidates(modRoot, pluginFiles) })
+    const byStem = new Map<string, { stem: string; active?: string; disabled?: string }>()
+    for (const p of plugins) {
+      const parsed = parsePluginEntry(path.basename(p.file))
+      if (!parsed) continue
+      const key = parsed.stem.toLowerCase()
+      const cur = byStem.get(key) ?? { stem: parsed.stem }
+      if (p.disabled) cur.disabled = cur.disabled ?? p.file
+      else cur.active = cur.active ?? p.file
+      byStem.set(key, cur)
+    }
+    for (const { stem, active, disabled } of byStem.values()) {
+      const file = active ?? disabled ?? ''
+      if (!file) continue
+      const activated = !!active
+      // 候选 GUID 只需要算一次：identifyName 与后续 Modded 关联共用同一份结果
+      const candidates = collectCandidates(modRoot, [file])
+      const item = buildLegacyItem(
+        modRoot,
+        stem,
+        [file],
+        activated,
+        resolveIdentifyName(entry.name, candidates),
+        entry.name,
+        `legacy:${entry.name}/${stem}`
+      )
+      mods.push(item)
+      legacyMetas.push({ item, candidates })
+    }
     for (const p of plugins) {
       coveredStems.add(path.basename(p.file).toLowerCase())
     }
@@ -295,25 +379,27 @@ export function scanRepository(gameRoot: string, gameVersion?: string): ModItemD
   }
   for (const g of roots) {
     if (g.active.length > 0) {
+      const candidates = collectCandidates(pluginsDir, g.active)
       const item = buildLegacyItem(
         pluginsDir,
         g.title,
         g.active,
         true,
-        resolveIdentifyName(g.title, pluginsDir, g.active)
+        resolveIdentifyName(g.title, candidates)
       )
       mods.push(item)
-      legacyMetas.push({ item, candidates: collectCandidates(pluginsDir, g.active) })
+      legacyMetas.push({ item, candidates })
     } else if (g.disabled.length > 0) {
+      const candidates = collectCandidates(pluginsDir, [g.disabled[0]])
       const item = buildLegacyItem(
         pluginsDir,
         g.title,
         [g.disabled[0]],
         false,
-        resolveIdentifyName(g.title, pluginsDir, [g.disabled[0]])
+        resolveIdentifyName(g.title, candidates)
       )
       mods.push(item)
-      legacyMetas.push({ item, candidates: collectCandidates(pluginsDir, [g.disabled[0]]) })
+      legacyMetas.push({ item, candidates })
     }
   }
 
@@ -381,24 +467,30 @@ export function scanRepository(gameRoot: string, gameVersion?: string): ModItemD
   }
 
   
-  const configDir = path.join(path.dirname(pluginsDir), 'config')
-  for (const m of mods) {
-    
-    const active =
-      m.pluginFiles.find((p) => /\.dll$/i.test(p) && !/\.(disabled|disable|\.\d+)$/i.test(p)) ??
-      m.pluginFiles[0]
-    if (active) {
-      const abs = path.isAbsolute(active) ? active : path.join(m.installDir, active)
-      m.dllFile = abs
-      m.dllDirectory = path.dirname(abs)
-      m.loose = samePath(m.dllDirectory, pluginsDir)
-    } else {
-      m.loose = samePath(m.installDir, pluginsDir)
-    }
-    m.configFile = findConfigFile(configDir, m)
-  }
+  for (const m of mods) applyResolvedPaths(gameRoot, m)
 
   return mods
+}
+
+
+/**
+ * 依据 gameRoot 与 mod 当前的 pluginFiles 重算派生字段。
+ * 独立出来是为了让「启用/停用后就地更新缓存条目」不必重扫整个仓库。
+ */
+export function applyResolvedPaths(gameRoot: string, m: ModItemDto): void {
+  const pluginsDir = bepinexPluginsDir(gameRoot)
+  const active =
+    m.pluginFiles.find((p) => /\.dll$/i.test(p) && !/\.(disabled|disable|\.\d+)$/i.test(p)) ??
+    m.pluginFiles[0]
+  if (active) {
+    const abs = path.isAbsolute(active) ? active : path.join(m.installDir, active)
+    m.dllFile = abs
+    m.dllDirectory = path.dirname(abs)
+    m.loose = samePath(m.dllDirectory, pluginsDir)
+  } else {
+    m.loose = samePath(m.installDir, pluginsDir)
+  }
+  m.configFile = findConfigFile(path.join(path.dirname(pluginsDir), 'config'), m)
 }
 
 

@@ -1,10 +1,20 @@
 import { Languages } from 'lucide-react'
+import { toast } from 'sonner'
 import { useI18n } from '@/i18n'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 
+/** 亚等约语（Eilmetion 供稿）：选中时右下角弹致谢 */
+const CREDIT_LOCALE = 'ydyy'
+const CREDIT_TEXT = 'By Eilmetion'
+
 export function LanguagePicker(): React.JSX.Element {
   const { locale, setLocale, locales, t } = useI18n()
+
+  const pick = (id: string): void => {
+    setLocale(id as Parameters<typeof setLocale>[0])
+    if (id === CREDIT_LOCALE) toast(CREDIT_TEXT)
+  }
 
   if (locale === 'fish') {
     return (
@@ -40,7 +50,7 @@ export function LanguagePicker(): React.JSX.Element {
               <button
                 key={l.id}
                 type="button"
-                onClick={() => setLocale(l.id)}
+                onClick={() => pick(l.id)}
                 className={cn(
                   'flex flex-col items-start gap-0.5 rounded-lg border px-3 py-2 text-left transition',
                   active

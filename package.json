@@ -22,6 +22,10 @@
       {
         "from": "resources/BepInEx.zip",
         "to": "BepInEx.zip"
+      },
+      {
+        "from": "resources/apps.ico",
+        "to": "apps.ico"
       }
     ],
     "protocols": [
@@ -38,22 +42,6 @@
         "nsis"
       ]
     },
-    "mac": {
-      "icon": "build/icon.png",
-      "target": [
-        "dmg",
-        "zip"
-      ],
-      "category": "public.app-category.utilities"
-    },
-    "linux": {
-      "icon": "build/icon.png",
-      "target": [
-        "AppImage",
-        "deb"
-      ],
-      "category": "Utility"
-    },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
@@ -64,8 +52,6 @@
     "dev": "electron-vite dev",
     "build": "electron-vite build",
     "build:win": "electron-vite build && electron-builder --win",
-    "build:mac": "electron-vite build && electron-builder --mac",
-    "build:linux": "electron-vite build && electron-builder --linux",
     "preview": "electron-vite preview"
   },
   "dependencies": {

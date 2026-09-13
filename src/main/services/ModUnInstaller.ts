@@ -33,7 +33,7 @@ function dllStem(nameOrPath: string): string {
   let s = base
   let lc = s.toLowerCase()
   if (lc.endsWith('.disabled')) s = s.slice(0, -9)
-  else if (lc.endsWith('.disable')) s = s.slice(0, -7)
+  else if (lc.endsWith('.disable')) s = s.slice(0, -8)
   lc = s.toLowerCase()
   const backup = /^(.*)\.dll\.\d+$/i.exec(s)
   if (backup) return backup[1]

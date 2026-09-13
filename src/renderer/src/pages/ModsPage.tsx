@@ -1,13 +1,15 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { Download, Gamepad2, PackageX, Play, Search, SlidersHorizontal, Package, Square } from 'lucide-react'
+﻿import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
+import { ChevronDown, Download, Folder, FolderPlus, Gamepad2, MoreVertical, PackageX, Pin, PinOff, Play, Search, SlidersHorizontal, Package, Square, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
-import type { GameEnvironment } from '@shared/types'
+import type { GameEnvironment, ModItemDto } from '@shared/types'
 import { useI18n } from '@/i18n'
 import { useMods } from '@/hooks/useMods'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Switch } from '@/components/ui/switch'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
+import { WithTooltip } from '@/components/ui/tooltip'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,6 +17,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger
+} from '@/components/ui/dialog'
 import { ModListItem } from '@/components/ModListItem'
 import { PageHeader } from '@/components/PageHeader'
 import { InstallModDialog } from '@/components/InstallModDialog'
@@ -30,6 +41,130 @@ const PAGE_SIZE = 30
 
 function isTrashed(m: { name: string }): boolean {
   return /\[(trashed|deleted|removed|delisted|垃圾)\]/i.test(m.name)
+}
+
+function CollapseWrapper({
+  open,
+  children
+}: {
+  open: boolean
+  children: React.ReactNode
+}): React.JSX.Element {
+  return (
+    <div
+      className={`grid transition-all duration-300 ease-in-out ${
+        open ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+      }`}
+    >
+      <div className="overflow-hidden">
+        <div className="space-y-3">{children}</div>
+      </div>
+    </div>
+  )
+}
+
+function BepInExGroup({
+  name,
+  items,
+  collapsed,
+  pinned,
+  onToggleCollapse,
+  onSetPinned,
+  onToggleGroup,
+  onDelete
+}: {
+  name: string
+  items: ModItemDto[]
+  collapsed: boolean
+  pinned: boolean
+  onToggleCollapse: () => void
+  onSetPinned: (pinned: boolean) => void
+  onToggleGroup: (activate: boolean) => void
+  onDelete: () => void | Promise<void>
+}): React.JSX.Element {
+  const { t } = useI18n()
+  const enabled = items.filter((m) => m.activated).length
+  const total = items.length
+  const allOn = enabled === total
+  const mixed = enabled > 0 && !allOn
+  const folder = items[0]?.installDir
+  return (
+    <Card className="relative bg-muted/40">
+      <CardContent className="flex items-center gap-2 px-3 py-2.5">
+        <Button variant="ghost" size="icon" onClick={onToggleCollapse} className="h-7 w-7 shrink-0">
+          <ChevronDown className={"h-4 w-4 transition-transform duration-300 ease-out " + (collapsed ? "-rotate-90" : "rotate-0")} />
+        </Button>
+        <button
+          type="button"
+          onClick={onToggleCollapse}
+          className="flex min-w-0 flex-1 items-center gap-2 text-left"
+        >
+          <Folder className="h-4 w-4 shrink-0 text-primary" />
+          <span className="min-w-0">
+            <span className="flex items-center gap-2">
+              <span className="truncate text-sm font-semibold">{name}</span>
+              {pinned && <Pin className="h-3.5 w-3.5 shrink-0 text-primary" />}
+              {mixed && <span className="text-xs text-muted-foreground">{t('mods.groupMixed')}</span>}
+            </span>
+            <span className="block text-xs text-muted-foreground">
+              {t('mods.groupOn', { enabled: String(enabled), total: String(total) })}
+            </span>
+          </span>
+        </button>
+        <Switch
+          checked={allOn}
+          onCheckedChange={(c) => onToggleGroup(c)}
+          aria-label={t('mods.groupAll', { name })}
+        />
+        <Dialog>
+          <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <MoreVertical className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="min-w-44">
+            <DropdownMenuItem onClick={() => onSetPinned(!pinned)}>
+              {pinned ? (
+                <PinOff className="mr-2 h-4 w-4" />
+              ) : (
+                <Pin className="mr-2 h-4 w-4" />
+              )}
+              {pinned ? t('list.unpin') : t('list.pin')}
+            </DropdownMenuItem>
+            {folder && (
+              <DropdownMenuItem onClick={() => void window.api.ui.openFolder(folder!)}>
+                <FolderPlus className="mr-2 h-4 w-4" />
+                {t('list.openDllFolder')}
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuSeparator />
+            <DialogTrigger asChild>
+              <DropdownMenuItem className="text-destructive focus:text-destructive">
+                <Trash2 className="mr-2 h-4 w-4" />
+                {t('mods.groupDelete')}
+              </DropdownMenuItem>
+            </DialogTrigger>
+          </DropdownMenuContent>
+          </DropdownMenu>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{t('mods.groupDeleteTitle', { name })}</DialogTitle>
+              <DialogDescription>{t('mods.groupDeleteWarn')}</DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <DialogTrigger asChild>
+                <Button variant="outline">{t('list.cancel')}</Button>
+              </DialogTrigger>
+              <Button variant="destructive" onClick={() => void onDelete()}>
+                {t('mods.groupDelete')}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </CardContent>
+    </Card>
+  )
 }
 
 interface Props {
@@ -79,6 +214,7 @@ export function ModsPage({
   const [timeFilter, setTimeFilter] = useState<TimeFilter>('all')
   const [sortKey, setSortKey] = useState<SortKey>('recent')
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({})
   const { t } = useI18n()
 
   
@@ -124,10 +260,57 @@ export function ModsPage({
     })
   }, [mods, search, timeFilter, sortKey, pins])
 
+  const groups = useMemo(() => {
+    const ordered: Array<{ name: string; items: ModItemDto[] }> = []
+    const map = new Map<string, ModItemDto[]>()
+    const standalone: ModItemDto[] = []
+    for (const m of filtered) {
+      if (m.group) {
+        let arr = map.get(m.group)
+        if (!arr) {
+          arr = []
+          map.set(m.group, arr)
+          ordered.push({ name: m.group, items: arr })
+        }
+        arr.push(m)
+      } else {
+        standalone.push(m)
+      }
+    }
+    return { ordered, standalone }
+  }, [filtered])
+
+  const rows = useMemo(() => {
+    const orderedGroups = [...groups.ordered].sort(
+      (a, b) => Number(!!pins[`group:${b.name}`]) - Number(!!pins[`group:${a.name}`])
+    )
+    const r: Array<{ kind: 'group'; name: string; items: ModItemDto[] } | { kind: 'item'; mod: ModItemDto }> = []
+    for (const g of orderedGroups) {
+      r.push({ kind: 'group', name: g.name, items: g.items })
+    }
+    for (const m of groups.standalone) r.push({ kind: 'item', mod: m })
+    return r
+  }, [groups, pins])
+
+  const rowCount = rows.length
+
+  const toggleGroup = async (name: string, items: ModItemDto[], activate: boolean): Promise<void> => {
+    let failed = 0
+    for (const m of items) {
+      const ok = await toggle(m.guid, activate)
+      if (!ok) failed++
+    }
+    if (failed > 0) {
+      toast.error(activate ? t('list.failEnable') : t('list.failDisable'), {
+        description: t('mods.groupAll', { name })
+      })
+    }
+  }
+
   
   const sentinelRef = useRef<HTMLDivElement>(null)
   const loadMore = (): void => {
-    setVisibleCount((c) => (c >= filtered.length ? c : c + PAGE_SIZE))
+    setVisibleCount((c) => (c >= rows.length ? c : c + PAGE_SIZE))
   }
   useEffect(() => {
     const el = sentinelRef.current
@@ -140,10 +323,7 @@ export function ModsPage({
     )
     io.observe(el)
     return () => io.disconnect()
-    
-    
-    
-  }, [filtered.length, visibleCount])
+  }, [rows.length, visibleCount])
 
   const runInstall = async (path: string): Promise<void> => {
     setDialogOpen(true)
@@ -219,20 +399,26 @@ export function ModsPage({
         desc={t('mods.countInstalled', { n: filtered.length })}
       >
         {running ? (
-          <Button variant="outline" onClick={() => void stop()} title={t('mods.stop')}>
+          <WithTooltip title={t('mods.stop')}>
+          <Button variant="outline" onClick={() => void stop()}>
             <Square className="mr-2 h-4 w-4" />
             {t('mods.stop')}
           </Button>
+          </WithTooltip>
         ) : (
           <>
-            <Button variant="outline" disabled={!env} onClick={() => void launch()} title={t('mods.launch')}>
+            <WithTooltip title={t('mods.launch')}>
+            <Button variant="outline" disabled={!env} onClick={() => void launch()}>
               <Play className="mr-2 h-4 w-4" />
               {t('mods.launch')}
             </Button>
-            <Button variant="outline" disabled={!env} onClick={() => void launchSteam()} title={t('mods.launchSteam')}>
+            </WithTooltip>
+            <WithTooltip title={t('mods.launchSteam')}>
+            <Button variant="outline" disabled={!env} onClick={() => void launchSteam()}>
               <Gamepad2 className="mr-2 h-4 w-4" />
               {t('mods.launchSteam')}
             </Button>
+            </WithTooltip>
           </>
         )}
         <Button onClick={() => void pickAndInstall()}>
@@ -306,22 +492,64 @@ export function ModsPage({
         </Card>
       ) : (
         <div className="space-y-3">
-          {filtered.slice(0, visibleCount).map((m) => (
-            <ModListItem
-              key={m.guid}
-              mod={m}
-              updateInfo={updates[m.guid]}
-              updating={updating[m.guid] ?? false}
-              onUpdate={() => void updateMod(m.guid)}
-              onToggle={toggle}
-              onUninstall={uninstall}
-              onSetPinned={(v) => setPinned(m.guid, v)}
-              pinned={!!pins[m.guid]}
-              onEditConfig={onEditConfig}
-            />
-          ))}
+          {rows.slice(0, visibleCount).map((row) =>
+            row.kind === 'group' ? (
+              <Fragment key={`group:${row.name}`}>
+                <BepInExGroup
+                  name={row.name}
+                  items={row.items}
+                  collapsed={!expandedGroups[row.name]}
+                  pinned={!!pins[`group:${row.name}`]}
+                  onToggleCollapse={() =>
+                    setExpandedGroups((p) => ({ ...p, [row.name]: !p[row.name] }))
+                  }
+                  onSetPinned={(v) => setPinned(`group:${row.name}`, v)}
+                  onToggleGroup={(activate) => void toggleGroup(row.name, row.items, activate)}
+                  onDelete={() =>
+                    void (async () => {
+                      let failed = 0
+                      for (const m of row.items) {
+                        const ok = await uninstall(m.guid)
+                        if (!ok) failed++
+                      }
+                      if (failed > 0) toast.error(t('mods.failUninstall'))
+                    })()
+                  }
+                />
+                <CollapseWrapper open={!!expandedGroups[row.name]}>
+                  {row.items.map((m) => (
+                    <ModListItem
+                      key={m.guid}
+                      mod={m}
+                      updateInfo={updates[m.guid]}
+                      updating={updating[m.guid] ?? false}
+                      onUpdate={() => void updateMod(m.guid)}
+                      onToggle={toggle}
+                      onUninstall={uninstall}
+                      onSetPinned={(v) => setPinned(m.guid, v)}
+                      pinned={!!pins[m.guid]}
+                      onEditConfig={onEditConfig}
+                    />
+                  ))}
+                </CollapseWrapper>
+              </Fragment>
+            ) : (
+              <ModListItem
+                key={row.mod.guid}
+                mod={row.mod}
+                updateInfo={updates[row.mod.guid]}
+                updating={updating[row.mod.guid] ?? false}
+                onUpdate={() => void updateMod(row.mod.guid)}
+                onToggle={toggle}
+                onUninstall={uninstall}
+                onSetPinned={(v) => setPinned(row.mod.guid, v)}
+                pinned={!!pins[row.mod.guid]}
+                onEditConfig={onEditConfig}
+              />
+            )
+          )}
           {}
-          {filtered.length > visibleCount && (
+          {rowCount > visibleCount && (
             <div ref={sentinelRef} className="h-px w-full" />
           )}
         </div>

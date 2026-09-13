@@ -7,12 +7,18 @@ const PLUGIN_EXT = '.dll'
 
 
 export interface InstallTargets {
-  
+
   modded: { src: string; destRel: string }[]
-  
+
   plugins: { src: string; destRel: string; extras: string[] }[]
-  
+
   patchers: { src: string; destRel: string }[]
+
+  /**
+   * 与包内 dll 同名的杂项 json（非 .deps.json）→ BepInEx/modInfo
+   * （BBMM 兼容：这些是 mod 的元数据描述文件）
+   */
+  modInfo: { src: string; destRel: string }[]
 }
 
 function pluginsRootCandidates(extractRoot: string): string[] {
@@ -63,6 +69,135 @@ function walkPatchers(dir: string, rel: string, into: { src: string; destRel: st
   }
 }
 
+/* ------------------------------------------------------------------ *
+ * BBMM 式启发式分拣（无可识别目录布局时的兜底，抄自 BBMM 1.3.1
+ * ExtractArchiveAndSort / ScanAndHandleFolders 的规则）：
+ *  1. 目录名是合法 GUID（全小写字母/数字/点，按点分 2~5 段）→ 整目录进 Modded；
+ *  2. 名字含 template/example（不分大小写）的目录是模板/示例 → 跳过不装；
+ *  3. 相对路径任意一段等于 patchers（不分大小写）的 dll → BepInEx/patchers；
+ *  4. 其余 dll → plugins（保留相对路径）；同目录同名的 .pdb/.xml 挂为 extras；
+ *  5. json 只有在 stem 与包内某个 dll 同名时才收：
+ *     .deps.json → 跟着那个 dll 进 plugins，其余同名 json → BepInEx/modInfo。
+ * ------------------------------------------------------------------ */
+
+/** 目录名是否符合 GUID 规则（BBMM IsValidModFolderName） */
+export function isValidGuidFolderName(input: string): boolean {
+  if (!input) return false
+  if (!/^[a-z0-9.]+$/.test(input)) return false
+  const segs = input.split('.')
+  return segs.length >= 2 && segs.length <= 5
+}
+
+/** 名字含 template / example（不分大小写）视为模板/示例目录（BBMM IsTemplateFolder） */
+export function isTemplateFolderName(input: string): boolean {
+  const n = input.toLowerCase()
+  return n.includes('template') || n.includes('example')
+}
+
+function relDirOf(rel: string): string {
+  const i = rel.lastIndexOf('/')
+  return i === -1 ? '' : rel.slice(0, i)
+}
+
+function stemOf(rel: string): string {
+  const base = path.basename(rel)
+  const dot = base.lastIndexOf('.')
+  return dot === -1 ? base : base.slice(0, dot)
+}
+
+function findPluginEntry(
+  plugins: InstallTargets['plugins'],
+  rel: string,
+  stem: string
+): { src: string; destRel: string; extras: string[] } | undefined {
+  const dir = relDirOf(rel)
+  return (
+    plugins.find((p) => relDirOf(p.destRel) === dir && stemOf(p.destRel).toLowerCase() === stem) ??
+    plugins.find((p) => stemOf(p.destRel).toLowerCase() === stem)
+  )
+}
+
+function walkHeuristic(extractRoot: string, targets: InstallTargets): void {
+  const skipNames = new Set([GMP_METADATA_FOLDER, GMP_FALLBACK_METADATA_FOLDER, TEMP_FOLDER])
+  const modded = targets.modded
+  const plugins = targets.plugins
+  const patchers = targets.patchers
+  const modInfo = targets.modInfo
+
+  // pass 1：DFS 收集文件；目录按 GUID/模板规则就地分流，命中的不再下钻
+  const pendingDirs: { abs: string; rel: string }[] = [{ abs: extractRoot, rel: '' }]
+  const files: { abs: string; rel: string }[] = []
+  while (pendingDirs.length > 0) {
+    const { abs, rel } = pendingDirs.pop()!
+    let entries: fs.Dirent[]
+    try {
+      entries = fs.readdirSync(abs, { withFileTypes: true })
+    } catch {
+      continue
+    }
+    for (const e of entries) {
+      const childAbs = path.join(abs, e.name)
+      const childRel = rel ? `${rel}/${e.name}` : e.name
+      if (e.isDirectory()) {
+        if (skipNames.has(e.name)) continue
+        if (isTemplateFolderName(e.name)) continue
+        if (isValidGuidFolderName(e.name)) {
+          if (!modded.some((m) => m.destRel === e.name)) {
+            modded.push({ src: childAbs, destRel: e.name })
+          }
+          continue
+        }
+        pendingDirs.push({ abs: childAbs, rel: childRel })
+      } else {
+        files.push({ abs: childAbs, rel: childRel })
+      }
+    }
+  }
+
+  // pass 2：包内所有 dll 的 stem 集合（json 配对依据）
+  const dllStems = new Set<string>()
+  for (const f of files) {
+    if (f.rel.toLowerCase().endsWith(PLUGIN_EXT)) dllStems.add(stemOf(f.rel).toLowerCase())
+  }
+
+  // pass 3a：先分流所有 dll（pdb/xml/json 要挂到 dll 条目上，必须后处理）
+  for (const f of files) {
+    const lower = f.rel.toLowerCase()
+    if (!lower.endsWith(PLUGIN_EXT)) continue
+    if (f.rel.split('/').some((seg) => seg.toLowerCase() === 'patchers')) {
+      patchers.push({ src: f.abs, destRel: path.basename(f.rel) })
+    } else {
+      plugins.push({ src: f.abs, destRel: f.rel, extras: [] })
+    }
+  }
+
+  // pass 3b：pdb/xml/json 配对
+  for (const f of files) {
+    const lower = f.rel.toLowerCase()
+    const stem = stemOf(f.rel).toLowerCase()
+    if (lower.endsWith('.pdb') || lower.endsWith('.xml')) {
+      const owner = findPluginEntry(plugins, f.rel, stem)
+      owner?.extras.push(f.abs)
+      continue
+    }
+    if (lower.endsWith('.json')) {
+      // BBMM 原版按「去掉最后一个扩展名」取 stem，导致 X.deps.json 的 stem 变成
+      // 'X.deps' 永远配不上 dll（原版会把它当无关 json 跳过）——这里修正为
+      // 剥掉整个 .deps.json 后缀再配对
+      let stem = lower.slice(0, -'.json'.length)
+      const isDeps = stem.endsWith('.deps')
+      if (isDeps) stem = stem.slice(0, -'.deps'.length)
+      if (!dllStems.has(stem)) continue
+      if (isDeps) {
+        const owner = findPluginEntry(plugins, f.rel, stem)
+        owner?.extras.push(f.abs)
+      } else {
+        modInfo.push({ src: f.abs, destRel: path.basename(f.rel) })
+      }
+    }
+  }
+}
+
 
 
 
@@ -100,6 +235,7 @@ export function collectTargets(input: string): InstallTargets {
   const modded: InstallTargets['modded'] = []
   const plugins: InstallTargets['plugins'] = []
   const patchers: InstallTargets['patchers'] = []
+  const modInfo: InstallTargets['modInfo'] = []
 
   const moddedRoots = moddedRootCandidates(extractRoot).filter((p) => fs.existsSync(p))
   for (const mr of moddedRoots) {
@@ -116,34 +252,14 @@ export function collectTargets(input: string): InstallTargets {
   const patchersRoots = patchersRootCandidates(extractRoot).filter((p) => fs.existsSync(p))
   for (const pr of patchersRoots) walkPatchers(pr, '', patchers)
 
-  const skipResolve = [
-    ...moddedRoots.map((p) => path.resolve(p)),
-    ...pluginRoots.map((p) => path.resolve(p)),
-    ...patchersRoots.map((p) => path.resolve(p))
-  ]
-
-  
-  
   if (pluginRoots.length > 0 || moddedRoots.length > 0 || patchersRoots.length > 0) {
-    return { modded, plugins, patchers }
+    return { modded, plugins, patchers, modInfo }
   }
 
-  for (const e of fs.readdirSync(extractRoot, { withFileTypes: true })) {
-    const abs = path.join(extractRoot, e.name)
-    if (skipResolve.includes(path.resolve(abs))) continue
-    if (e.name === GMP_METADATA_FOLDER || e.name === GMP_FALLBACK_METADATA_FOLDER) continue
-    if (e.name === TEMP_FOLDER) continue
-    if (e.isDirectory()) {
-      if (!modded.some((x) => x.destRel === e.name))
-        modded.push({ src: abs, destRel: e.name })
-    } else if (e.name.toLowerCase().endsWith(PLUGIN_EXT)) {
-      if (!plugins.some((x) => x.destRel === e.name))
-        plugins.push(pluginTarget(abs, e.name))
-    }
-    
-  }
+  // 没有任何可识别目录布局 → BBMM 式启发式分拣整棵树
+  walkHeuristic(extractRoot, { modded, plugins, patchers, modInfo })
 
-  return { modded, plugins, patchers }
+  return { modded, plugins, patchers, modInfo }
 }
 
 export function deriveModName(targets: InstallTargets): string {

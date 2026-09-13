@@ -6,7 +6,8 @@ import {
   GMP_FALLBACK_METADATA_FOLDER,
   TEMP_FOLDER,
   bepinexPatchersDir,
-  bepinexPluginsDir
+  bepinexPluginsDir,
+  bepinexModInfoDir
 } from '../constants'
 import { createTempDir, extractArchive, removeDirIfInside } from './ModArchiveExtractor'
 import { matchSupportedVersion } from './ManifestLoader'
@@ -334,6 +335,22 @@ export function installUnmanaged(
       const existed = fs.existsSync(dest)
       fs.copyFileSync(patcher.src, dest)
       if (!existed) created.push(dest)
+    }
+
+    // modInfo：与包内 dll 同名的杂项 json（BBMM 兼容），平铺进 BepInEx/modInfo
+    if (targets.modInfo.length > 0) {
+      const modInfoRoot = path.resolve(bepinexModInfoDir(gameRoot))
+      fs.mkdirSync(modInfoRoot, { recursive: true })
+      for (const item of targets.modInfo) {
+        if (isCancelled?.()) throw new Error('install cancelled')
+        const dest = path.resolve(modInfoRoot, item.destRel)
+        if (!isInside(modInfoRoot, dest)) throw new Error(`modInfo dest escapes: ${dest}`)
+        if (!isInside(gameRoot, dest)) throw new Error(`dest outside game root: ${dest}`)
+        fs.mkdirSync(path.dirname(dest), { recursive: true })
+        const existed = fs.existsSync(dest)
+        fs.copyFileSync(item.src, dest)
+        if (!existed) created.push(dest)
+      }
     }
 
     onProgress?.({ stage: 'done', percent: 100, message: modName })

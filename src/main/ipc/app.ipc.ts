@@ -32,10 +32,6 @@ const COMMON_CJK_FONTS = [
 let fontCache: string[] | null = null
 export async function listSystemFonts(): Promise<string[]> {
   if (fontCache) return fontCache
-  if (process.platform !== 'win32') {
-    fontCache = [...COMMON_CJK_FONTS].sort()
-    return fontCache
-  }
   try {
     const out = await new Promise<string>((resolve, reject) => {
       execFile(

@@ -1,7 +1,7 @@
 import fs from 'fs'
 import { ipcMain, WebContents } from 'electron'
 import { loadModManifest } from '../services/ManifestLoader'
-import { scanRepositoryCached, invalidateModScan } from '../services/ModRepositoryScanner'
+import { scanRepositoryCached, invalidateModScan, patchModScanEntry } from '../services/ModRepositoryScanner'
 import { installModArchive, installUnmanaged, hasManifest } from '../services/ModInstaller'
 import { createTempDir, extractArchive, removeDirIfInside } from '../services/ModArchiveExtractor'
 import { buildPlan } from '../services/ModArchivePlanner'
@@ -151,7 +151,11 @@ export function registerModsIpc(getWebContents: () => WebContents | null): void 
       const manifest = loadModManifest(installDir)
       if (!manifest) return { ok: false, error: 'Cannot read manifest for mod' }
       const res = toggleActivation(env.value, installDir, manifest, activate)
-      invalidateModScan(env.value)
+      // 只改了这一个 mod 的文件名，定点更新缓存即可 —— 整份作废会逼出一次
+      // 阻塞主进程的全量重扫，用户看到的就是界面卡死
+      patchModScanEntry(env.value, guid, (m) => {
+        m.activated = res.activated
+      })
       return { ok: true, value: res }
     }
     const list = scanRepositoryCached(env.value, runtimeState.environment?.gameVersion)
@@ -160,13 +164,18 @@ export function registerModsIpc(getWebContents: () => WebContents | null): void 
     
     if (mod.guid.startsWith('legacy:')) {
       const res = toggleLegacyPlugin(mod.installDir, mod.pluginFiles, activate)
-      invalidateModScan(env.value)
-      return { ok: true, value: res }
+      patchModScanEntry(env.value, guid, (m) => {
+        m.activated = res.activated
+        m.pluginFiles = res.pluginFiles
+      })
+      return { ok: true, value: { activated: res.activated } }
     }
     const manifest = loadModManifest(mod.installDir)
     if (!manifest) return { ok: false, error: 'Cannot read manifest for mod' }
     const res = toggleActivation(env.value, mod.installDir, manifest, activate)
-    invalidateModScan(env.value)
+    patchModScanEntry(env.value, guid, (m) => {
+      m.activated = res.activated
+    })
     return { ok: true, value: res }
   })
 

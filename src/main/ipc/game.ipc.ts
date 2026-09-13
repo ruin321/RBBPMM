@@ -1,6 +1,6 @@
-import { ipcMain, dialog, shell } from 'electron'
+import { ipcMain, dialog, shell, BrowserWindow } from 'electron'
 import { spawn } from 'child_process'
-import { resolveEnvironment, resolveEnvironmentFromAny, resolveLaunchScript } from '../services/GameEnvironment'
+import { resolveEnvironment } from '../services/GameEnvironment'
 import { isGameRunning, stopGame } from '../services/GameProcess'
 import { getStoredExePath, setStoredExePath, runtimeState } from '../store'
 import type { GameEnvironment, Result } from '../../shared/types'
@@ -17,9 +17,14 @@ function loadCurrentEnv(): GameEnvironment | null {
   if (runtimeState.environment) return runtimeState.environment
   const exe = getStoredExePath()
   if (!exe) return null
-  const env = process.platform === 'win32' ? resolveEnvironment(exe) : resolveEnvironmentFromAny(exe)
+  const env = resolveEnvironment(exe)
   if (env) runtimeState.environment = env
   return env
+}
+
+function minimizeMainWindow(): void {
+  const w = BrowserWindow.getAllWindows()[0]
+  if (w) w.minimize()
 }
 
 export function registerGameIpc(): void {
@@ -28,18 +33,15 @@ export function registerGameIpc(): void {
   })
 
   ipcMain.handle('game:select-dir', async (): Promise<Result<GameEnvironment>> => {
-    const isWin = process.platform === 'win32'
     const res = await dialog.showOpenDialog({
       title: 'Select the Baldi\'s Basics Plus executable',
-      properties: isWin ? ['openFile'] : ['openFile', 'openDirectory'],
-      filters: isWin ? [{ name: 'Executable', extensions: ['exe'] }] : []
+      properties: ['openFile'],
+      filters: [{ name: 'Executable', extensions: ['exe'] }]
     })
     if (res.canceled || res.filePaths.length === 0) {
       return { ok: false, error: 'cancelled' }
     }
-    const env = isWin
-      ? resolveEnvironment(res.filePaths[0])
-      : resolveEnvironmentFromAny(res.filePaths[0])
+    const env = resolveEnvironment(res.filePaths[0])
     if (!env) return envResult(null)
     runtimeState.environment = env
     setStoredExePath(env.executablePath)
@@ -47,9 +49,7 @@ export function registerGameIpc(): void {
   })
 
   ipcMain.handle('game:set-dir', async (_e, { exePath }: { exePath: string }): Promise<Result<GameEnvironment>> => {
-    const env = process.platform === 'win32'
-      ? resolveEnvironment(exePath)
-      : resolveEnvironmentFromAny(exePath)
+    const env = resolveEnvironment(exePath)
     if (!env) return envResult(null)
     runtimeState.environment = env
     setStoredExePath(env.executablePath)
@@ -61,25 +61,18 @@ export function registerGameIpc(): void {
     if (!env) return { ok: false, error: 'Game directory not configured' }
     return new Promise((resolve) => {
       try {
-        const isWin = process.platform === 'win32'
-        const launchScript = !isWin ? resolveLaunchScript(env.rootPath) : null
-        const child = launchScript
-          ? spawn('/bin/sh', [launchScript], {
-              cwd: env.rootPath,
-              detached: true,
-              stdio: 'ignore'
-            })
-          : spawn(env.executablePath, [], {
-              cwd: env.rootPath,
-              detached: true,
-              stdio: 'ignore',
-              windowsHide: false
-            })
+        const child = spawn(env.executablePath, [], {
+          cwd: env.rootPath,
+          detached: true,
+          stdio: 'ignore',
+          windowsHide: false
+        })
         child.on('error', (err) => {
           resolve({ ok: false, error: err.message })
         })
         child.unref()
         runtimeState.gamePid = child.pid ?? null
+        minimizeMainWindow()
         resolve({ ok: true, value: { pid: child.pid } })
       } catch (err) {
         resolve({ ok: false, error: err instanceof Error ? err.message : String(err) })
@@ -91,6 +84,7 @@ export function registerGameIpc(): void {
     try {
       await shell.openExternal(`steam://rungameid/${STEAM_APPID}`)
       runtimeState.gamePid = null
+      minimizeMainWindow()
       return { ok: true, value: { launched: true } }
     } catch (err) {
       return { ok: false, error: err instanceof Error ? err.message : String(err) }

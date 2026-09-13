@@ -246,6 +246,41 @@ html.prank-wobble .app-root {
 }
 
 
+.ascii-scrollbar-hide {
+  scrollbar-width: none;
+}
+.ascii-scrollbar-hide::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.ascii-scrollbar {
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  line-height: 18px;
+  /* 跟着页面文字色走 —— 这页是「无样式 HTML」，字符就该是纯黑 */
+  color: inherit;
+}
+.ascii-scrollbar > div {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ascii-scrollbar-cap {
+  color: inherit;
+  opacity: 0.3;
+}
+.ascii-scrollbar-track {
+  color: inherit;
+  opacity: 0.55;
+}
+.ascii-scrollbar-thumb {
+  color: inherit;
+  font-weight: 700;
+}
+
+
 @keyframes shimmer {
   0% {
     transform: translateX(-150%);
@@ -358,9 +393,452 @@ html.fish-mode img {
   object-fit: cover;
 }
 
+
+html.no-anims,
+html.no-anims *,
+html.no-anims *::before,
+html.no-anims *::after {
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
+}
+
 html.fish-mode {
   background-color: hsl(var(--background));
   background-image: url('./fish.gif');
   background-size: 96px 96px;
   background-attachment: fixed;
+}
+
+
+/* ────────────────────────────────────────────────────────────────
+   彩蛋：把 mod 详情页做成「一个没写过 CSS 的老网页」（submissionId 716127）
+
+   不是真删样式表，而是把这一页的现代 UI 逐项清零：display 交回浏览器 UA
+   默认值（所有 flex / grid 塌成文档流），圆角、阴影、渐变、过渡、动画、
+   绝对定位、宽高全部关掉。
+
+   然后在元素级把「文章排版」补回来：h1 就是 h1 那么大、p 有段距、ul 有
+   项目符号、a 是蓝色下划线、button 是系统画的灰疙瘩、正文排成一条居中的
+   窄栏。这才是 2000 年前后一个没写 CSS 的 HTML 在浏览器里的样子 ——
+   有排版，但没有任何设计。
+
+   为什么到处 !important：Tailwind 的工具类和 hover / 响应式变体在跟这些
+   属性抢，变体还带伪类、特异性更高，不挂 !important 就会从缝里漏出来。
+
+   唯一的排除项是滚动条列 —— 它是 fixed 覆盖层，跟着塌会掉进文档流。
+   ──────────────────────────────────────────────────────────────── */
+
+/* 整页铺白，连滚动容器一起 —— 别在「网页」外面留一圈深色画框 */
+main:has(.retro-page) {
+  padding: 0 !important;
+  background-color: #ffffff !important;
+}
+
+.retro-page {
+  background-color: #ffffff;
+  color: #000000;
+  font-family: 'Times New Roman', Times, SimSun, '宋体', serif;
+  font-size: 16px;
+  line-height: 1.45;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 1.5em 2em 6em;
+}
+
+/* ── 第一步：清零。
+      `display: revert` 是关键 —— 不还原 display，flex/grid 就还立着，
+      看起来仍然是个 App，而不是一份文档。 ── */
+.retro-page *:where(:not(.ascii-scrollbar):not(.ascii-scrollbar *)) {
+  display: revert !important;
+  position: static !important;
+  float: none !important;
+  background: none !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  outline: none !important;
+  color: inherit !important;
+  font-family: inherit !important;
+  font-size: inherit !important;
+  font-weight: inherit !important;
+  font-style: inherit !important;
+  line-height: inherit !important;
+  letter-spacing: normal !important;
+  text-transform: none !important;
+  text-decoration: none !important;
+  text-align: left !important;
+  white-space: normal !important;
+  vertical-align: baseline !important;
+  width: auto !important;
+  height: auto !important;
+  max-width: none !important;
+  max-height: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  transform: none !important;
+  opacity: 1 !important;
+  overflow: visible !important;
+  aspect-ratio: auto !important;
+  transition: none !important;
+  animation: none !important;
+}
+
+/* 伪元素不在 `*` 的覆盖范围内，单独清掉 */
+.retro-page *::before,
+.retro-page *::after {
+  content: none !important;
+}
+
+/* ── 第二步：把文档该有的排版按元素补回来 ── */
+
+.retro-page h1 {
+  font-size: 2em !important;
+  font-weight: bold !important;
+  margin: 0.67em 0 !important;
+}
+.retro-page h2 {
+  font-size: 1.5em !important;
+  font-weight: bold !important;
+  margin: 0.83em 0 !important;
+}
+.retro-page h3 {
+  font-size: 1.17em !important;
+  font-weight: bold !important;
+  margin: 1em 0 !important;
+}
+.retro-page p {
+  margin: 1em 0 !important;
+}
+.retro-page ul,
+.retro-page ol {
+  margin: 1em 0 !important;
+  padding-left: 40px !important;
+}
+.retro-page ul {
+  list-style: disc outside !important;
+}
+.retro-page ol {
+  list-style: decimal outside !important;
+}
+.retro-page li {
+  display: list-item !important;
+  margin: 0.2em 0 !important;
+}
+.retro-page blockquote {
+  margin: 1em 40px !important;
+}
+.retro-page strong,
+.retro-page b {
+  font-weight: bold !important;
+}
+.retro-page em,
+.retro-page i {
+  font-style: italic !important;
+}
+.retro-page code,
+.retro-page kbd,
+.retro-page pre,
+.retro-page samp {
+  font-family: 'Courier New', Courier, monospace !important;
+}
+.retro-page pre {
+  margin: 1em 0 !important;
+  white-space: pre !important;
+}
+
+/* 链接：没访问过蓝、访问过紫、按下去红 —— 就是浏览器出厂那套 */
+.retro-page a {
+  color: #0000ee !important;
+  text-decoration: underline !important;
+  cursor: pointer !important;
+}
+.retro-page a:visited {
+  color: #551a8b !important;
+}
+.retro-page a:active {
+  color: #ee0000 !important;
+}
+
+/* 按钮：回到操作系统画的灰疙瘩 */
+.retro-page button {
+  display: inline-block !important;
+  padding: 1px 6px !important;
+  background-color: #efefef !important;
+  border: 2px outset #efefef !important;
+  color: #000000 !important;
+  cursor: default !important;
+}
+
+/* 图片跟着正文宽度走，别把页面撑出横向滚动条 */
+.retro-page img {
+  max-width: 100% !important;
+  height: auto !important;
+  vertical-align: middle !important;
+}
+/* 图集缩略图丢掉 w-20 h-12 后会涨到原始分辨率，不限一下会刷出几千像素 */
+.retro-page aside img {
+  max-width: 120px !important;
+}
+
+/* ── 第三步：块与块之间留行距，不然整页糊成一坨 ── */
+.retro-page > *,
+.retro-page section {
+  margin: 0 0 1.5em !important;
+}
+
+/* ── 兜底 ── */
+
+/* 语义上的隐藏别被 display: revert 翻出来 */
+.retro-page .hidden,
+.retro-page [hidden] {
+  display: none !important;
+}
+.retro-page .sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border-width: 0 !important;
+}
+
+/* 滚动条列是 fixed 覆盖层，不能跟着塌进文档流 */
+.retro-page .ascii-scrollbar {
+  position: fixed !important;
+  z-index: 30 !important;
+}
+
+/* 深色主题下这一页照样是白纸黑字 —— 没写 CSS 的网页不分主题。
+   滚动条字符跟着 .retro-page 的 color 走，所以它也是纯黑。 */
+
+
+/* ────────────────────────────────────────────────────────────────
+   彩蛋：鼠标指针换成模组自带的那只光标（submissionId 710488）
+
+   710488 是 Custom Cursor Mod —— 一个专门给游戏换鼠标指针的插件。
+   这一页就照它办：整页用模组图标里那只手当指针。
+
+   cursor 本身是可继承属性，但子树里任何一处自己声明了 cursor 都会盖掉
+   继承值（Tailwind 的 cursor-pointer / cursor-default、disabled:cursor-not-allowed…），
+   不显式对整棵子树下 !important 就会在按钮和链接上漏回系统箭头。
+
+   作用域挂在 main:has(...) 上、而不是页面根节点：main 自己有 p-8 内边距，
+   只挂根节点的话四周那圈留白不属于该子树，指针走到页面边缘会闪回系统箭头。
+
+   热点取的是图里指尖那一个像素 (23,16)：64×64 的画布四周全是透明的，
+   形状实际只占 x19-44 / y16-47，用默认的左上角热点会让指针整体错位一格。
+   ──────────────────────────────────────────────────────────────── */
+main:has(.cursor-710488),
+main:has(.cursor-710488) *,
+main:has(.cursor-710488) *::before,
+main:has(.cursor-710488) *::after {
+  cursor: url('./cursor-710488.png') 23 16, auto !important;
+}
+
+/* ────────────────────────────────────────────────────────────────
+   Banana 列表卡片跳过渲染（配合 BananaPage 的列表保活）。
+   content-visibility:auto 让视口外的卡片不参与布局/绘制——进详情
+   隐藏、点返回取消隐藏时，不用为一整屏之外的几百张卡重算样式和布局。
+   contain-intrinsic-size 给从未渲染过的卡片一个估算高度占位；
+   auto 前缀让浏览器记住渲染过的卡片真实高度，滚动恢复不受影响。
+   ──────────────────────────────────────────────────────────────── */
+.banana-card {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 480px;
+}
+
+/* ────────────────────────────────────────────────────────────────
+   彩蛋 715561（Dynamic Cursor）：指针实体化，平滑吸附到最近的按钮。
+   网页拿不到 OS 光标控制权 ⇒ 整页 cursor:none + 一个假指针元素缓动跟随，
+   点击由 MagneticCursor 劫持转发给吸附中的按钮。作用域与 710488 换肤
+   同一套挂点套路（main:has(...) 整棵子树 !important，否则 Tailwind 的
+   cursor-pointer / 禁用按钮的 cursor-not-allowed / UA 默认值都会漏回来）。
+   ──────────────────────────────────────────────────────────────── */
+main:has(.magnet-715561),
+main:has(.magnet-715561) *,
+main:has(.magnet-715561)::before,
+main:has(.magnet-715561)::after,
+main:has(.magnet-715561) *::before,
+main:has(.magnet-715561) *::after {
+  cursor: none !important;
+}
+
+/* 假指针：portal 在 body 上，位置由 rAF 指数缓动驱动（热点 23 16） */
+.magnet-fake-cursor {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 60;
+  pointer-events: none;
+  opacity: 0;
+  transition:
+    opacity 120ms linear,
+    scale 90ms ease-out;
+  will-change: transform;
+}
+/* 按下去缩一缩 */
+.magnet-fake-cursor.magnet-press {
+  scale: 0.82;
+}
+
+/* 吸附目标提示圈：告诉玩家「点下去生效的是它」 */
+.magnet-target {
+  outline: 2px solid rgba(250, 204, 21, 0.95) !important;
+  outline-offset: 2px;
+}
+
+/* ────────────────────────────────────────────────────────────────
+   彩蛋 713697（Baldi's basics BUG）：这个 mod 把修好的 bug 放回游戏，
+   于是它自己的详情页也会周期性长出 bug（由 GlitchPage.tsx 定时下毒、
+   到点自愈）。下面是各种 bug 的病灶样式。
+   ──────────────────────────────────────────────────────────────── */
+
+/* 贴图错乱：RGB 分离 + 抽搐 */
+.glitch-rgb {
+  animation: glitch-rgb 0.7s steps(2, jump-none) infinite;
+}
+@keyframes glitch-rgb {
+  0% {
+    filter: saturate(1.6) contrast(1.3) drop-shadow(2px 0 rgba(255, 0, 60, 0.75))
+      drop-shadow(-2px 0 rgba(0, 229, 255, 0.75));
+    transform: translate(0, 0);
+  }
+  50% {
+    filter: saturate(0.4) contrast(2) hue-rotate(120deg) drop-shadow(-3px 1px rgba(255, 0, 60, 0.6))
+      drop-shadow(3px -1px rgba(0, 229, 255, 0.6));
+    transform: translate(2px, -1px);
+  }
+  100% {
+    filter: none;
+    transform: none;
+  }
+}
+
+/* 文本撑爆：不许换行，直接冲出去（配合脚本把文本翻倍） */
+.glitch-nowrap {
+  white-space: nowrap !important;
+  overflow: visible !important;
+}
+
+/* 布局漂移：这一块整个歪了 */
+.glitch-shift {
+  transform: translate(7px, -4px) skewX(-2deg) !important;
+}
+
+/* 没 CSS：这一块突然退回浏览器默认观感 —— 白底黑字衬线 + 万物 1px 灰边 */
+.glitch-nocss {
+  background: #fff !important;
+  color: #000 !important;
+}
+.glitch-nocss,
+.glitch-nocss * {
+  font-family: 'Times New Roman', serif !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+}
+.glitch-nocss * {
+  background: transparent !important;
+  border: 1px solid #999 !important;
+  color: inherit !important;
+}
+
+/* 凭空 undefined */
+.glitch-undef {
+  color: #ef4444;
+  font-family: monospace;
+  font-size: 11px;
+  margin-left: 4px;
+}
+
+/* 整页闪屏 */
+.glitch-flicker {
+  animation: glitch-flicker 0.13s steps(2, jump-none) 7;
+}
+@keyframes glitch-flicker {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+    transform: translateX(1px);
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* —— 713697 开门即坏版新增 —— */
+
+/* 整块倒立：坐标系统反了 */
+.glitch-upside {
+  transform: rotate(180deg) !important;
+}
+
+/* 镜像：渲染目标翻转了 */
+.glitch-mirror {
+  transform: scaleX(-1) !important;
+}
+
+/* 糊掉：贴图加载到一半 */
+.glitch-blur {
+  filter: blur(5px) !important;
+}
+
+/* 隐身：这块还在，就是几乎看不见 */
+.glitch-ghost {
+  opacity: 0.06 !important;
+}
+
+/* 颜色通道炸了 */
+.glitch-hue {
+  filter: hue-rotate(160deg) saturate(3.2) contrast(1.4) !important;
+}
+
+/* 蚂蚁字：字号表读错了 */
+.glitch-tiny {
+  font-size: 6px !important;
+  line-height: 1.2 !important;
+}
+
+/* —— 708588 牛奶：牛奶瓶倒转 + 页面内容变成空气 —— */
+
+/* 喝了：内容隐成空气（页面本身不倒转，倒转的是右下角那瓶牛奶） */
+.milk-708588 > * {
+  transition: opacity 0.45s ease;
+}
+.milk-708588.is-milk-flipped > * {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transition: opacity 0.45s ease 0.3s;
+}
+
+/* 牛奶瓶倒转 / 回正（按钮 portal 在 body 上，样式走 .milk-btn） */
+.milk-btn img {
+  transition: transform 0.9s cubic-bezier(0.7, 0, 0.3, 1);
+}
+.milk-btn.milk-flipped img {
+  transform: rotate(180deg);
+}
+
+/* 右下角的牛奶按钮本体（portal 在 body 上，走这里上样式） */
+.milk-btn {
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  line-height: 0;
+  filter: drop-shadow(0 2px 6px rgb(0 0 0 / 0.35));
+  transition: transform 0.15s ease;
+}
+.milk-btn:hover {
+  transform: scale(1.08) rotate(-4deg);
+}
+.milk-btn:active {
+  transform: scale(0.94);
 }

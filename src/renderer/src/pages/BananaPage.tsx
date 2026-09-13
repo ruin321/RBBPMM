@@ -34,6 +34,7 @@ import { Select } from '@/components/ui/select'
 import { ModDetailPage } from '@/components/ModDetailPage'
 import { RichText } from '@/components/RichText'
 import { PageHeader } from '@/components/PageHeader'
+import { RansomOverlay } from '@/components/RansomOverlay'
 
 interface Props {
   
@@ -81,6 +82,10 @@ export function BananaPage({ onInstalled, initialSubmissionId, onInitialConsumed
   const [needTextureDep, setNeedTextureDep] = useState(false)
   
   const [lsPrereq, setLsPrereq] = useState<LevelStudioPrereqItem[] | null>(null)
+  
+  // Ransom 模组彩蛋 —— submissionId 716138
+  const RANSOM_SUBMISSION_ID = 716138
+  const [ransomUnlocked, setRansomUnlocked] = useState(false)
   
   type NavEntry = { id: number; fallback: GamebananaSubmissionDto }
   const [entries, setEntries] = useState<NavEntry[]>([])
@@ -226,6 +231,7 @@ export function BananaPage({ onInstalled, initialSubmissionId, onInitialConsumed
     const L = entries.length
     levelScrollRef.current[L] = mainEl()?.scrollTop ?? 0
     setEntries((p) => [...p, { id, fallback: { id, name: '…', hasFiles: false, files: [] } }])
+    setRansomUnlocked(false)
   }
 
   
@@ -283,17 +289,22 @@ export function BananaPage({ onInstalled, initialSubmissionId, onInitialConsumed
       return
     }
     const target = listScrollRef.current
-    const id = window.setTimeout(() => {
+    // 列表保活后，隐藏只是 display:none，取消隐藏的同一帧布局就是完整的，
+    // rAF 内恢复即可（原来等 320ms 是在等重建出来的列表摆好，现在不用了）。
+    const id = requestAnimationFrame(() => {
       if (current === null) mainEl()?.scrollTo({ top: target, left: 0, behavior: 'auto' })
-    }, 320)
-    return () => window.clearTimeout(id)
+    })
+    return () => cancelAnimationFrame(id)
     
   }, [current === null])
 
   return (
     <div className="mx-auto w-full max-w-5xl overflow-x-hidden">
-      {}
-      {current ? (
+      {current && current.id === RANSOM_SUBMISSION_ID && !ransomUnlocked && (
+        <RansomOverlay onUnlocked={() => setRansomUnlocked(true)} />
+      )}
+      {/* 列表保活：进详情只是隐藏，返回时不重建 450 张卡片（重建一次要 2 秒+）。 */}
+      {current && (
         <div className="fade-in">
           <ModDetailPage
             submissionId={current.id}
@@ -308,8 +319,9 @@ export function BananaPage({ onInstalled, initialSubmissionId, onInitialConsumed
             onContentReady={onContentReady}
           />
         </div>
-      ) : (
-        <section className="fade-in space-y-6">
+      )}
+
+      <section className={'fade-in space-y-6' + (current ? ' hidden' : '')}>
           <PageHeader icon={<Store className="h-6 w-6" />} title={t('banana.title')} />
 
           {}
@@ -386,7 +398,7 @@ export function BananaPage({ onInstalled, initialSubmissionId, onInitialConsumed
               {items.map((sub) => (
                 <Card
                   key={sub.id}
-                  className="group flex cursor-pointer flex-col overflow-hidden transition-shadow hover:shadow-md"
+                  className="banana-card group flex cursor-pointer flex-col overflow-hidden transition-shadow hover:shadow-md"
                   onClick={() => openFromList(sub)}
                 >
                   <div className="relative aspect-video w-full bg-muted">
@@ -495,8 +507,7 @@ export function BananaPage({ onInstalled, initialSubmissionId, onInitialConsumed
               <p className="text-sm text-muted-foreground">{t('banana.noMods')}</p>
             </div>
           )}
-        </section>
-      )}
+      </section>
 
       {}
       <Dialog open={needTextureDep} onOpenChange={setNeedTextureDep}>

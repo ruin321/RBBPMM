@@ -26,12 +26,16 @@ const api: AppApi = {
       ipcRenderer.invoke('banana:search', { page, query, category }),
     get: (submissionId) => ipcRenderer.invoke('banana:get', { submissionId }),
     install: (submissionId, fileId) => ipcRenderer.invoke('banana:install', { submissionId, fileId }),
+    installUrl: (url, modType, modId) => ipcRenderer.invoke('banana:install-url', { url, modType, modId }),
     getComments: (submissionId) => ipcRenderer.invoke('banana:get-comments', { submissionId }),
+    getUpdates: (submissionId) => ipcRenderer.invoke('banana:get-updates', { submissionId }),
     getPostReplies: (postId) => ipcRenderer.invoke('banana:get-post-replies', { postId }),
     levelStudioPrereq: () => ipcRenderer.invoke('banana:levelstudio-prereq')
   },
   customLevel: {
     list: () => ipcRenderer.invoke('customLevel:list'),
+    probe: (archivePath) => ipcRenderer.invoke('customLevel:probe', { archivePath }),
+    install: (archivePath) => ipcRenderer.invoke('customLevel:install', { archivePath }),
     toggle: (fileName, enabled) =>
       ipcRenderer.invoke('customLevel:toggle', { fileName, enabled }),
     delete: (fileName) => ipcRenderer.invoke('customLevel:delete', { fileName })

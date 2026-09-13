@@ -17,23 +17,6 @@ const APP_VERSION = '0.1.3'
 
 const SOURCE_URL = 'https://github.com/ruin321/RBBPMM'
 
-const ABOUT_NOTE = [
-  "Ruin321's Baldi's Basics Plus Mod Manager is just a little thing I threw together... (I think?)",
-  'Okay, I\'ve been working on this for a while.',
-  "Mainly because I couldn't stand BBPMM's bugs + it being closed source, and PixelGuy's GottaManagePlus not getting updates for a long time...",
-  'So I made this mod manager tool.',
-  '(Mostly just to make installing bbplus mods easier.)',
-  '',
-  'Special thanks to:',
-  'Eilmetion',
-  'G31-L',
-  'Basically Games - creator of the Baldi\'s Basics series',
-  'NickWildy - creator of the BBPMM tool',
-  'MissingTextureMan101, PixelGuy, uncertain_luei - Baldi\'s Basics Plus Dev API',
-  'MissingTextureMan101, uncertain_luei - Baldi\'s Basics Plus Texture Pack Mod',
-  'BepInExTeam - BepInEx'
-].join('\n')
-
 interface Props {
   open: boolean
   onOpenChange: (o: boolean) => void
@@ -72,7 +55,7 @@ export function AboutDialog({ open, onOpenChange }: Props): React.JSX.Element {
           </DialogDescription>
         </DialogHeader>
         <p className="max-h-64 overflow-y-auto whitespace-pre-line text-sm text-muted-foreground">
-          {ABOUT_NOTE}
+          {t('about.desc')}
         </p>
         <button
           type="button"

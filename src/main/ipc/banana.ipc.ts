@@ -10,6 +10,7 @@ import {
   getComments,
   getPostReplies,
   getSubmission,
+  getUpdates,
   searchMods
 } from '../services/GamebananaService'
 import { runtimeState } from '../store'
@@ -23,6 +24,7 @@ import type {
   GamebananaCommentsDto,
   GamebananaSearchResult,
   GamebananaSubmissionDto,
+  GamebananaUpdatesDto,
   InstallProgress,
   InstallResult,
   LevelStudioPrereqItem,
@@ -75,6 +77,14 @@ export function registerBananaIpc(getWebContents: () => WebContents | null): voi
     'banana:get-comments',
     async (_e, { submissionId }: { submissionId: number }): Promise<Result<GamebananaCommentsDto>> => {
       const value = await getComments(submissionId)
+      return { ok: true, value }
+    }
+  )
+
+  ipcMain.handle(
+    'banana:get-updates',
+    async (_e, { submissionId }: { submissionId: number }): Promise<Result<GamebananaUpdatesDto>> => {
+      const value = await getUpdates(submissionId)
       return { ok: true, value }
     }
   )
@@ -258,4 +268,107 @@ export function registerBananaIpc(getWebContents: () => WebContents | null): voi
   ipcMain.handle('banana:cancel', async (): Promise<void> => {
     runtimeState.cancelController?.abort()
   })
+
+  ipcMain.handle(
+    'banana:install-url',
+    async (
+      _e,
+      { url, modType, modId }: { url: string; modType?: string; modId?: number }
+    ): Promise<Result<InstallResult>> => {
+      const env = requireEnv()
+      if (!env.ok) return env
+      if (!url || typeof url !== 'string') return { ok: false, error: 'Missing archive URL' }
+      if (busy) return { ok: false, error: 'Another download/install is already running' }
+      busy = true
+      let tmpFile: string | null = null
+      try {
+        runtimeState.cancelController = new AbortController()
+        const signal = runtimeState.cancelController.signal
+
+        emit({ stage: 'downloading', percent: 0, message: `Downloading ${url}` })
+        tmpFile = await downloadMod(
+          url,
+          (p) => {
+            const percent = p.total ? Math.min(99, Math.round((p.received / p.total) * 100)) : undefined
+            emit({
+              stage: 'downloading',
+              percent,
+              message: `Downloading (...)${p.total ? ` (${Math.round(p.received / 1024 / 1024)}/${Math.round(p.total / 1024 / 1024)} MB)` : ''}`
+            })
+          },
+          () => signal.aborted
+        )
+
+        emit({ stage: 'installing', message: 'Installing...' })
+        let result: InstallResult
+        const exTemp = createTempDir(env.value)
+        try {
+          emit({ stage: 'extracting', message: 'Extracting archive' })
+          const extractRoot = await extractArchive(tmpFile, exTemp)
+          const mt = (modType || '').toLowerCase()
+          debugLog('banana:install-url modType =', mt, 'modId =', modId)
+
+          if (mt.includes('level') || mt.includes('map')) {
+            debugLog('banana:install-url routing to Level Studio Playables install')
+            const lsResult = await installLevelStudioPlayable(extractRoot)
+            result = {
+              mod: undefined,
+              warnings: [],
+              readmes: lsResult.readmes,
+              levelStudio: lsResult
+            }
+          } else if (mt.includes('texture')) {
+            debugLog('banana:install-url routing to Texture Packs install')
+            const packResult = await installTexturePacksFromRoot(
+              env.value,
+              extractRoot,
+              path.basename(tmpFile).replace(/\.(zip|rar|7z|tar|gz|bz2|xz|tgz|jar)$/i, '')
+            )
+            result = {
+              mod: undefined,
+              warnings: [],
+              texturePacks: packResult.installed,
+              readmes: packResult.readmes
+            }
+          } else {
+            debugLog('banana:install-url routing to Mod install')
+            if (hasManifest(extractRoot)) {
+              result = await installModArchive(
+                env.value,
+                tmpFile,
+                runtimeState.environment?.gameVersion,
+                (p) => emit(p),
+                () => signal.aborted,
+                extractRoot
+              )
+            } else {
+              installUnmanaged(extractRoot, env.value, (p) => emit(p), () => signal.aborted)
+              result = { mod: undefined, warnings: [] }
+            }
+            invalidateModScan(env.value)
+          }
+        } finally {
+          try {
+            fs.rmSync(exTemp, { recursive: true, force: true })
+          } catch {
+          }
+        }
+        return { ok: true, value: result }
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err)
+        debugError('banana:install-url failed:', msg)
+        if (runtimeState.cancelController?.signal.aborted) return { ok: false, error: 'Cancelled' }
+        return { ok: false, error: msg }
+      } finally {
+        if (tmpFile) {
+          try {
+            fs.rmSync(path.dirname(tmpFile), { recursive: true, force: true })
+          } catch {
+          }
+        }
+        runtimeState.cancelController = null
+        busy = false
+      }
+    }
+  )
 }

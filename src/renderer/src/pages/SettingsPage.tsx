@@ -8,6 +8,7 @@ import { ThemeCard } from '@/components/ThemeCard'
 import { LanguagePicker } from '@/components/LanguagePicker'
 import { ResetSettingsCard } from '@/components/ResetSettingsCard'
 import { SplashToggleCard } from '@/components/SplashToggleCard'
+import { AnimationToggleCard } from '@/components/AnimationToggleCard'
 import { DebugLogCard } from '@/components/DebugLogCard'
 import { PageHeader } from '@/components/PageHeader'
 
@@ -50,6 +51,7 @@ export function SettingsPage({
       <ThemeCard themeId={themeId} onChange={onSelectTheme} />
       <FontPicker font={font} fonts={fonts} onSelect={onSelectFont} />
       <SplashToggleCard />
+      <AnimationToggleCard />
       <DebugLogCard />
       <ResetSettingsCard />
     </div>

@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import type { GameEnvironment, TexturePackDto, TexturePackInstallResult } from '@shared/types'
 import { useI18n } from '@/i18n'
 import { Button } from '@/components/ui/button'
+import { WithTooltip } from '@/components/ui/tooltip'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Badge } from '@/components/ui/badge'
@@ -172,22 +173,22 @@ export function TexturePacksPage({ env, dropPath, onDropConsumed }: Props): Reac
                     {t('textures.openFolder')}
                   </Button>
                   {p.protected ? (
-                    <span
-                      className="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground"
-                      title={t('textures.protected')}
-                    >
-                      <ShieldCheck className="h-4 w-4 text-muted-foreground" />
-                      {t('textures.protected')}
-                    </span>
+                    <WithTooltip title={t('textures.protected')}>
+                      <span className="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground">
+                        <ShieldCheck className="h-4 w-4 text-muted-foreground" />
+                        {t('textures.protected')}
+                      </span>
+                    </WithTooltip>
                   ) : (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => void uninstall(p)}
-                      title={t('textures.uninstall')}
-                    >
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
+                    <WithTooltip title={t('textures.uninstall')}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => void uninstall(p)}
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </WithTooltip>
                   )}
                 </div>
               </CardContent>

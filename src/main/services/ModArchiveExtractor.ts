@@ -48,38 +48,36 @@ function startsWithZipMagic(archivePath: string): boolean {
 
 
 function resolve7za(): string {
-  const arch = process.arch === 'ia32' ? 'ia32' : process.arch === 'arm64' ? 'arm64' : 'x64'
   const candidates: string[] = []
 
-  if (process.platform === 'win32') {
-    const bundled7z = app.isPackaged
-      ? path.join(process.resourcesPath, '7z', '7z.exe')
-      : path.join(app.getAppPath(), 'resources', '7z', '7z.exe')
-    if (fs.existsSync(bundled7z)) candidates.push(bundled7z)
-    const localAppData = process.env['LOCALAPPDATA'] || ''
-    const programFiles = process.env['ProgramFiles'] || ''
-    const programFilesX86 = process.env['ProgramFiles(x86)'] || ''
-    candidates.push(
-      path.join(localAppData, 'Microsoft', 'WindowsApps', '7z.exe'),
-      path.join(programFiles, '7-Zip', '7z.exe'),
-      path.join(programFilesX86, '7-Zip', '7z.exe')
-    )
-  }
+  const bundled7z = app.isPackaged
+    ? path.join(process.resourcesPath, '7z', '7z.exe')
+    : path.join(app.getAppPath(), 'resources', '7z', '7z.exe')
+  if (fs.existsSync(bundled7z)) candidates.push(bundled7z)
 
-  if (app.isPackaged) candidates.unshift(path.join(process.resourcesPath, '7zip-bin', platformSubdir(process.platform, arch)))
+  const localAppData = process.env['LOCALAPPDATA'] || ''
+  const programFiles = process.env['ProgramFiles'] || ''
+  const programFilesX86 = process.env['ProgramFiles(x86)'] || ''
+  candidates.push(
+    path.join(localAppData, 'Microsoft', 'WindowsApps', '7z.exe'),
+    path.join(programFiles, '7-Zip', '7z.exe'),
+    path.join(programFilesX86, '7-Zip', '7z.exe')
+  )
+
   candidates.push(path7za)
-  candidates.push(path.join(app.getAppPath(), 'node_modules', '7zip-bin', platformSubdir(process.platform, arch)))
+  candidates.push(
+    path.join(app.getAppPath(), 'node_modules', '7zip-bin', 'win', sevenZipArch(), '7za.exe')
+  )
   for (const c of candidates) {
     if (c && fs.existsSync(c)) return c
   }
   return path7za
 }
 
-function platformSubdir(platform: NodeJS.Platform, arch: string): string {
-  const os = platform === 'win32' ? 'win' : platform === 'darwin' ? 'mac' : 'linux'
-  const a = arch === 'x64' ? 'x64' : 'x86'
-  const bin = platform === 'win32' ? '7za.exe' : '7za'
-  return path.join(os, a, bin)
+function sevenZipArch(): string {
+  if (process.arch === 'ia32') return 'ia32'
+  if (process.arch === 'arm64') return 'arm64'
+  return 'x64'
 }
 
 

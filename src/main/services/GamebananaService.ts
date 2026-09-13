@@ -10,7 +10,10 @@ import type {
   GamebananaFileDto,
   GamebananaRequirementDto,
   GamebananaSearchResult,
-  GamebananaSubmissionDto
+  GamebananaSubmissionDto,
+  GamebananaUpdateChangeDto,
+  GamebananaUpdateDto,
+  GamebananaUpdatesDto
 } from '../../shared/types'
 import { BALDI_COMMUNITY_CATEGORY_ID } from '../../shared/types'
 import { debugLog } from '../logger'
@@ -424,6 +427,72 @@ export async function getSubmission(
 
 
 
+function parseUpdate(r: unknown): GamebananaUpdateDto | null {
+  if (!ok(r)) return null
+  if (r['_bIsTrashed'] === true || r['_bIsPrivate'] === true) return null
+
+  const changeLog: GamebananaUpdateChangeDto[] = []
+  const rawLog = r['_aChangeLog']
+  if (Array.isArray(rawLog)) {
+    for (const entry of rawLog) {
+      if (!ok(entry)) continue
+      const text = asStr(entry['text']).trim()
+      if (!text) continue
+      changeLog.push({ text, category: asStr(entry['cat']).trim() || undefined })
+    }
+  }
+
+  const fileNames: string[] = []
+  const rawFiles = r['_aFiles']
+  if (Array.isArray(rawFiles)) {
+    for (const f of rawFiles) {
+      if (!ok(f)) continue
+      const name = asStr(f['_sFile']).trim()
+      if (name && !fileNames.includes(name)) fileNames.push(name)
+    }
+  }
+
+  const submitter = ok(r['_aSubmitter']) ? r['_aSubmitter'] : undefined
+  const text = asStr(r['_sText']).trim()
+
+  return {
+    id: asNum(r['_idRow']),
+    title: asStr(r['_sName']).trim(),
+    url: absoluteUrl(asStr(r['_sProfileUrl'])) || undefined,
+    dateAdded: asNum(r['_tsDateAdded']) || undefined,
+    version: asStr(r['_sVersion']).trim() || undefined,
+    
+    body: text || undefined,
+    authorName: submitter ? asStr(submitter['_sName']).trim() || undefined : undefined,
+    changeLog,
+    fileNames
+  }
+}
+
+
+export async function getUpdates(submissionId: number): Promise<GamebananaUpdatesDto> {
+  if (!Number.isFinite(submissionId) || submissionId <= 0) return { total: 0, items: [] }
+  try {
+    const doc = await getJson(
+      `${API_BASE}Mod/${submissionId}/Updates?_nPerpage=${PAGE_SIZE}&_nPage=1`
+    )
+    const records = doc['_aRecords']
+    const meta = ok(doc['_aMetadata']) ? doc['_aMetadata'] : undefined
+    const items: GamebananaUpdateDto[] = []
+    if (Array.isArray(records)) {
+      for (const r of records) {
+        const u = parseUpdate(r)
+        if (u) items.push(u)
+      }
+    }
+    return { total: asNum(meta?.['_nRecordCount'], items.length), items }
+  } catch {
+    
+    return { total: 0, items: [] }
+  }
+}
+
+
 export async function getComments(submissionId: number): Promise<GamebananaCommentsDto> {
   if (!Number.isFinite(submissionId) || submissionId <= 0) return { total: 0, items: [] }
   try {
@@ -488,6 +557,22 @@ export interface DownloadProgress {
 
 
 
+function extractFilenameFromCd(cd: string | null): string | null {
+  if (!cd) return null
+  // RFC 6266: filename="xxx.zip" or filename*=UTF-8''xxx.zip
+  const utf8Match = cd.match(/filename\*\s*=\s*UTF-8''([^;]+)/i)
+  if (utf8Match) {
+    try {
+      return decodeURIComponent(utf8Match[1].trim().replace(/^"|"$/g, ''))
+    } catch {
+      /* fall through */
+    }
+  }
+  const plain = cd.match(/filename\s*=\s*"([^"]+)"/i) ?? cd.match(/filename\s*=\s*([^;]+)/i)
+  if (plain) return plain[1].trim().replace(/^"|"$/g, '')
+  return null
+}
+
 export async function downloadMod(
   downloadUrl: string,
   onProgress?: (p: DownloadProgress) => void,
@@ -502,12 +587,24 @@ export async function downloadMod(
 
   const total = res.headers.get('content-length')
   const totalBytes = total ? Number(total) : undefined
+  const contentType = res.headers.get('content-type')
+  const cd = res.headers.get('content-disposition')
+  debugLog('downloadMod status =', res.status, 'type =', contentType, 'cd =', cd)
+
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'gmdl-'))
-  const name =
-    (downloadUrl.split('/').pop() || 'mod') +
-    '-' +
-    crypto.randomBytes(4).toString('hex')
-  const dest = path.join(tmpDir, name)
+  const random = crypto.randomBytes(4).toString('hex')
+  const cdName = extractFilenameFromCd(cd)
+  let baseName: string
+  if (cdName) {
+    // use real file name from server, keep extension, add random suffix
+    const ext = path.extname(cdName)
+    const stem = path.basename(cdName, ext)
+    baseName = stem + '-' + random + (ext || '')
+  } else {
+    baseName = (downloadUrl.split('/').pop() || 'mod') + '-' + random
+  }
+  const dest = path.join(tmpDir, baseName)
+  debugLog('downloadMod dest =', dest)
 
   const stream = fs.createWriteStream(dest)
   const reader = res.body.getReader()
@@ -532,5 +629,17 @@ export async function downloadMod(
     stream.end()
     await new Promise<void>((resolve) => stream.once('finish', () => resolve(undefined)))
   }
+
+  // dump first 16 bytes as hex for format debugging
+  try {
+    const fd = fs.openSync(dest, 'r')
+    const buf = Buffer.alloc(16)
+    const n = fs.readSync(fd, buf, 0, 16, 0)
+    fs.closeSync(fd)
+    debugLog('downloadMod head bytes =', buf.slice(0, n).toString('hex'), 'size =', fs.statSync(dest).size)
+  } catch {
+    /* ignore */
+  }
+
   return dest
 }
