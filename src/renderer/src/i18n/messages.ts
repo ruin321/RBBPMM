@@ -1,5 +1,4 @@
-import type { en } from './locales/en'
-
+import type { en } from './locales/en';
 export type Messages = {
-  [K in keyof typeof en]: string
-}
+    [K in keyof typeof en]: string;
+};

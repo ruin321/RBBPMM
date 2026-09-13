@@ -1,9 +1,7 @@
-import type { AppApi } from '../shared/api'
-
+import type { AppApi } from '../shared/api';
 declare global {
-  interface Window {
-    api: AppApi
-  }
+    interface Window {
+        api: AppApi;
+    }
 }
-
-export {}
+export {};

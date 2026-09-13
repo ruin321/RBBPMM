@@ -1,14 +1,1 @@
-
-
-
-
-
-
-
-
-
-
-
-export const MOD_GUID_OVERRIDES: Record<string, string> = {
-  
-}
+export const MOD_GUID_OVERRIDES: Record<string, string> = {};

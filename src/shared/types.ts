@@ -1,374 +1,274 @@
-
-
-
-export const BALDI_COMMUNITY_CATEGORY_ID = 4609
-export const TEXTURE_PACK_CATEGORY_ID = 28929
-export const LEVEL_STUDIO_CATEGORY_ID = 28926
-
+export const BALDI_COMMUNITY_CATEGORY_ID = 4609;
+export const TEXTURE_PACK_CATEGORY_ID = 28929;
+export const LEVEL_STUDIO_CATEGORY_ID = 28926;
 export interface LevelStudioPrereqItem {
-  modId: number
-  nameKey: string
-  installed: boolean
+    modId: number;
+    nameKey: string;
+    installed: boolean;
 }
-
 export interface LevelStudioInstallResult {
-  playables: string[]
-  readmes: ReadmeFileDto[]
+    playables: string[];
+    readmes: ReadmeFileDto[];
 }
-
 export interface CustomLevelDto {
-  fileName: string
-  name: string
-  author: string
-  type: string
-  size: number
-  enabled: boolean
-  thumbnail?: string
+    fileName: string;
+    name: string;
+    author: string;
+    type: string;
+    size: number;
+    enabled: boolean;
+    thumbnail?: string;
 }
-
 export interface GameEnvironment {
-  rootPath: string
-  dataFolder: string
-  executablePath: string
-  gameVersion: string
+    rootPath: string;
+    dataFolder: string;
+    executablePath: string;
+    gameVersion: string;
 }
-
-
 export interface ModManifestDto {
-  guid: string
-  name: string
-  author: string
-  version: string
-  description?: string
-  assets: { localPath: string; destination?: string }[]
-  plugins: string[]
-  patchers: string[]
+    guid: string;
+    name: string;
+    author: string;
+    version: string;
+    description?: string;
+    assets: {
+        localPath: string;
+        destination?: string;
+    }[];
+    plugins: string[];
+    patchers: string[];
 }
-
-
 export interface ModMetadataDto {
-  activated: boolean
-  supportedPlusVersions: string[]
-  lastUpdateDate?: string
-  installationUrl?: string
-  thumbnail?: string
-  path?: string
-  
-  gamebananaSource?: GamebananaSourceDto
-  lastInstalledArchiveName?: string
+    activated: boolean;
+    supportedPlusVersions: string[];
+    lastUpdateDate?: string;
+    installationUrl?: string;
+    thumbnail?: string;
+    path?: string;
+    gamebananaSource?: GamebananaSourceDto;
+    lastInstalledArchiveName?: string;
 }
-
-
 export interface ModItemDto {
-  guid: string
-  name: string
-  author: string
-  version: string
-  description?: string
-  
-  identifyName?: string
-  
-  installedAt?: number
-  
-  moddedFolder?: string
-  directoryName: string
-  installDir: string
-  activated: boolean
-  supportsCurrentVersion: boolean
-  pluginFiles: string[]
-  assetPaths: string[]
-  
-  dllFile?: string
-  
-  dllDirectory?: string
-  
-  loose: boolean
-  
-  configFile?: string
-
-  gamebananaSource?: GamebananaSourceDto
-
-  group?: string
+    guid: string;
+    name: string;
+    author: string;
+    version: string;
+    description?: string;
+    identifyName?: string;
+    installedAt?: number;
+    moddedFolder?: string;
+    directoryName: string;
+    installDir: string;
+    activated: boolean;
+    supportsCurrentVersion: boolean;
+    pluginFiles: string[];
+    assetPaths: string[];
+    dllFile?: string;
+    dllDirectory?: string;
+    loose: boolean;
+    configFile?: string;
+    gamebananaSource?: GamebananaSourceDto;
+    group?: string;
 }
-
 export interface GamebananaSourceDto {
-  submissionId: number
-  fileId: number
-  fileName: string
-  version?: string
-  submissionName?: string
-  dateLinked: string
+    submissionId: number;
+    fileId: number;
+    fileName: string;
+    version?: string;
+    submissionName?: string;
+    dateLinked: string;
 }
-
 export interface ModUpdateInfoDto {
-  hasUpdate: boolean
-  submissionId: number
-  fileId: number
-  fileName: string
-  version?: string
-  publishedDate?: number
-  downloadUrl: string
+    hasUpdate: boolean;
+    submissionId: number;
+    fileId: number;
+    fileName: string;
+    version?: string;
+    publishedDate?: number;
+    downloadUrl: string;
 }
-
 export interface InstallProgress {
-  stage: string
-  percent?: number
-  message?: string
+    stage: string;
+    percent?: number;
+    message?: string;
 }
-
 export interface OpenUrlPayload {
-  action: string
-  id?: number
-  fileId?: number
-  url?: string
-  modType?: string
-  modId?: number
-  raw: string
+    action: string;
+    id?: number;
+    fileId?: number;
+    url?: string;
+    modType?: string;
+    modId?: number;
+    raw: string;
 }
-
 export interface ToolboxDirDto {
-  key: string
-  path: string
+    key: string;
+    path: string;
 }
-
 export interface ToolboxCleanupDto {
-  removed: number
-  details: string[]
+    removed: number;
+    details: string[];
 }
-
-export type Result<T = void> = { ok: true; value?: T } | { ok: false; error: string }
-
+export type Result<T = void> = {
+    ok: true;
+    value?: T;
+} | {
+    ok: false;
+    error: string;
+};
 export interface SecurityWarning {
-  field: string
-  reason: string
+    field: string;
+    reason: string;
 }
-
 export interface InstallResult {
-  mod?: ModItemDto
-  warnings: SecurityWarning[]
-  
-  texturePacks?: TexturePackDto[]
-  
-  readmes?: ReadmeFileDto[]
-  
-  levelStudio?: LevelStudioInstallResult
+    mod?: ModItemDto;
+    warnings: SecurityWarning[];
+    texturePacks?: TexturePackDto[];
+    readmes?: ReadmeFileDto[];
+    levelStudio?: LevelStudioInstallResult;
 }
-
-
 export interface ModInstallPlanDto {
-  
-  modName: string
-  
-  needsConfirm: boolean
-  
-  modded: string[]
-  
-  plugins: string[]
+    modName: string;
+    needsConfirm: boolean;
+    modded: string[];
+    plugins: string[];
 }
-
-
-export type ModInstallOutcome =
-  | { mode: 'manifest'; modName: string; readmes: ReadmeFileDto[] }
-  | { mode: 'unmanaged'; modName: string; readmes: ReadmeFileDto[] }
-  | { mode: 'confirm'; plan: ModInstallPlanDto; readmes: ReadmeFileDto[] }
-
+export type ModInstallOutcome = {
+    mode: 'manifest';
+    modName: string;
+    readmes: ReadmeFileDto[];
+} | {
+    mode: 'unmanaged';
+    modName: string;
+    readmes: ReadmeFileDto[];
+} | {
+    mode: 'confirm';
+    plan: ModInstallPlanDto;
+    readmes: ReadmeFileDto[];
+};
 export interface ReadmeFileDto {
-  name: string
-  content: string
+    name: string;
+    content: string;
 }
-
-
-
-
 export interface GamebananaFileDto {
-  id: number
-  fileName: string
-  fileSize: number
-  downloadUrl: string
-  
-  description?: string
-  
-  version?: string
-  
-  dateAdded?: number
+    id: number;
+    fileName: string;
+    fileSize: number;
+    downloadUrl: string;
+    description?: string;
+    version?: string;
+    dateAdded?: number;
 }
-
-
 export interface GamebananaCommentDto {
-  
-  id: number
-  author: string
-  body: string
-  date?: string
-  
-  replyCount?: number
+    id: number;
+    author: string;
+    body: string;
+    date?: string;
+    replyCount?: number;
 }
-
 export interface GamebananaCommentsDto {
-  total: number
-  items: GamebananaCommentDto[]
+    total: number;
+    items: GamebananaCommentDto[];
 }
-
-
 export interface GamebananaUpdateChangeDto {
-  
-  text: string
-  
-  category?: string
+    text: string;
+    category?: string;
 }
-
-
 export interface GamebananaUpdateDto {
-  id: number
-  
-  title: string
-  url?: string
-  
-  dateAdded?: number
-  
-  version?: string
-  
-  body?: string
-  
-  authorName?: string
-  
-  changeLog: GamebananaUpdateChangeDto[]
-  
-  fileNames: string[]
+    id: number;
+    title: string;
+    url?: string;
+    dateAdded?: number;
+    version?: string;
+    body?: string;
+    authorName?: string;
+    changeLog: GamebananaUpdateChangeDto[];
+    fileNames: string[];
 }
-
 export interface GamebananaUpdatesDto {
-  total: number
-  items: GamebananaUpdateDto[]
+    total: number;
+    items: GamebananaUpdateDto[];
 }
-
-
 export interface GamebananaRequirementDto {
-  name: string
-  url?: string
-  
-  status?: string
-  
-  required?: boolean
-  
-  gamebananaId?: number
+    name: string;
+    url?: string;
+    status?: string;
+    required?: boolean;
+    gamebananaId?: number;
 }
-
-
 export interface GamebananaAlternateSourceDto {
-  url: string
-  
-  description?: string
-  
-  host?: string
+    url: string;
+    description?: string;
+    host?: string;
 }
-
-
 export interface GamebananaSubmissionDto {
-  id: number
-  name: string
-  description?: string
-  version?: string
-  authorName?: string
-  hasFiles: boolean
-  
-  categoryId?: number
-  thumbnailUrl?: string
-  
-  images?: string[]
-  
-  downloadCount?: number
-  viewCount?: number
-  
-  dateAdded?: number
-  
-  dateUpdated?: number
-  files: GamebananaFileDto[]
-  
-  archivedFiles?: GamebananaFileDto[]
-  
-  requirements?: GamebananaRequirementDto[]
-  
-  alternateFileSources?: GamebananaAlternateSourceDto[]
+    id: number;
+    name: string;
+    description?: string;
+    version?: string;
+    authorName?: string;
+    hasFiles: boolean;
+    categoryId?: number;
+    thumbnailUrl?: string;
+    images?: string[];
+    downloadCount?: number;
+    viewCount?: number;
+    dateAdded?: number;
+    dateUpdated?: number;
+    files: GamebananaFileDto[];
+    archivedFiles?: GamebananaFileDto[];
+    requirements?: GamebananaRequirementDto[];
+    alternateFileSources?: GamebananaAlternateSourceDto[];
 }
-
-
 export interface GamebananaSearchResult {
-  recordCount: number
-  isComplete: boolean
-  perPage: number
-  items: GamebananaSubmissionDto[]
+    recordCount: number;
+    isComplete: boolean;
+    perPage: number;
+    items: GamebananaSubmissionDto[];
 }
-
-
-
-
 export interface CfgEntryDto {
-  key: string
-  value: string
-  
-  control: 'boolean' | 'number' | 'select' | 'text'
-  
-  rawType?: string
-  description?: string
-  defaultValue?: string
-  
-  acceptable?: string[]
-  min?: number
-  max?: number
-  step?: number
+    key: string;
+    value: string;
+    control: 'boolean' | 'number' | 'select' | 'text';
+    rawType?: string;
+    description?: string;
+    defaultValue?: string;
+    acceptable?: string[];
+    min?: number;
+    max?: number;
+    step?: number;
 }
-
-
 export interface CfgSectionDto {
-  name: string
-  
-  heading?: string
-  entries: CfgEntryDto[]
+    name: string;
+    heading?: string;
+    entries: CfgEntryDto[];
 }
-
-
 export interface ConfigFileDto {
-  path: string
-  fileName: string
-  
-  heading?: string
-  sections: CfgSectionDto[]
+    path: string;
+    fileName: string;
+    heading?: string;
+    sections: CfgSectionDto[];
 }
-
-
-
-
 export interface TexturePackDto {
-  
-  folderName: string
-  
-  name: string
-  author?: string
-  version?: string
-  description?: string
-  
-  protected?: boolean
+    folderName: string;
+    name: string;
+    author?: string;
+    version?: string;
+    description?: string;
+    protected?: boolean;
 }
-
-
 export interface TexturePackInstallResult {
-  installed: TexturePackDto[]
-  
-  installDir: string
-  
-  readmes: { name: string; content: string }[]
+    installed: TexturePackDto[];
+    installDir: string;
+    readmes: {
+        name: string;
+        content: string;
+    }[];
 }
-
-
 export interface TexturePackProgress {
-  
-  stage: 'extracting' | 'installing'
+    stage: 'extracting' | 'installing';
 }
-
-
 export interface TexturePackListResult {
-  
-  installDir: string
-  packs: TexturePackDto[]
+    installDir: string;
+    packs: TexturePackDto[];
 }
