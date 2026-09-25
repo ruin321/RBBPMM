@@ -12,3 +12,9 @@ electron.vite.config.*.mjs
 /*.zip
 .DS_Store
 Thumbs.db
+
+# .NET (WPF rewrite under RBBPMM.Wpf/)
+[Rr]BBPMM.Wpf/**/bin/
+[Rr]BBPMM.Wpf/**/obj/
+bin/
+obj/

@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="RBBPMM.Core.Tests/RBBPMM.Core.Tests.csproj" />
+  <Project Path="RBBPMM.Core/RBBPMM.Core.csproj" />
+  <Project Path="RBBPMM/RBBPMM.csproj" />
+</Solution>
