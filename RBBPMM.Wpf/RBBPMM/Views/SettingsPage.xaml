@@ -1,0 +1,48 @@
+<UserControl x:Class="RBBPMM.Views.SettingsPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:vm="clr-namespace:RBBPMM.ViewModels"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance vm:SettingsPageViewModel}">
+    <StackPanel>
+        <TextBlock Text="{Binding Title}" FontSize="22" FontWeight="Bold"
+                   Foreground="{DynamicResource TextBrush}" Margin="0,0,0,8"/>
+
+        <Border Style="{StaticResource Card}" Margin="0,0,0,12">
+            <StackPanel>
+                <TextBlock Text="外观" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,8"
+                           Foreground="{DynamicResource TextBrush}"/>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="主题" Width="80" VerticalAlignment="Center"
+                               Foreground="{DynamicResource TextMutedBrush}"/>
+                    <Button Content="{Binding ThemeButtonLabel}"
+                            Command="{Binding ToggleThemeCommand}"
+                            Style="{StaticResource PrimaryButton}" MinWidth="120"/>
+                    <TextBlock Text="{Binding IsDark, StringFormat='当前：{0}'}"
+                               Margin="12,0,0,0" VerticalAlignment="Center"
+                               Foreground="{DynamicResource TextMutedBrush}"/>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <Border Style="{StaticResource Card}" Margin="0,0,0,12">
+            <StackPanel>
+                <TextBlock Text="语言" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,8"
+                           Foreground="{DynamicResource TextBrush}"/>
+                <TextBlock Text="选择会立即持久化；UI 文案真正切换将在 Phase 4 接入 i18n 资源后生效。"
+                           Foreground="{DynamicResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,0,0,8"/>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="语言" Width="80" VerticalAlignment="Center"
+                               Foreground="{DynamicResource TextMutedBrush}"/>
+                    <ComboBox ItemsSource="{Binding Languages}"
+                              SelectedValuePath="Code"
+                              DisplayMemberPath="Label"
+                              SelectedValue="{Binding SelectedLanguage, Mode=TwoWay}"
+                              MinWidth="160" Padding="6,4"/>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+    </StackPanel>
+</UserControl>

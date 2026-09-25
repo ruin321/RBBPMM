@@ -1,13 +1,49 @@
-﻿using System.Configuration;
-using System.Data;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using RBBPMM.Navigation;
+using RBBPMM.Services;
+using RBBPMM.ViewModels;
+using RBBPMM.Views;
 using System.Windows;
 
 namespace RBBPMM;
 
-/// <summary>
-/// Interaction logic for App.xaml
-/// </summary>
 public partial class App : Application
 {
-}
+    private ServiceProvider? _provider;
 
+    protected override void OnStartup(StartupEventArgs e)
+    {
+        base.OnStartup(e);
+
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddSingleton<UserSettings>(_ => UserSettings.Load());
+        services.AddSingleton<ThemeManager>(sp =>
+            new ThemeManager(Application.Current.Resources, log: sp.GetService<ILogger<ThemeManager>>()));
+        services.AddSingleton<NavigationService>();
+        services.AddTransient<MainViewModel>();
+        services.AddTransient<ModsPageViewModel>();
+        services.AddTransient<TexturesPageViewModel>();
+        services.AddTransient<LevelsPageViewModel>();
+        services.AddTransient<GameBananaPageViewModel>();
+        services.AddTransient<SettingsPageViewModel>();
+
+        _provider = services.BuildServiceProvider();
+
+        var settings = _provider.GetRequiredService<UserSettings>();
+        var theme = _provider.GetRequiredService<ThemeManager>();
+        theme.Initialize(settings);
+
+        var nav = _provider.GetRequiredService<NavigationService>();
+        nav.Register("mods", () => _provider.GetRequiredService<ModsPageViewModel>());
+        nav.Register("textures", () => _provider.GetRequiredService<TexturesPageViewModel>());
+        nav.Register("levels", () => _provider.GetRequiredService<LevelsPageViewModel>());
+        nav.Register("gamebanana", () => _provider.GetRequiredService<GameBananaPageViewModel>());
+        nav.Register("settings", () => _provider.GetRequiredService<SettingsPageViewModel>());
+
+        var mainVm = _provider.GetRequiredService<MainViewModel>();
+        var window = new MainWindow { DataContext = mainVm };
+        window.Show();
+    }
+}

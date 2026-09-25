@@ -2,4 +2,5 @@
   <Project Path="RBBPMM.Core.Tests/RBBPMM.Core.Tests.csproj" />
   <Project Path="RBBPMM.Core/RBBPMM.Core.csproj" />
   <Project Path="RBBPMM/RBBPMM.csproj" />
+  <Project Path="RBBPMM.Wpf.Tests/RBBPMM.Wpf.Tests.csproj" />
 </Solution>

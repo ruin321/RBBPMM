@@ -1,12 +1,117 @@
-﻿<Window x:Class="RBBPMM.MainWindow"
+<Window x:Class="RBBPMM.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:RBBPMM"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:vm="clr-namespace:RBBPMM.ViewModels"
+        xmlns:views="clr-namespace:RBBPMM.Views"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Grid>
+        Title="RBBPMM — Baldi's Basics Plus Mod Manager"
+        Height="760" Width="1180"
+        Background="{DynamicResource BgBrush}" Foreground="{DynamicResource TextBrush}">
 
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="220"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- 侧边栏 -->
+        <Border Grid.Column="0" Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,1,0">
+            <DockPanel LastChildFill="True">
+                <StackPanel DockPanel.Dock="Top" Margin="0,8">
+                    <TextBlock Text="RBBPMM" FontSize="20" FontWeight="Bold"
+                               Margin="16,8,16,2" Foreground="{DynamicResource PrimaryBrush}"/>
+                    <TextBlock Text="Baldi's Basics Plus Mod Manager" FontSize="11" Margin="16,0,16,8"
+                               Foreground="{DynamicResource TextMutedBrush}"/>
+                </StackPanel>
+
+                <ItemsControl ItemsSource="{Binding NavItems}" DockPanel.Dock="Top">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Button Command="{Binding DataContext.NavigateCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                    CommandParameter="{Binding Key}"
+                                    Margin="8,3" Padding="12,9" HorizontalContentAlignment="Left"
+                                    HorizontalAlignment="Stretch" BorderThickness="0"
+                                    Background="{DynamicResource SurfaceBrush}"
+                                    Foreground="{DynamicResource TextBrush}" Cursor="Hand">
+                                <Button.Style>
+                                    <Style TargetType="Button">
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="Button">
+                                                    <Border x:Name="bd" Background="{TemplateBinding Background}"
+                                                            CornerRadius="{DynamicResource RadiusSm}"
+                                                            Padding="{TemplateBinding Padding}">
+                                                        <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                                          VerticalAlignment="Center"/>
+                                                    </Border>
+                                                    <ControlTemplate.Triggers>
+                                                        <DataTrigger
+                                                            Binding="{Binding DataContext.Nav.CurrentKey, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                            Value="{Binding Key}">
+                                                            <Setter TargetName="bd" Property="Background"
+                                                                    Value="{DynamicResource NavActiveBrush}"/>
+                                                        </DataTrigger>
+                                                    </ControlTemplate.Triggers>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </Button.Style>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{Binding Icon}" FontSize="15" Margin="0,0,10,0"/>
+                                    <TextBlock Text="{Binding Title}" FontSize="13"/>
+                                </StackPanel>
+                            </Button>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </DockPanel>
+        </Border>
+
+        <!-- 内容区 -->
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <Border Grid.Row="0" Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1"
+                    Padding="14,10">
+                <DockPanel LastChildFill="False">
+                    <TextBlock DockPanel.Dock="Left" FontSize="16" FontWeight="SemiBold"
+                               VerticalAlignment="Center"
+                               Text="{Binding Nav.CurrentPage.Title, FallbackValue=''}"
+                               Foreground="{DynamicResource TextBrush}"/>
+                    <Button DockPanel.Dock="Right" Content="{Binding ThemeGlyph}"
+                            Command="{Binding ToggleThemeCommand}"
+                            Padding="10,5" MinWidth="42" ToolTip="切换明暗主题"
+                            Style="{StaticResource BaseButton}"/>
+                </DockPanel>
+            </Border>
+
+            <ContentControl Grid.Row="1" Margin="14" Content="{Binding Nav.CurrentPage}">
+                <ContentControl.Resources>
+                    <DataTemplate DataType="{x:Type vm:ModsPageViewModel}">
+                        <views:ModsPage/>
+                    </DataTemplate>
+                    <DataTemplate DataType="{x:Type vm:TexturesPageViewModel}">
+                        <views:TexturesPage/>
+                    </DataTemplate>
+                    <DataTemplate DataType="{x:Type vm:LevelsPageViewModel}">
+                        <views:LevelsPage/>
+                    </DataTemplate>
+                    <DataTemplate DataType="{x:Type vm:GameBananaPageViewModel}">
+                        <views:GameBananaPage/>
+                    </DataTemplate>
+                    <DataTemplate DataType="{x:Type vm:SettingsPageViewModel}">
+                        <views:SettingsPage/>
+                    </DataTemplate>
+                </ContentControl.Resources>
+            </ContentControl>
+        </Grid>
     </Grid>
 </Window>

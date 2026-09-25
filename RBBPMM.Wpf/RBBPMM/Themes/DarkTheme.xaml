@@ -1,0 +1,38 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+
+    <sys:String x:Key="__ThemeTag__">Dark</sys:String>
+
+    <Color x:Key="BgColor">#1E1B16</Color>
+    <Color x:Key="SurfaceColor">#2A261F</Color>
+    <Color x:Key="SurfaceAltColor">#343028</Color>
+    <Color x:Key="BorderColor">#433D31</Color>
+    <Color x:Key="TextColor">#F1ECE0</Color>
+    <Color x:Key="TextMutedColor">#A89F8C</Color>
+    <Color x:Key="PrimaryColor">#F2B705</Color>
+    <Color x:Key="PrimaryHoverColor">#FFD24D</Color>
+    <Color x:Key="PrimaryTextColor">#2B2B2B</Color>
+    <Color x:Key="DangerColor">#E57373</Color>
+    <Color x:Key="SuccessColor">#5BC98A</Color>
+    <Color x:Key="NavActiveColor">#4A4031</Color>
+
+    <SolidColorBrush x:Key="BgBrush" Color="{StaticResource BgColor}"/>
+    <SolidColorBrush x:Key="SurfaceBrush" Color="{StaticResource SurfaceColor}"/>
+    <SolidColorBrush x:Key="SurfaceAltBrush" Color="{StaticResource SurfaceAltColor}"/>
+    <SolidColorBrush x:Key="BorderBrush" Color="{StaticResource BorderColor}"/>
+    <SolidColorBrush x:Key="TextBrush" Color="{StaticResource TextColor}"/>
+    <SolidColorBrush x:Key="TextMutedBrush" Color="{StaticResource TextMutedColor}"/>
+    <SolidColorBrush x:Key="PrimaryBrush" Color="{StaticResource PrimaryColor}"/>
+    <SolidColorBrush x:Key="PrimaryHoverBrush" Color="{StaticResource PrimaryHoverColor}"/>
+    <SolidColorBrush x:Key="PrimaryTextBrush" Color="{StaticResource PrimaryTextColor}"/>
+    <SolidColorBrush x:Key="DangerBrush" Color="{StaticResource DangerColor}"/>
+    <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource SuccessColor}"/>
+    <SolidColorBrush x:Key="NavActiveBrush" Color="{StaticResource NavActiveColor}"/>
+
+    <CornerRadius x:Key="Radius">10</CornerRadius>
+    <CornerRadius x:Key="RadiusSm">6</CornerRadius>
+    <CornerRadius x:Key="RadiusLg">16</CornerRadius>
+    <Thickness x:Key="Pad">12</Thickness>
+    <FontFamily x:Key="UiFont">Segoe UI</FontFamily>
+</ResourceDictionary>
