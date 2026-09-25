@@ -7,16 +7,181 @@
              xmlns:loc="clr-namespace:RBBPMM.Localization"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance vm:ModsPageViewModel}">
-    <StackPanel>
-        <TextBlock Text="{Binding Title}" FontSize="22" FontWeight="Bold"
-                   Foreground="{DynamicResource TextBrush}" Margin="0,0,0,8"/>
-        <Border Style="{StaticResource Card}">
-            <StackPanel>
-                <TextBlock Text="{loc:Loc Key=mods.empty}"
-                           Foreground="{DynamicResource TextMutedBrush}" TextWrapping="Wrap"/>
-                <TextBlock Text="{loc:Loc Key=mods.emptyHint}"
-                           Foreground="{DynamicResource TextMutedBrush}" Margin="0,6,0,0" TextWrapping="Wrap"/>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- ── 顶部：标题 / 目录状态 / 工具条 / 状态行 ── -->
+        <StackPanel Grid.Row="0">
+            <TextBlock Text="{Binding Title}" FontSize="22" FontWeight="Bold" Margin="0,0,0,8"/>
+
+            <!-- 未选游戏目录时的引导卡 -->
+            <Border Style="{StaticResource Card}"
+                    Visibility="{Binding IsGameMissing, Converter={StaticResource BoolToVis}}"
+                    Margin="0,0,0,10">
+                <StackPanel>
+                    <TextBlock Text="{loc:Loc Key=game.notSet}" FontWeight="SemiBold"/>
+                    <TextBlock Text="{loc:Loc Key=game.notSetHint}" Margin="0,6,0,0" TextWrapping="Wrap"
+                               Foreground="{DynamicResource TextMutedBrush}"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                        <Button Content="{loc:Loc Key=game.choose}"
+                                Command="{Binding ChooseGameFolderCommand}"
+                                Style="{StaticResource PrimaryButton}"/>
+                        <Button Content="{loc:Loc Key=game.detect}"
+                                Command="{Binding AutoDetectGameCommand}"
+                                Style="{StaticResource BaseButton}" Margin="8,0,0,0"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- BepInEx 未安装提示 -->
+            <Border Style="{StaticResource Card}"
+                    Visibility="{Binding NeedsBepInEx, Converter={StaticResource BoolToVis}}"
+                    Margin="0,0,0,10">
+                <DockPanel LastChildFill="False">
+                    <TextBlock DockPanel.Dock="Left" VerticalAlignment="Center"
+                               Text="{loc:Loc Key=game.bepinex.missing}"
+                               Foreground="{DynamicResource TextMutedBrush}"/>
+                    <Button DockPanel.Dock="Right" Content="{loc:Loc Key=game.installBepinex}"
+                            Command="{Binding InstallBepInExCommand}"
+                            Style="{StaticResource BaseButton}"/>
+                </DockPanel>
+            </Border>
+
+            <!-- 工具条 -->
+            <DockPanel LastChildFill="True" Margin="0,0,0,8">
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                    <Button Content="{loc:Loc Key=common.refresh}" Command="{Binding RefreshCommand}"
+                            Style="{StaticResource BaseButton}" Margin="6,0,0,0"/>
+                    <Button Content="{loc:Loc Key=mods.installFromFile}" Command="{Binding InstallArchiveCommand}"
+                            Style="{StaticResource PrimaryButton}" Margin="6,0,0,0"/>
+                    <Button Content="{loc:Loc Key=mods.checkAllUpdates}" Command="{Binding CheckAllUpdatesCommand}"
+                            Style="{StaticResource BaseButton}" Margin="6,0,0,0"/>
+                </StackPanel>
+                <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged, Delay=120}"
+                         ToolTip="{loc:Loc Key=mods.search}" Margin="0,0,6,0"/>
+            </DockPanel>
+
+            <!-- 第二行工具条：游戏相关 -->
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                <Button Content="{loc:Loc Key=game.launch}" Command="{Binding LaunchGameCommand}"
+                        Style="{StaticResource BaseButton}"/>
+                <Button Content="{loc:Loc Key=game.installDevApi}" Command="{Binding InstallDevApiCommand}"
+                        Style="{StaticResource BaseButton}" Margin="6,0,0,0"/>
+                <Button Content="{loc:Loc Key=game.changeFolder}" Command="{Binding ChooseGameFolderCommand}"
+                        Style="{StaticResource BaseButton}" Margin="6,0,0,0"/>
+                <TextBlock VerticalAlignment="Center" Margin="12,0,0,0"
+                           Foreground="{DynamicResource TextMutedBrush}">
+                    <Run Text="{Binding GameVersionLabel, Mode=OneWay}"/>
+                    <Run Text=":"/>
+                    <Run Text="{Binding GameVersion, Mode=OneWay}"/>
+                </TextBlock>
             </StackPanel>
-        </Border>
-    </StackPanel>
+
+            <!-- 状态行 -->
+            <TextBlock Text="{Binding Status}" Margin="0,0,0,8" TextWrapping="Wrap"
+                       Visibility="{Binding HasStatus, Converter={StaticResource BoolToVis}}"
+                       Foreground="{DynamicResource TextMutedBrush}"/>
+        </StackPanel>
+
+        <!-- ── 列表 ── -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <ItemsControl ItemsSource="{Binding VisibleMods}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Style="{StaticResource RowCard}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Grid.Column="0" MinWidth="0">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="{Binding Name}" FontSize="14" FontWeight="SemiBold"/>
+                                            <Border Style="{StaticResource Badge}" Margin="8,0,0,0"
+                                                    Visibility="{Binding IsLegacy, Converter={StaticResource BoolToVis}}">
+                                                <TextBlock Text="{loc:Loc Key=mods.legacy}" FontSize="10"
+                                                           Foreground="{DynamicResource TextMutedBrush}"/>
+                                            </Border>
+                                            <Border Style="{StaticResource Badge}"
+                                                    Visibility="{Binding IsLoose, Converter={StaticResource BoolToVis}}">
+                                                <TextBlock Text="{loc:Loc Key=mods.loose}" FontSize="10"
+                                                           Foreground="{DynamicResource TextMutedBrush}"/>
+                                            </Border>
+                                            <Border Style="{StaticResource Badge}"
+                                                    Visibility="{Binding HasUpdate, Converter={StaticResource BoolToVis}}">
+                                                <TextBlock Text="{loc:Loc Key=mods.updateAvailable}" FontSize="10"
+                                                           Foreground="{DynamicResource PrimaryBrush}"/>
+                                            </Border>
+                                            <Border Style="{StaticResource Badge}"
+                                                    Visibility="{Binding SupportsCurrentVersion, Converter={StaticResource NotBoolToVis}}">
+                                                <TextBlock Text="{loc:Loc Key=mods.incompatible}" FontSize="10"
+                                                           Foreground="{DynamicResource DangerBrush}"/>
+                                            </Border>
+                                        </StackPanel>
+
+                                        <TextBlock Margin="0,4,0,0" TextWrapping="Wrap"
+                                                   Foreground="{DynamicResource TextMutedBrush}"
+                                                   FontSize="11">
+                                            <Run Text="{Binding Author, Mode=OneWay}"/>
+                                            <Run Text="·"/>
+                                            <Run Text="{Binding VersionBadge, Mode=OneWay}"/>
+                                            <Run Text="·"/>
+                                            <Run Text="{Binding StatusLabel, Mode=OneWay}"/>
+                                        </TextBlock>
+
+                                        <TextBlock Text="{Binding Guid}" FontSize="10" Margin="0,2,0,0"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   Foreground="{DynamicResource TextMutedBrush}"/>
+                                        <TextBlock Text="{Binding InstallDir}" FontSize="10" Margin="0,1,0,0"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   Foreground="{DynamicResource TextMutedBrush}"
+                                                   ToolTip="{Binding InstallDir}"/>
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal"
+                                                VerticalAlignment="Top" Margin="12,0,0,0">
+                                        <Button Content="{Binding ToggleLabel}"
+                                                Command="{Binding DataContext.ToggleCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                CommandParameter="{Binding}"
+                                                IsEnabled="{Binding Idle}"
+                                                Style="{StaticResource BaseButton}" MinWidth="72"/>
+                                        <Button Content="{loc:Loc Key=common.update}"
+                                                Command="{Binding DataContext.UpdateCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                CommandParameter="{Binding}"
+                                                Visibility="{Binding HasUpdate, Converter={StaticResource BoolToVis}}"
+                                                Style="{StaticResource PrimaryButton}" Margin="6,0,0,0"/>
+                                        <Button Content="{loc:Loc Key=common.openFolder}"
+                                                Command="{Binding DataContext.OpenFolderCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                CommandParameter="{Binding}"
+                                                Style="{StaticResource BaseButton}" Margin="6,0,0,0"/>
+                                        <Button Content="{loc:Loc Key=common.uninstall}"
+                                                Command="{Binding DataContext.UninstallCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                CommandParameter="{Binding}"
+                                                IsEnabled="{Binding Idle}"
+                                                Style="{StaticResource DangerButton}" Margin="6,0,0,0"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <!-- 空态 -->
+                <Border Style="{StaticResource Card}"
+                        Visibility="{Binding HasMods, Converter={StaticResource NotBoolToVis}}">
+                    <StackPanel>
+                        <TextBlock Text="{loc:Loc Key=mods.empty}" TextWrapping="Wrap"
+                                   Foreground="{DynamicResource TextMutedBrush}"/>
+                        <TextBlock Text="{loc:Loc Key=mods.emptyHint}" Margin="0,6,0,0" TextWrapping="Wrap"
+                                   Foreground="{DynamicResource TextMutedBrush}"/>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
 </UserControl>

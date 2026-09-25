@@ -65,6 +65,63 @@
         <Setter Property="Padding" Value="16"/>
     </Style>
 
+    <!-- 列表行卡片：比 Card 更紧凑 -->
+    <Style x:Key="RowCard" TargetType="Border">
+        <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusSm}"/>
+        <Setter Property="Padding" Value="12,10"/>
+        <Setter Property="Margin" Value="0,0,0,8"/>
+    </Style>
+
+    <!-- 小标签：Legacy / Loose / 有更新 等 -->
+    <Style x:Key="Badge" TargetType="Border">
+        <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="{DynamicResource RadiusSm}"/>
+        <Setter Property="Padding" Value="6,2"/>
+        <Setter Property="Margin" Value="0,0,6,0"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+
+    <!--
+        输入框：与 ComboBox 同理，Aero2 默认模板是固定浅底，
+        深色主题下会变成浅底浅字，必须自带走主题令牌的模板。
+    -->
+    <Style TargetType="TextBox">
+        <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+        <Setter Property="CaretBrush" Value="{DynamicResource TextBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Padding" Value="10,6"/>
+        <Setter Property="MinHeight" Value="30"/>
+        <Setter Property="FontFamily" Value="{DynamicResource UiFont}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TextBox">
+                    <Border x:Name="bd"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="{DynamicResource RadiusSm}">
+                        <ScrollViewer x:Name="PART_ContentHost"
+                                      Margin="{TemplateBinding Padding}"
+                                      VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                            <Setter TargetName="bd" Property="BorderBrush"
+                                    Value="{DynamicResource PrimaryBrush}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <!--
         下拉框：不能用 Aero2 默认模板。
         默认模板是浅底，而本项目有一条隐式 TextBlock 样式把所有 TextBlock 的
@@ -162,6 +219,50 @@
                         <Trigger Property="IsSelected" Value="True">
                             <Setter TargetName="bd" Property="Background"
                                     Value="{DynamicResource SurfaceAltBrush}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--
+        列表：同样是「Aero2 默认模板固定浅底」的受害者 —— 选中项的系统蓝
+        在深色主题里既突兀又会让主题文字失色，所以自带选中/悬停令牌。
+    -->
+    <Style TargetType="ListBox">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+        <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
+        <Setter Property="FontFamily" Value="{DynamicResource UiFont}"/>
+    </Style>
+
+    <Style TargetType="ListBoxItem">
+        <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="Margin" Value="0,0,0,6"/>
+        <Setter Property="FontFamily" Value="{DynamicResource UiFont}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ListBoxItem">
+                    <!-- 行卡片自带底色，所以选中态用外圈描边表达，避免两层底色叠加 -->
+                    <Border x:Name="bd"
+                            BorderBrush="Transparent"
+                            BorderThickness="2"
+                            CornerRadius="{DynamicResource RadiusSm}"
+                            Padding="0">
+                        <ContentPresenter/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="bd" Property="BorderBrush"
+                                    Value="{DynamicResource BorderBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="bd" Property="BorderBrush"
+                                    Value="{DynamicResource PrimaryBrush}"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>

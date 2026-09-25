@@ -72,6 +72,13 @@ public class AppStartupSmokeTests
                 Source = new Uri("pack://application:,,,/RBBPMM;component/Styles/Controls.xaml")
             });
 
+            // 对应 App.xaml 里那三个 xxxConverter 资源。页面用 {StaticResource BoolToVis}
+            // 引用它们，漏注册的话 MainWindow 一实例化页面就抛 XamlParseException ——
+            // 这正是本测试存在的意义（曾真的漏过）。
+            app.Resources["BoolToVis"] = new Converters.BoolToVisibilityConverter();
+            app.Resources["NotBoolToVis"] = new Converters.InverseBoolToVisibilityConverter();
+            app.Resources["NotBool"] = new Converters.InverseBoolConverter();
+
             var settings = new UserSettings(Path.Combine(TestFs.TempDir(), "settings.json"));
 
             // 对应 App.OnStartup 的主题初始化：真实 pack URI 加载 Light/Dark
@@ -95,10 +102,10 @@ public class AppStartupSmokeTests
 
             // 对应 DI 里的导航注册
             var nav = new NavigationService();
-            nav.Register("mods", () => new ModsPageViewModel());
-            nav.Register("textures", () => new TexturesPageViewModel());
-            nav.Register("levels", () => new LevelsPageViewModel());
-            nav.Register("gamebanana", () => new GameBananaPageViewModel());
+            nav.Register("mods", () => TestServices.ModsVm());
+            nav.Register("textures", () => TestServices.TexturesVm());
+            nav.Register("levels", () => TestServices.LevelsVm());
+            nav.Register("gamebanana", () => TestServices.BananaVm());
             nav.Register("settings", () => new SettingsPageViewModel(settings, theme, loc));
 
             try

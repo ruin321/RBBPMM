@@ -18,6 +18,22 @@ public sealed class LocalizationService : INotifyPropertyChanged
     /// <summary>设置全局实例；传 null 可复位（单测收尾用）。</summary>
     public static void SetCurrent(LocalizationService? svc) => Current = svc;
 
+    /// <summary>
+    /// 静态取值：ViewModel 里拼状态/错误文案用。无服务或未翻译时回退
+    /// <paramref name="fallback"/>，再否则返回键名。
+    /// </summary>
+    public static string T(string key, string? fallback = null)
+    {
+        var svc = Current;
+        if (svc is not null)
+        {
+            var v = svc.Get(key);
+            if (!string.Equals(v, key, System.StringComparison.Ordinal))
+                return v;
+        }
+        return string.IsNullOrEmpty(fallback) ? key : fallback!;
+    }
+
     private readonly Dictionary<string, Dictionary<string, string>> _resources = new();
     private string _language = "en";
 

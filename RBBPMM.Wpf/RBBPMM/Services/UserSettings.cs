@@ -12,6 +12,9 @@ public sealed class UserSettings
     public string Theme { get; set; } = "Light";
     public string Language { get; set; } = "en";
 
+    /// <summary>绝对路径到 BALDI.exe；未选择游戏目录时为 null。</summary>
+    public string? GamePath { get; set; }
+
     private static string DefaultPath =>
         Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),

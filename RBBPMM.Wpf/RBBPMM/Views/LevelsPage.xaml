@@ -7,16 +7,114 @@
              xmlns:loc="clr-namespace:RBBPMM.Localization"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance vm:LevelsPageViewModel}">
-    <StackPanel>
-        <TextBlock Text="{Binding Title}" FontSize="22" FontWeight="Bold"
-                   Foreground="{DynamicResource TextBrush}" Margin="0,0,0,8"/>
-        <Border Style="{StaticResource Card}">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- ── 顶部：标题 / 路径 / 工具条 / 状态 ── -->
+        <StackPanel Grid.Row="0">
+            <TextBlock Text="{Binding Title}" FontSize="22" FontWeight="Bold" Margin="0,0,0,4"/>
+
+            <!-- 关卡装在用户级 Playables 目录，不依赖游戏目录，所以只显示路径 -->
+            <TextBlock Margin="0,0,0,10" FontSize="11" TextTrimming="CharacterEllipsis"
+                       Foreground="{DynamicResource TextMutedBrush}"
+                       ToolTip="{Binding PlayablesPath}">
+                <Run Text="{loc:Loc Key=levels.playablesPath}"/>
+                <Run Text=":"/>
+                <Run Text="{Binding PlayablesPath, Mode=OneWay}"/>
+            </TextBlock>
+
+            <DockPanel LastChildFill="True" Margin="0,0,0,8">
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                    <Button Content="{loc:Loc Key=common.refresh}" Command="{Binding RefreshCommand}"
+                            Style="{StaticResource BaseButton}" Margin="6,0,0,0"/>
+                    <Button Content="{loc:Loc Key=levels.openFolder}" Command="{Binding OpenFolderCommand}"
+                            Style="{StaticResource BaseButton}" Margin="6,0,0,0"/>
+                    <Button Content="{loc:Loc Key=levels.installFromFile}" Command="{Binding InstallCommand}"
+                            Style="{StaticResource PrimaryButton}" Margin="6,0,0,0"/>
+                </StackPanel>
+                <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged, Delay=120}"
+                         ToolTip="{loc:Loc Key=levels.search}" Margin="0,0,6,0"/>
+            </DockPanel>
+
+            <TextBlock Text="{Binding Status}" Margin="0,0,0,8" TextWrapping="Wrap"
+                       Visibility="{Binding HasStatus, Converter={StaticResource BoolToVis}}"
+                       Foreground="{DynamicResource TextMutedBrush}"/>
+        </StackPanel>
+
+        <!-- ── 列表 ── -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
             <StackPanel>
-                <TextBlock Text="{loc:Loc Key=levels.empty}"
-                           Foreground="{DynamicResource TextMutedBrush}" TextWrapping="Wrap"/>
-                <TextBlock Text="{loc:Loc Key=levels.emptyHint}"
-                           Foreground="{DynamicResource TextMutedBrush}" Margin="0,6,0,0" TextWrapping="Wrap"/>
+                <ItemsControl ItemsSource="{Binding VisibleLevels}"
+                              Visibility="{Binding HasLevels, Converter={StaticResource BoolToVis}}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Style="{StaticResource RowCard}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Grid.Column="0" MinWidth="0">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="{Binding Name}" FontSize="14" FontWeight="SemiBold"
+                                                       TextTrimming="CharacterEllipsis"/>
+                                            <Border Style="{StaticResource Badge}" Margin="8,0,0,0">
+                                                <TextBlock Text="{Binding Type}" FontSize="10"
+                                                           Foreground="{DynamicResource TextMutedBrush}"/>
+                                            </Border>
+                                            <Border Style="{StaticResource Badge}">
+                                                <TextBlock Text="{Binding StatusLabel}" FontSize="10"
+                                                           Foreground="{DynamicResource PrimaryBrush}"/>
+                                            </Border>
+                                        </StackPanel>
+
+                                        <TextBlock Margin="0,4,0,0" TextWrapping="Wrap" FontSize="11"
+                                                   Foreground="{DynamicResource TextMutedBrush}"
+                                                   Visibility="{Binding HasAuthor, Converter={StaticResource BoolToVis}}">
+                                            <Run Text="{Binding Author, Mode=OneWay}"/>
+                                            <Run Text="·"/>
+                                            <Run Text="{Binding SizeLabel, Mode=OneWay}"/>
+                                        </TextBlock>
+
+                                        <TextBlock Text="{Binding FileName}" FontSize="10" Margin="0,2,0,0"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   Foreground="{DynamicResource TextMutedBrush}"/>
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal"
+                                                VerticalAlignment="Top" Margin="12,0,0,0">
+                                        <Button Content="{Binding ToggleLabel}"
+                                                Command="{Binding DataContext.ToggleCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                CommandParameter="{Binding}"
+                                                IsEnabled="{Binding Idle}"
+                                                Style="{StaticResource BaseButton}" MinWidth="72"/>
+                                        <Button Content="{loc:Loc Key=common.delete}"
+                                                Command="{Binding DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                CommandParameter="{Binding}"
+                                                IsEnabled="{Binding Idle}"
+                                                Style="{StaticResource DangerButton}" Margin="6,0,0,0"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <!-- 空态 -->
+                <Border Style="{StaticResource Card}"
+                        Visibility="{Binding HasLevels, Converter={StaticResource NotBoolToVis}}">
+                    <StackPanel>
+                        <TextBlock Text="{loc:Loc Key=levels.empty}" TextWrapping="Wrap"
+                                   Foreground="{DynamicResource TextMutedBrush}"/>
+                        <TextBlock Text="{loc:Loc Key=levels.emptyHint}" Margin="0,6,0,0" TextWrapping="Wrap"
+                                   Foreground="{DynamicResource TextMutedBrush}"/>
+                    </StackPanel>
+                </Border>
             </StackPanel>
-        </Border>
-    </StackPanel>
+        </ScrollViewer>
+    </Grid>
 </UserControl>

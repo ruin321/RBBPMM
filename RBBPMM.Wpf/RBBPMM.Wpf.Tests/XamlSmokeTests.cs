@@ -154,4 +154,49 @@ public class XamlSmokeTests
         Assert.True(dangling.Length == 0,
             $"{name}Theme.xaml 引用了自身未定义的 StaticResource: " + string.Join(", ", dangling));
     }
+
+    /// <summary>
+    /// 页面/MainWindow 里的 <c>{StaticResource X}</c> 必须是 App.xaml 的合并字典
+    /// （Controls.xaml）或 App.xaml 直接声明的资源（那几个转换器）之一。
+    ///
+    /// 这条守着一个真实踩过的坑：页面用 <c>{StaticResource BoolToVis}</c>，而
+    /// App.xaml 忘注册 → 编译期毫无问题，窗口一打开就 XamlParseException。
+    /// </summary>
+    [Fact]
+    public void Views_ReferenceOnlyGloballyProvidedStaticResources()
+    {
+        var provided = new HashSet<string>();
+
+        // App.xaml 直接声明的资源（转换器等）
+        var appXaml = Path.Combine(TestFs.AppProjectDir(), "App.xaml");
+        foreach (Match m in Regex.Matches(File.ReadAllText(appXaml), @"x:Key=""([^""]+)"""))
+            provided.Add(m.Groups[1].Value);
+
+        // Controls.xaml（App.xaml 的 MergedDictionaries 里唯一一项）
+        foreach (var key in LoadDictionary(Path.Combine(StylesDir, "Controls.xaml")).Keys)
+            provided.Add(key.ToString()!);
+
+        // 主题字典也会进 Application.Resources
+        foreach (var name in new[] { "Light", "Dark" })
+            foreach (var key in LoadTheme(name).Keys)
+                provided.Add(key.ToString()!);
+
+        var viewFiles = Directory
+            .EnumerateFiles(Path.Combine(TestFs.AppProjectDir(), "Views"), "*.xaml")
+            .Append(Path.Combine(TestFs.AppProjectDir(), "MainWindow.xaml"));
+
+        var problems = new List<string>();
+        foreach (var file in viewFiles)
+        {
+            foreach (Match m in Regex.Matches(File.ReadAllText(file), @"\{StaticResource\s+([A-Za-z_][A-Za-z0-9_]*)\}"))
+            {
+                var key = m.Groups[1].Value;
+                if (!provided.Contains(key))
+                    problems.Add($"{Path.GetFileName(file)} -> {key}");
+            }
+        }
+
+        Assert.True(problems.Count == 0,
+            "页面引用了全局未提供的 StaticResource:\n  " + string.Join("\n  ", problems));
+    }
 }

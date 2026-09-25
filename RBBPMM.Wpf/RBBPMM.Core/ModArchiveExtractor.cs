@@ -125,7 +125,11 @@ public static class ModArchiveExtractor
         }
     }
 
-    private static string LocateGmpRoot(string extractRoot)
+    /// <summary>
+    /// Pivots out of a single wrapping folder (archives usually ship <c>MyMod/…</c>) so callers
+    /// inspect the real payload root. Falls back to <paramref name="extractRoot"/> when ambiguous.
+    /// </summary>
+    public static string LocateGmpRoot(string extractRoot)
     {
         var rootFull = Path.GetFullPath(extractRoot);
         var candidates = new List<string>();

@@ -7,16 +7,180 @@
              xmlns:loc="clr-namespace:RBBPMM.Localization"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance vm:GameBananaPageViewModel}">
-    <StackPanel>
-        <TextBlock Text="{Binding Title}" FontSize="22" FontWeight="Bold"
-                   Foreground="{DynamicResource TextBrush}" Margin="0,0,0,8"/>
-        <Border Style="{StaticResource Card}">
-            <StackPanel>
-                <TextBlock Text="{loc:Loc Key=gamebanana.empty}"
-                           Foreground="{DynamicResource TextMutedBrush}" TextWrapping="Wrap"/>
-                <TextBlock Text="{loc:Loc Key=gamebanana.emptyHint}"
-                           Foreground="{DynamicResource TextMutedBrush}" Margin="0,6,0,0" TextWrapping="Wrap"/>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- ── 顶部：标题 / 搜索条 / 分页 / 状态 ── -->
+        <StackPanel Grid.Row="0">
+            <TextBlock Text="{Binding Title}" FontSize="22" FontWeight="Bold" Margin="0,0,0,8"/>
+
+            <DockPanel LastChildFill="True" Margin="0,0,0,8">
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Margin="6,0,0,0">
+                    <TextBlock Text="{loc:Loc Key=banana.category}" VerticalAlignment="Center"
+                               Margin="0,0,6,0" Foreground="{DynamicResource TextMutedBrush}"/>
+                    <ComboBox ItemsSource="{Binding Categories}"
+                              SelectedItem="{Binding Category, Mode=TwoWay}"
+                              MinWidth="150" Margin="0,0,6,0">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Label}"/>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                    <Button Content="{loc:Loc Key=banana.search}" Command="{Binding SearchCommand}"
+                            Style="{StaticResource PrimaryButton}"/>
+                </StackPanel>
+                <TextBox Text="{Binding Query, UpdateSourceTrigger=PropertyChanged}"
+                         ToolTip="{loc:Loc Key=banana.searchPlaceholder}" Margin="0,0,6,0"/>
+            </DockPanel>
+
+            <!-- 分页 + 状态 -->
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                <Button Content="{loc:Loc Key=banana.prev}" Command="{Binding PrevPageCommand}"
+                        Style="{StaticResource BaseButton}" MinWidth="72"/>
+                <Button Content="{loc:Loc Key=banana.next}" Command="{Binding NextPageCommand}"
+                        Style="{StaticResource BaseButton}" MinWidth="72" Margin="6,0,0,0"/>
+                <TextBlock Text="{Binding PageLabel}" VerticalAlignment="Center" Margin="12,0,0,0"
+                           Foreground="{DynamicResource TextMutedBrush}"/>
+                <TextBlock Text="{Binding Status}" VerticalAlignment="Center" Margin="12,0,0,0"
+                           TextWrapping="Wrap"
+                           Visibility="{Binding HasStatus, Converter={StaticResource BoolToVis}}"
+                           Foreground="{DynamicResource TextMutedBrush}"/>
             </StackPanel>
-        </Border>
-    </StackPanel>
+        </StackPanel>
+
+        <!-- ── 左：搜索结果　右：详情（文件 / 前置 / 更新） ── -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2*" MinWidth="220"/>
+                <ColumnDefinition Width="12"/>
+                <ColumnDefinition Width="3*" MinWidth="260"/>
+            </Grid.ColumnDefinitions>
+
+            <ListBox Grid.Column="0"
+                     ItemsSource="{Binding Results}"
+                     SelectedItem="{Binding SelectedSubmission, Mode=TwoWay}">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <Border Style="{StaticResource RowCard}">
+                            <StackPanel MinWidth="0">
+                                <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="SemiBold"
+                                           TextTrimming="CharacterEllipsis"/>
+                                <TextBlock Margin="0,4,0,0" TextWrapping="Wrap" FontSize="11"
+                                           TextTrimming="CharacterEllipsis"
+                                           Foreground="{DynamicResource TextMutedBrush}">
+                                    <Run Text="{Binding AuthorName, Mode=OneWay}"/>
+                                    <Run Text="·"/>
+                                    <Run Text="{Binding Version, Mode=OneWay}"/>
+                                </TextBlock>
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+
+            <!-- 未搜索时的空态 -->
+            <Border Grid.Column="0" Style="{StaticResource Card}" VerticalAlignment="Top"
+                    Visibility="{Binding HasResults, Converter={StaticResource NotBoolToVis}}">
+                <StackPanel>
+                    <TextBlock Text="{loc:Loc Key=banana.empty}" TextWrapping="Wrap"
+                               Foreground="{DynamicResource TextMutedBrush}"/>
+                    <TextBlock Text="{loc:Loc Key=banana.emptyHint}" Margin="0,6,0,0" TextWrapping="Wrap"
+                               Foreground="{DynamicResource TextMutedBrush}"/>
+                </StackPanel>
+            </Border>
+
+            <!-- 详情面板 -->
+            <Border Grid.Column="2" Style="{StaticResource Card}">
+                <Grid>
+                    <!-- 未选中：提示 -->
+                    <TextBlock Text="{loc:Loc Key=banana.selectHint}" TextWrapping="Wrap"
+                               VerticalAlignment="Top"
+                               Foreground="{DynamicResource TextMutedBrush}"
+                               Visibility="{Binding HasSelection, Converter={StaticResource NotBoolToVis}}"/>
+
+                    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                  Visibility="{Binding HasSelection, Converter={StaticResource BoolToVis}}">
+                        <StackPanel>
+                            <TextBlock Text="{Binding SelectedSubmission.Name}" FontSize="16" FontWeight="Bold"
+                                       TextWrapping="Wrap"/>
+                            <TextBlock Margin="0,4,0,0" FontSize="11" TextWrapping="Wrap"
+                                       Foreground="{DynamicResource TextMutedBrush}">
+                                <Run Text="{Binding SelectedSubmission.AuthorName, Mode=OneWay}"/>
+                                <Run Text="·"/>
+                                <Run Text="{Binding SelectedSubmission.Version, Mode=OneWay}"/>
+                            </TextBlock>
+                            <TextBlock Text="{Binding SelectedSubmission.Description}" Margin="0,8,0,0"
+                                       TextWrapping="Wrap" FontSize="12"/>
+
+                            <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                                <Button Content="{loc:Loc Key=banana.openPage}"
+                                        Command="{Binding OpenPageCommand}"
+                                        CommandParameter="{Binding SelectedSubmission}"
+                                        Style="{StaticResource BaseButton}"/>
+                                <Button Content="{loc:Loc Key=banana.reload}" Command="{Binding ReloadDetailsCommand}"
+                                        Style="{StaticResource BaseButton}" Margin="6,0,0,0"/>
+                            </StackPanel>
+
+                            <!-- 前置要求 -->
+                            <StackPanel Margin="0,14,0,0"
+                                        Visibility="{Binding HasRequirements, Converter={StaticResource BoolToVis}}">
+                                <TextBlock Text="{loc:Loc Key=banana.requirements}" FontWeight="SemiBold"
+                                           Margin="0,0,0,6"/>
+                                <ItemsControl ItemsSource="{Binding SelectedSubmission.Requirements}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding Name}" TextWrapping="Wrap" FontSize="12"
+                                                       Foreground="{DynamicResource TextMutedBrush}"/>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+
+                            <!-- 文件 -->
+                            <TextBlock Text="{loc:Loc Key=banana.files}" FontWeight="SemiBold" Margin="0,14,0,6"/>
+                            <ItemsControl ItemsSource="{Binding AllFiles}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Style="{StaticResource RowCard}">
+                                            <DockPanel LastChildFill="True">
+                                                <Button DockPanel.Dock="Right"
+                                                        Content="{loc:Loc Key=banana.install}"
+                                                        Command="{Binding DataContext.InstallFileCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                        CommandParameter="{Binding}"
+                                                        Style="{StaticResource PrimaryButton}" Margin="8,0,0,0"/>
+                                                <StackPanel MinWidth="0">
+                                                    <TextBlock Text="{Binding FileName}" FontSize="12"
+                                                               TextTrimming="CharacterEllipsis"/>
+                                                    <TextBlock Text="{Binding Version}" FontSize="10"
+                                                               Foreground="{DynamicResource TextMutedBrush}"/>
+                                                </StackPanel>
+                                            </DockPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <!-- 更新记录 -->
+                            <TextBlock Text="{loc:Loc Key=banana.updates}" FontWeight="SemiBold" Margin="0,14,0,6"/>
+                            <ItemsControl ItemsSource="{Binding Updates}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Margin="0,0,0,8">
+                                            <TextBlock Text="{Binding Title}" FontSize="12" TextWrapping="Wrap"/>
+                                            <TextBlock Text="{Binding Version}" FontSize="10"
+                                                       Foreground="{DynamicResource TextMutedBrush}"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
 </UserControl>

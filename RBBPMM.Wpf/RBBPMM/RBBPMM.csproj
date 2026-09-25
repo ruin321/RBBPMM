@@ -20,4 +20,9 @@
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
 
+  <!-- WPF 的 ImplicitUsings 集合不含 System.IO（Path/File/Directory），全项目补一个全局 using -->
+  <ItemGroup>
+    <Using Include="System.IO" />
+  </ItemGroup>
+
 </Project>

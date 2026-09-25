@@ -1,4 +1,5 @@
 using System.IO;
+using RBBPMM.Core;
 
 namespace RBBPMM.Wpf.Tests;
 
@@ -31,4 +32,41 @@ internal static class TestFs
     public static string ResourcesDir() => Path.Combine(RepoRoot(), "RBBPMM", "Resources");
 
     public static string AppProjectDir() => Path.Combine(RepoRoot(), "RBBPMM");
+
+    /// <summary>把 <paramref name="entries"/>（相对路径 → 内容）打成一个 zip。</summary>
+    public static string MakeZip(Dictionary<string, string> entries)
+    {
+        var path = Path.Combine(TempDir(), "archive.zip");
+        using var fs = File.Create(path);
+        using var zip = new System.IO.Compression.ZipArchive(fs, System.IO.Compression.ZipArchiveMode.Create);
+        foreach (var (name, content) in entries)
+        {
+            var entry = zip.CreateEntry(name);
+            using var writer = new StreamWriter(entry.Open());
+            writer.Write(content);
+        }
+        return path;
+    }
+
+    /// <summary>
+    /// 造一个「看起来像真的」Baldi's Basics Plus 安装：exe + BALDI_Data/globalgamemanagers，
+    /// 并在 GameEnvironmentService 认的偏移处塞进身份串与版本号。
+    /// </summary>
+    public static string MakeGameInstall(string version = "0.9.1")
+    {
+        var root = TempDir();
+        File.WriteAllBytes(Path.Combine(root, "BALDI.exe"), [0x4D, 0x5A]);
+
+        var data = Path.Combine(root, "BALDI_Data");
+        Directory.CreateDirectory(data);
+
+        var blob = new byte[GameEnvironmentService.VersionOffset + GameEnvironmentService.VersionLength + 64];
+        var payload = System.Text.Encoding.ASCII.GetBytes(
+            "Baldi's Basics in Education and Learningbasicallygames" +
+            "category.games@" + version + "ff@$");
+        Array.Copy(payload, 0, blob, GameEnvironmentService.VersionOffset, payload.Length);
+
+        File.WriteAllBytes(Path.Combine(data, Constants.GameVersionFile), blob);
+        return root;
+    }
 }

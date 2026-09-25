@@ -15,11 +15,18 @@ from __future__ import annotations
 
 import json
 import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+# 功能页（Mods / 材质包 / 关卡 / GameBanana）的追加键与译文单独成模块，
+# 否则本文件会长到难以审阅；键集仍由下面的校验统一把关。
+from locales_extra import EXTRA, KEYS_EXTRA  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # 键集（唯一真源）。顺序即输出顺序。
 # ---------------------------------------------------------------------------
-KEYS = [
+KEYS_BASE = [
     "app.title",
     "app.subtitle",
     "nav.mods",
@@ -48,9 +55,10 @@ KEYS = [
     "textures.emptyHint",
     "levels.empty",
     "levels.emptyHint",
-    "gamebanana.empty",
-    "gamebanana.emptyHint",
 ]
+
+# 完整键集 = 第一阶段（外壳/导航/设置）+ 功能页
+KEYS = KEYS_BASE + KEYS_EXTRA
 
 LANGUAGES: dict[str, dict[str, str]] = {
     "en": {
@@ -82,8 +90,6 @@ LANGUAGES: dict[str, dict[str, str]] = {
         "textures.emptyHint": "(Wired to Core.TexturePackService in Phase 5.)",
         "levels.empty": "Custom level management will appear here.",
         "levels.emptyHint": "(Wired to the Core level services in Phase 5.)",
-        "gamebanana.empty": "Browse / search GameBanana and install mods with one click here.",
-        "gamebanana.emptyHint": "(Wired to Core.GamebananaService with an injectable HttpClient in Phase 5.)",
     },
     "zh-CN": {
         "app.title": "RBBPMM — Baldi's Basics Plus 模组管理器",
@@ -114,8 +120,6 @@ LANGUAGES: dict[str, dict[str, str]] = {
         "textures.emptyHint": "（功能页将在 Phase 5 接入 Core.TexturePackService）",
         "levels.empty": "自定义关卡的管理将在此呈现。",
         "levels.emptyHint": "（功能页将在 Phase 5 接入 Core 关卡服务）",
-        "gamebanana.empty": "浏览 / 搜索 GameBanana，一键拉取 Mod 将在此呈现。",
-        "gamebanana.emptyHint": "（功能页将在 Phase 5 接入 Core.GamebananaService，含可注入 HttpClient 以便测试）",
     },
     "zh-TW": {
         "app.title": "RBBPMM — Baldi's Basics Plus 模組管理器",
@@ -146,8 +150,6 @@ LANGUAGES: dict[str, dict[str, str]] = {
         "textures.emptyHint": "（功能頁將於 Phase 5 接入 Core.TexturePackService）",
         "levels.empty": "自訂關卡的管理將在此呈現。",
         "levels.emptyHint": "（功能頁將於 Phase 5 接入 Core 關卡服務）",
-        "gamebanana.empty": "瀏覽 / 搜尋 GameBanana，一鍵取得模組將在此呈現。",
-        "gamebanana.emptyHint": "（功能頁將於 Phase 5 接入 Core.GamebananaService，含可注入 HttpClient 以便測試）",
     },
     "ja": {
         "app.title": "RBBPMM — Baldi's Basics Plus MOD マネージャー",
@@ -178,8 +180,6 @@ LANGUAGES: dict[str, dict[str, str]] = {
         "textures.emptyHint": "（Phase 5 で Core.TexturePackService に接続します）",
         "levels.empty": "カスタムレベルの管理がここに表示されます。",
         "levels.emptyHint": "（Phase 5 で Core のレベルサービスに接続します）",
-        "gamebanana.empty": "GameBanana を閲覧 / 検索し、ワンクリックで MOD を導入できます。",
-        "gamebanana.emptyHint": "（Phase 5 で Core.GamebananaService に接続します。HttpClient は注入可能）",
     },
     "ko": {
         "app.title": "RBBPMM — Baldi's Basics Plus 모드 관리자",
@@ -210,8 +210,6 @@ LANGUAGES: dict[str, dict[str, str]] = {
         "textures.emptyHint": "(Phase 5에서 Core.TexturePackService에 연결됩니다)",
         "levels.empty": "커스텀 레벨 관리가 여기에 표시됩니다.",
         "levels.emptyHint": "(Phase 5에서 Core 레벨 서비스에 연결됩니다)",
-        "gamebanana.empty": "GameBanana를 둘러보고 검색하며 한 번의 클릭으로 모드를 설치할 수 있습니다.",
-        "gamebanana.emptyHint": "(Phase 5에서 Core.GamebananaService에 연결됩니다. HttpClient 주입 가능)",
     },
     "es": {
         "app.title": "RBBPMM — Gestor de mods de Baldi's Basics Plus",
@@ -242,8 +240,6 @@ LANGUAGES: dict[str, dict[str, str]] = {
         "textures.emptyHint": "(Se conectará a Core.TexturePackService en la Fase 5.)",
         "levels.empty": "La gestión de niveles personalizados aparecerá aquí.",
         "levels.emptyHint": "(Se conectará a los servicios de niveles de Core en la Fase 5.)",
-        "gamebanana.empty": "Explora / busca en GameBanana e instala mods con un clic aquí.",
-        "gamebanana.emptyHint": "(Se conectará a Core.GamebananaService con un HttpClient inyectable en la Fase 5.)",
     },
     "pt": {
         "app.title": "RBBPMM — Gerenciador de mods de Baldi's Basics Plus",
@@ -274,8 +270,6 @@ LANGUAGES: dict[str, dict[str, str]] = {
         "textures.emptyHint": "(Será conectado ao Core.TexturePackService na Fase 5.)",
         "levels.empty": "O gerenciamento de níveis personalizados aparecerá aqui.",
         "levels.emptyHint": "(Será conectado aos serviços de níveis do Core na Fase 5.)",
-        "gamebanana.empty": "Navegue / pesquise no GameBanana e instale mods com um clique aqui.",
-        "gamebanana.emptyHint": "(Será conectado ao Core.GamebananaService com um HttpClient injetável na Fase 5.)",
     },
     "fr": {
         "app.title": "RBBPMM — Gestionnaire de mods pour Baldi's Basics Plus",
@@ -306,8 +300,6 @@ LANGUAGES: dict[str, dict[str, str]] = {
         "textures.emptyHint": "(Sera relié à Core.TexturePackService en phase 5.)",
         "levels.empty": "La gestion des niveaux personnalisés apparaîtra ici.",
         "levels.emptyHint": "(Sera relié aux services de niveaux du Core en phase 5.)",
-        "gamebanana.empty": "Parcourez / recherchez GameBanana et installez des mods en un clic ici.",
-        "gamebanana.emptyHint": "(Sera relié à Core.GamebananaService avec un HttpClient injectable en phase 5.)",
     },
     "de": {
         "app.title": "RBBPMM — Mod-Manager für Baldi's Basics Plus",
@@ -338,8 +330,6 @@ LANGUAGES: dict[str, dict[str, str]] = {
         "textures.emptyHint": "(Wird in Phase 5 an Core.TexturePackService angebunden.)",
         "levels.empty": "Die Verwaltung eigener Level erscheint hier.",
         "levels.emptyHint": "(Wird in Phase 5 an die Level-Dienste des Core angebunden.)",
-        "gamebanana.empty": "GameBanana durchsuchen und Mods mit einem Klick installieren – hier.",
-        "gamebanana.emptyHint": "(Wird in Phase 5 an Core.GamebananaService mit injizierbarem HttpClient angebunden.)",
     },
     "ru": {
         "app.title": "RBBPMM — менеджер модов для Baldi's Basics Plus",
@@ -370,8 +360,6 @@ LANGUAGES: dict[str, dict[str, str]] = {
         "textures.emptyHint": "(В фазе 5 подключится к Core.TexturePackService.)",
         "levels.empty": "Управление своими уровнями появится здесь.",
         "levels.emptyHint": "(В фазе 5 подключится к службам уровней Core.)",
-        "gamebanana.empty": "Просматривайте и ищите на GameBanana, устанавливайте моды в один клик.",
-        "gamebanana.emptyHint": "(В фазе 5 подключится к Core.GamebananaService с внедряемым HttpClient.)",
     },
     # 亚等约语（彩蛋语言）—— 词根与 Electron 版 ydyy 保持一致
     "ydyy": {
@@ -403,8 +391,6 @@ LANGUAGES: dict[str, dict[str, str]] = {
         "textures.emptyHint": "(Phase 5 — Core.TexturePackService.)",
         "levels.empty": "Lávas pametion hic.",
         "levels.emptyHint": "(Phase 5 — Core lávas motás.)",
-        "gamebanana.empty": "Kêtolog saló — dóva póna hic.",
-        "gamebanana.emptyHint": "(Phase 5 — Core.GamebananaService, HttpClient póna vola.)",
     },
     # fish（彩蛋语言）：Electron 版 fish 的每个键都是字面量 'FISH'
     "fish": {k: "FISH" for k in KEYS},
@@ -416,9 +402,18 @@ def main() -> int:
     out_dir = os.path.normpath(os.path.join(here, "..", "RBBPMM", "Resources"))
     os.makedirs(out_dir, exist_ok=True)
 
+    # 合并：第一阶段译文（本文件）+ 功能页译文（locales_extra.py）
+    merged: dict[str, dict[str, str]] = {
+        lang: {**table, **EXTRA.get(lang, {})} for lang, table in LANGUAGES.items()
+    }
+
     # 先做一致性自检，避免写出缺键/多键的语言包
     problems: list[str] = []
-    for lang, table in LANGUAGES.items():
+    for lang in EXTRA:
+        if lang not in LANGUAGES:
+            problems.append(f"{lang}: locales_extra 有译文但 LANGUAGES 未登记该语言")
+
+    for lang, table in merged.items():
         missing = [k for k in KEYS if k not in table]
         extra = [k for k in table if k not in KEYS]
         if missing:
@@ -434,7 +429,7 @@ def main() -> int:
     for lang in LANGUAGES:
         path = os.path.join(out_dir, f"{lang}.json")
         with open(path, "w", encoding="utf-8", newline="\n") as fh:
-            json.dump({k: LANGUAGES[lang][k] for k in KEYS}, fh, ensure_ascii=False, indent=2)
+            json.dump({k: merged[lang][k] for k in KEYS}, fh, ensure_ascii=False, indent=2)
             fh.write("\n")
         print(f"written {os.path.relpath(path, here)}  ({len(KEYS)} keys)")
 

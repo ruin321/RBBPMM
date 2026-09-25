@@ -10,10 +10,10 @@ public class MainViewModelTests
     private static (MainViewModel vm, ThemeManager theme, UserSettings settings) Build()
     {
         var nav = new NavigationService();
-        nav.Register("mods", () => new ModsPageViewModel());
-        nav.Register("textures", () => new TexturesPageViewModel());
-        nav.Register("levels", () => new LevelsPageViewModel());
-        nav.Register("gamebanana", () => new GameBananaPageViewModel());
+        nav.Register("mods", () => TestServices.ModsVm());
+        nav.Register("textures", () => TestServices.TexturesVm());
+        nav.Register("levels", () => TestServices.LevelsVm());
+        nav.Register("gamebanana", () => TestServices.BananaVm());
         nav.Register("settings", () => new SettingsPageViewModel(new UserSettings(), new ThemeManager(new ResourceDictionary())));
 
         var theme = new ThemeManager(

@@ -31,7 +31,7 @@ public class LocalizationIntegrationTests
         var loc = InstallRealResources();
         try
         {
-            var vm = new ModsPageViewModel();
+            var vm = TestServices.ModsVm();
             Assert.Equal("Your Mods", vm.Title);
 
             loc.Language = "zh-CN";
@@ -52,7 +52,7 @@ public class LocalizationIntegrationTests
         var loc = InstallRealResources();
         try
         {
-            var vm = new ModsPageViewModel();
+            var vm = TestServices.ModsVm();
             var raised = new List<string?>();
             vm.PropertyChanged += (_, e) => raised.Add(e.PropertyName);
 

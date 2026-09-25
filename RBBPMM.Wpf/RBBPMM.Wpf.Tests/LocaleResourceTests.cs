@@ -28,6 +28,8 @@ public class LocaleResourceTests
     private static readonly string[] KeyPrefixes =
     [
         "app", "nav", "page", "shell", "settings", "theme", "mods", "textures", "levels", "gamebanana",
+        // Phase 5 功能页新增的命名空间
+        "common", "game", "status", "banana",
     ];
 
     private static string ResourcesDir => TestFs.ResourcesDir();
