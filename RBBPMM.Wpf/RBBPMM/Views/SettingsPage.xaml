@@ -41,9 +41,16 @@
                                Foreground="{DynamicResource TextMutedBrush}"/>
                     <ComboBox ItemsSource="{Binding Languages}"
                               SelectedValuePath="Code"
-                              DisplayMemberPath="Label"
                               SelectedValue="{Binding SelectedLanguage, Mode=TwoWay}"
-                              MinWidth="180" Padding="6,4"/>
+                              MinWidth="180">
+                        <!-- 用显式 ItemTemplate 而不是 DisplayMemberPath：自定义模板下
+                             DisplayMemberPath 生成的选择框内容会退化成 record 的 ToString() -->
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Label}"/>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
                 </StackPanel>
             </StackPanel>
         </Border>

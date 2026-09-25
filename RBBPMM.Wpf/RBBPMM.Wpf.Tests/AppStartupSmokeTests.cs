@@ -2,6 +2,7 @@ using System.IO;
 using System.Runtime.ExceptionServices;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Media;
 using System.Windows.Threading;
 using RBBPMM.Navigation;
@@ -131,6 +132,31 @@ public class AppStartupSmokeTests
                 var settingsPage = Descendants(root).OfType<SettingsPage>().FirstOrDefault();
                 Assert.True(settingsPage is not null, "导航后视觉树里没有 SettingsPage。实际树:\n" + Dump(root));
                 Assert.Contains("切换到深色", Texts(settingsPage!));
+
+                // 6) 深色主题下下拉框必须仍然可读：它不能沿用 Aero2 的浅底，
+                //    否则会跟隐式 TextBlock 的浅色 Foreground 撞成「浅底浅字」。
+                theme.ApplyTheme("Dark");
+                Lay(root);
+
+                var combo = Descendants(settingsPage!).OfType<ComboBox>().FirstOrDefault();
+                Assert.True(combo is not null, "设置页里找不到语言下拉框");
+
+                var comboBg = Assert.IsType<SolidColorBrush>(combo!.Background);
+                Assert.Equal(((SolidColorBrush)app.Resources["SurfaceBrush"]).Color, comboBg.Color);
+
+                // 下拉框要真的套上了自定义模板（自定义模板少接 PART_Popup 就会失灵；
+                // 这里只查结构，真开下拉需要窗口，无桌面环境做不到）
+                combo!.ApplyTemplate();
+                Assert.IsAssignableFrom<Popup>(combo.Template.FindName("PART_Popup", combo));
+                Assert.IsAssignableFrom<ToggleButton>(combo.Template.FindName("DropDownToggle", combo));
+
+                // 选中项要显示语言名本身，而不是 LanguageOption 的 ToString()
+                Assert.Contains("English", Texts(combo));
+
+                // 7) 主题能切回来
+                theme.ApplyTheme("Light");
+                Lay(root);
+                Assert.Equal("Light", theme.CurrentTheme);
 
                 window.Close();
             }

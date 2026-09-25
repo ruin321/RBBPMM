@@ -2,6 +2,7 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Markup;
 
 namespace RBBPMM.Wpf.Tests;
@@ -95,6 +96,23 @@ public class XamlSmokeTests
         var missing = RequiredControlStyles.Where(k => !keys.Contains(k)).ToArray();
 
         Assert.True(missing.Length == 0, $"Controls.xaml 缺少样式: {string.Join(", ", missing)}");
+    }
+
+    [Fact]
+    public void ControlsDictionary_DefinesTheImplicitStylesWeRelyOn()
+    {
+        // 隐式样式（无 x:Key）在字典里的键就是目标类型本身。
+        // ComboBox 必须自带模板：Aero2 默认模板是浅底，配上本项目的隐式 TextBlock
+        // 浅色 Foreground，深色主题下会出现「浅底浅字」看不见。
+        var dict = LoadDictionary(Path.Combine(StylesDir, "Controls.xaml"));
+        var types = dict.Keys.Cast<object>().OfType<Type>().ToHashSet();
+
+        Assert.Contains(typeof(TextBlock), types);
+        Assert.Contains(typeof(ComboBox), types);
+        Assert.Contains(typeof(ComboBoxItem), types);
+
+        var combo = Assert.IsType<Style>(dict[typeof(ComboBox)]);
+        Assert.NotNull(combo.Setters.OfType<Setter>().FirstOrDefault(s => s.Property == Control.TemplateProperty));
     }
 
     [Fact]
