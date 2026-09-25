@@ -20,3 +20,5 @@ bin/
 obj/
 TestResults/
 *.trx
+# 发布产物（build/publish.ps1 的 dist/）
+[Rr]BBPMM.Wpf/dist/

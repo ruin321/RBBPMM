@@ -37,7 +37,14 @@ public static class ModArchiveExtractor
         }
     }
 
-    private static string ResolveSevenZip()
+    /// <summary>
+    /// Locates the 7z executable: explicit override, then the bundled copy, then common installs,
+    /// finally a bare "7z" so a machine that put it on PATH still works.
+    ///
+    /// Public because the packaged layout (see the app's csproj) is what makes the bundled branch
+    /// reachable, and tests assert the two stay in sync.
+    /// </summary>
+    public static string ResolveSevenZip()
     {
         if (!string.IsNullOrEmpty(SevenZipExecutable) && File.Exists(SevenZipExecutable))
             return SevenZipExecutable;
