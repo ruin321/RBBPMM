@@ -68,4 +68,44 @@ public class MainViewModelTests
 
         Assert.Equal("☀️", vm.ThemeGlyph);
     }
+
+    [Fact]
+    public void NavItems_CarryLocalizationKeys()
+    {
+        var (vm, _, _) = Build();
+
+        Assert.All(vm.NavItems, item => Assert.StartsWith("nav.", item.TitleKey));
+        Assert.Equal(new[] { "mods", "textures", "levels", "gamebanana", "settings" },
+            vm.NavItems.Select(i => i.Key));
+    }
+
+    [Fact]
+    public void OnlyCurrentNavItem_IsMarkedActive()
+    {
+        var (vm, _, _) = Build();
+
+        // 构造时默认进 Mods
+        Assert.True(vm.NavItems.Single(i => i.Key == "mods").IsActive);
+        Assert.True(vm.NavItems.Count(i => i.IsActive) == 1);
+
+        vm.NavigateCommand.Execute("settings");
+
+        Assert.True(vm.NavItems.Single(i => i.Key == "settings").IsActive);
+        Assert.False(vm.NavItems.Single(i => i.Key == "mods").IsActive);
+        Assert.True(vm.NavItems.Count(i => i.IsActive) == 1);
+    }
+
+    [Fact]
+    public void IsActive_NotifiesPropertyChanged_SoSidebarHighlightRefreshes()
+    {
+        var (vm, _, _) = Build();
+        var mods = vm.NavItems.Single(i => i.Key == "mods");
+
+        var raised = new List<string?>();
+        mods.PropertyChanged += (_, e) => raised.Add(e.PropertyName);
+
+        vm.NavigateCommand.Execute("textures");
+
+        Assert.Contains(nameof(RBBPMM.Models.NavItem.IsActive), raised);
+    }
 }

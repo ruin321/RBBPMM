@@ -18,3 +18,5 @@ Thumbs.db
 [Rr]BBPMM.Wpf/**/obj/
 bin/
 obj/
+TestResults/
+*.trx

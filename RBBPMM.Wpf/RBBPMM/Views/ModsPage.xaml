@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:vm="clr-namespace:RBBPMM.ViewModels"
+             xmlns:loc="clr-namespace:RBBPMM.Localization"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance vm:ModsPageViewModel}">
     <StackPanel>
@@ -11,9 +12,9 @@
                    Foreground="{DynamicResource TextBrush}" Margin="0,0,0,8"/>
         <Border Style="{StaticResource Card}">
             <StackPanel>
-                <TextBlock Text="已安装的 Mod 将在此列出，支持启用 / 停用 / 卸载与回滚。"
+                <TextBlock Text="{loc:Loc Key=mods.empty}"
                            Foreground="{DynamicResource TextMutedBrush}" TextWrapping="Wrap"/>
-                <TextBlock Text="（功能页将在 Phase 5 接入 Core 的扫描 / 安装 / 激活服务）"
+                <TextBlock Text="{loc:Loc Key=mods.emptyHint}"
                            Foreground="{DynamicResource TextMutedBrush}" Margin="0,6,0,0" TextWrapping="Wrap"/>
             </StackPanel>
         </Border>

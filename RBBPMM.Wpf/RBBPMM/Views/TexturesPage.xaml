@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:vm="clr-namespace:RBBPMM.ViewModels"
+             xmlns:loc="clr-namespace:RBBPMM.Localization"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance vm:TexturesPageViewModel}">
     <StackPanel>
@@ -11,9 +12,9 @@
                    Foreground="{DynamicResource TextBrush}" Margin="0,0,0,8"/>
         <Border Style="{StaticResource Card}">
             <StackPanel>
-                <TextBlock Text="材质包安装 / 卸载、README 预览将在此呈现。"
+                <TextBlock Text="{loc:Loc Key=textures.empty}"
                            Foreground="{DynamicResource TextMutedBrush}" TextWrapping="Wrap"/>
-                <TextBlock Text="（功能页将在 Phase 5 接入 Core.TexturePackService）"
+                <TextBlock Text="{loc:Loc Key=textures.emptyHint}"
                            Foreground="{DynamicResource TextMutedBrush}" Margin="0,6,0,0" TextWrapping="Wrap"/>
             </StackPanel>
         </Border>

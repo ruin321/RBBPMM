@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:vm="clr-namespace:RBBPMM.ViewModels"
+             xmlns:loc="clr-namespace:RBBPMM.Localization"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance vm:SettingsPageViewModel}">
     <StackPanel>
@@ -12,35 +13,37 @@
 
         <Border Style="{StaticResource Card}" Margin="0,0,0,12">
             <StackPanel>
-                <TextBlock Text="外观" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,8"
-                           Foreground="{DynamicResource TextBrush}"/>
+                <TextBlock Text="{loc:Loc Key=settings.appearance}" FontSize="14" FontWeight="SemiBold"
+                           Margin="0,0,0,8" Foreground="{DynamicResource TextBrush}"/>
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="主题" Width="80" VerticalAlignment="Center"
+                    <TextBlock Text="{loc:Loc Key=settings.theme}" Width="90" VerticalAlignment="Center"
                                Foreground="{DynamicResource TextMutedBrush}"/>
                     <Button Content="{Binding ThemeButtonLabel}"
                             Command="{Binding ToggleThemeCommand}"
                             Style="{StaticResource PrimaryButton}" MinWidth="120"/>
-                    <TextBlock Text="{Binding IsDark, StringFormat='当前：{0}'}"
-                               Margin="12,0,0,0" VerticalAlignment="Center"
+                    <TextBlock Text="{loc:Loc Key=settings.current}"
+                               Margin="12,0,4,0" VerticalAlignment="Center"
                                Foreground="{DynamicResource TextMutedBrush}"/>
+                    <TextBlock Text="{Binding CurrentThemeLabel}" VerticalAlignment="Center"
+                               Foreground="{DynamicResource TextBrush}"/>
                 </StackPanel>
             </StackPanel>
         </Border>
 
         <Border Style="{StaticResource Card}" Margin="0,0,0,12">
             <StackPanel>
-                <TextBlock Text="语言" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,8"
-                           Foreground="{DynamicResource TextBrush}"/>
-                <TextBlock Text="选择会立即持久化；UI 文案真正切换将在 Phase 4 接入 i18n 资源后生效。"
+                <TextBlock Text="{loc:Loc Key=settings.language}" FontSize="14" FontWeight="SemiBold"
+                           Margin="0,0,0,8" Foreground="{DynamicResource TextBrush}"/>
+                <TextBlock Text="{loc:Loc Key=settings.language.hint}"
                            Foreground="{DynamicResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,0,0,8"/>
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="语言" Width="80" VerticalAlignment="Center"
+                    <TextBlock Text="{loc:Loc Key=settings.language}" Width="90" VerticalAlignment="Center"
                                Foreground="{DynamicResource TextMutedBrush}"/>
                     <ComboBox ItemsSource="{Binding Languages}"
                               SelectedValuePath="Code"
                               DisplayMemberPath="Label"
                               SelectedValue="{Binding SelectedLanguage, Mode=TwoWay}"
-                              MinWidth="160" Padding="6,4"/>
+                              MinWidth="180" Padding="6,4"/>
                 </StackPanel>
             </StackPanel>
         </Border>

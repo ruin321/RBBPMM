@@ -5,8 +5,9 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:vm="clr-namespace:RBBPMM.ViewModels"
         xmlns:views="clr-namespace:RBBPMM.Views"
+        xmlns:loc="clr-namespace:RBBPMM.Localization"
         mc:Ignorable="d"
-        Title="RBBPMM — Baldi's Basics Plus Mod Manager"
+        Title="{loc:Loc Key=app.title}"
         Height="760" Width="1180"
         Background="{DynamicResource BgBrush}" Foreground="{DynamicResource TextBrush}">
 
@@ -23,7 +24,7 @@
                 <StackPanel DockPanel.Dock="Top" Margin="0,8">
                     <TextBlock Text="RBBPMM" FontSize="20" FontWeight="Bold"
                                Margin="16,8,16,2" Foreground="{DynamicResource PrimaryBrush}"/>
-                    <TextBlock Text="Baldi's Basics Plus Mod Manager" FontSize="11" Margin="16,0,16,8"
+                    <TextBlock Text="{loc:Loc Key=app.subtitle}" FontSize="11" Margin="16,0,16,8"
                                Foreground="{DynamicResource TextMutedBrush}"/>
                 </StackPanel>
 
@@ -48,9 +49,9 @@
                                                                           VerticalAlignment="Center"/>
                                                     </Border>
                                                     <ControlTemplate.Triggers>
-                                                        <DataTrigger
-                                                            Binding="{Binding DataContext.Nav.CurrentKey, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                                            Value="{Binding Key}">
+                                                        <!-- 当前页高亮：IsActive 由 MainViewModel 在导航时刷新
+                                                             （DataTrigger.Value 不支持 Binding，故走布尔量） -->
+                                                        <DataTrigger Binding="{Binding IsActive}" Value="True">
                                                             <Setter TargetName="bd" Property="Background"
                                                                     Value="{DynamicResource NavActiveBrush}"/>
                                                         </DataTrigger>
@@ -88,7 +89,7 @@
                                Foreground="{DynamicResource TextBrush}"/>
                     <Button DockPanel.Dock="Right" Content="{Binding ThemeGlyph}"
                             Command="{Binding ToggleThemeCommand}"
-                            Padding="10,5" MinWidth="42" ToolTip="切换明暗主题"
+                            Padding="10,5" MinWidth="42" ToolTip="{loc:Loc Key=shell.toggleTheme}"
                             Style="{StaticResource BaseButton}"/>
                 </DockPanel>
             </Border>

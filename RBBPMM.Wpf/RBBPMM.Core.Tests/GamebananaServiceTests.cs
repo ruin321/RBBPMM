@@ -59,7 +59,7 @@ public class GamebananaServiceTests
         var ok = JsonNode.Parse("""{"_idRow":5,"_sName":"Update","_sText":"notes","_aChangeLog":[{"text":"Fixed bug"}],"_aFiles":[{"_sFile":"u.zip"}]}""");
         var trashed = JsonNode.Parse("""{"_bIsTrashed":true,"_idRow":6,"_sName":"X"}""");
         Assert.NotNull(GamebananaService.ParseUpdate(ok));
-        Assert.Equal(1, GamebananaService.ParseUpdate(ok)!.ChangeLog.Count);
+        Assert.Single(GamebananaService.ParseUpdate(ok)!.ChangeLog);
         Assert.Null(GamebananaService.ParseUpdate(trashed));
     }
 

@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:vm="clr-namespace:RBBPMM.ViewModels"
+             xmlns:loc="clr-namespace:RBBPMM.Localization"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance vm:GameBananaPageViewModel}">
     <StackPanel>
@@ -11,9 +12,9 @@
                    Foreground="{DynamicResource TextBrush}" Margin="0,0,0,8"/>
         <Border Style="{StaticResource Card}">
             <StackPanel>
-                <TextBlock Text="浏览 / 搜索 GameBanana，一键拉取 Mod 将在此呈现。"
+                <TextBlock Text="{loc:Loc Key=gamebanana.empty}"
                            Foreground="{DynamicResource TextMutedBrush}" TextWrapping="Wrap"/>
-                <TextBlock Text="（功能页将在 Phase 5 接入 Core.GamebananaService，含可注入 HttpClient 以便测试）"
+                <TextBlock Text="{loc:Loc Key=gamebanana.emptyHint}"
                            Foreground="{DynamicResource TextMutedBrush}" Margin="0,6,0,0" TextWrapping="Wrap"/>
             </StackPanel>
         </Border>

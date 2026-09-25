@@ -4,6 +4,6 @@ public sealed class GameBananaPageViewModel : ViewModelBase
 {
     public GameBananaPageViewModel()
     {
-        Title = "GameBanana";
+        SetTitle("page.gamebanana.title", "GameBanana");
     }
 }

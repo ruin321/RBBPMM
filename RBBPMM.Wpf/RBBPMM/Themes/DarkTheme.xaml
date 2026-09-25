@@ -2,8 +2,10 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:sys="clr-namespace:System;assembly=mscorlib">
 
+    <!-- 标记键，便于 ThemeManager 识别并替换当前主题字典 -->
     <sys:String x:Key="__ThemeTag__">Dark</sys:String>
 
+    <!-- 调色板：与 LightTheme 键完全对应，只有取值不同 -->
     <Color x:Key="BgColor">#1E1B16</Color>
     <Color x:Key="SurfaceColor">#2A261F</Color>
     <Color x:Key="SurfaceAltColor">#343028</Color>

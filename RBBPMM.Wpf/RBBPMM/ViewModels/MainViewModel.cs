@@ -28,15 +28,15 @@ public sealed class MainViewModel : ViewModelBase
         _theme = theme;
         _settings = settings;
         _log = log;
-        Title = "RBBPMM";
+        SetTitle("app.title", "RBBPMM");
 
         NavItems = new List<NavItem>
         {
-            new("mods", "Mods", "📦"),
-            new("textures", "Texture Packs", "🎨"),
-            new("levels", "Custom Levels", "🗺️"),
-            new("gamebanana", "GameBanana", "🌐"),
-            new("settings", "Settings", "⚙️"),
+            new("mods", "nav.mods", "📦"),
+            new("textures", "nav.textures", "🎨"),
+            new("levels", "nav.levels", "🗺️"),
+            new("gamebanana", "nav.gamebanana", "🌐"),
+            new("settings", "nav.settings", "⚙️"),
         };
 
         NavigateCommand = new RelayCommand<string>(key =>
@@ -53,6 +53,21 @@ public sealed class MainViewModel : ViewModelBase
 
         // 默认进入 Mods 页
         _nav.Navigate("mods");
+
+        // 侧边栏高亮：导航键一变就同步 NavItem.IsActive
+        _nav.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(NavigationService.CurrentKey))
+                SyncActiveNavItem();
+        };
+        SyncActiveNavItem();
+    }
+
+    private void SyncActiveNavItem()
+    {
+        var current = _nav.CurrentKey;
+        foreach (var item in NavItems)
+            item.IsActive = string.Equals(item.Key, current, StringComparison.Ordinal);
     }
 
     public IReadOnlyList<NavItem> NavItems { get; }

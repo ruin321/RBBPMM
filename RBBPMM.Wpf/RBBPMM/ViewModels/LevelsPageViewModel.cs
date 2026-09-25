@@ -4,6 +4,6 @@ public sealed class LevelsPageViewModel : ViewModelBase
 {
     public LevelsPageViewModel()
     {
-        Title = "Custom Levels";
+        SetTitle("page.levels.title", "Custom Levels");
     }
 }

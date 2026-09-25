@@ -4,6 +4,6 @@ public sealed class ModsPageViewModel : ViewModelBase
 {
     public ModsPageViewModel()
     {
-        Title = "Mods";
+        SetTitle("page.mods.title", "Mods");
     }
 }

@@ -18,7 +18,8 @@ public sealed class UserSettings
             "RBBPMM",
             "settings.json");
 
-    private readonly string _filePath;
+    // 反序列化后需要按调用方路径回填，故非 readonly
+    private string _filePath;
 
     public UserSettings(string? filePath = null)
     {
@@ -40,7 +41,12 @@ public sealed class UserSettings
                 var json = File.ReadAllText(settings._filePath);
                 var loaded = JsonSerializer.Deserialize<UserSettings>(json);
                 if (loaded is not null)
+                {
+                    // 反序列化走的是无参构造，_filePath 会退回默认路径；
+                    // 这里改回调用方指定的路径，否则后续 Save() 会写错地方。
+                    loaded._filePath = settings._filePath;
                     return loaded;
+                }
             }
         }
         catch

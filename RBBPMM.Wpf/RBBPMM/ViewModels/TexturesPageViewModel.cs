@@ -4,6 +4,6 @@ public sealed class TexturesPageViewModel : ViewModelBase
 {
     public TexturesPageViewModel()
     {
-        Title = "Texture Packs";
+        SetTitle("page.textures.title", "Texture Packs");
     }
 }

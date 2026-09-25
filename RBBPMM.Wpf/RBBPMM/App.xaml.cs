@@ -22,6 +22,7 @@ public partial class App : Application
         services.AddSingleton<ThemeManager>(sp =>
             new ThemeManager(Application.Current.Resources, log: sp.GetService<ILogger<ThemeManager>>()));
         services.AddSingleton<NavigationService>();
+        services.AddSingleton<LocalizationService>();
         services.AddTransient<MainViewModel>();
         services.AddTransient<ModsPageViewModel>();
         services.AddTransient<TexturesPageViewModel>();
@@ -34,6 +35,11 @@ public partial class App : Application
         var settings = _provider.GetRequiredService<UserSettings>();
         var theme = _provider.GetRequiredService<ThemeManager>();
         theme.Initialize(settings);
+
+        var loc = _provider.GetRequiredService<LocalizationService>();
+        loc.LoadFromDirectory(System.IO.Path.Combine(AppContext.BaseDirectory, "Resources"));
+        LocalizationService.SetCurrent(loc);
+        loc.Language = settings.Language;
 
         var nav = _provider.GetRequiredService<NavigationService>();
         nav.Register("mods", () => _provider.GetRequiredService<ModsPageViewModel>());
