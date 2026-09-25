@@ -69,28 +69,32 @@ public sealed class ModMetadata
     public string? LastInstalledArchiveName { get; set; }
 }
 
-public sealed record ModItem(
-    string Guid,
-    string Name,
-    string Author,
-    string Version,
-    string DirectoryName,
-    string InstallDir,
-    bool Activated,
-    bool SupportsCurrentVersion,
-    List<string> PluginFiles,
-    List<string> AssetPaths,
-    bool Loose)
+/// <summary>
+/// One mod as seen by the repository scanner. Properties are mutable so the scan cache can be
+/// patched in place after install/activate/uninstall; prefer <c>with</c> when replacing.
+/// </summary>
+public sealed record ModItem
 {
-    public string? Description { get; init; }
-    public string? IdentifyName { get; init; }
-    public long? InstalledAt { get; init; }
-    public string? ModdedFolder { get; init; }
-    public string? DllFile { get; init; }
-    public string? DllDirectory { get; init; }
-    public string? ConfigFile { get; init; }
-    public GamebananaSource? GamebananaSource { get; init; }
-    public string? Group { get; init; }
+    public string Guid { get; set; } = "";
+    public string Name { get; set; } = "";
+    public string Author { get; set; } = "";
+    public string Version { get; set; } = "";
+    public string DirectoryName { get; set; } = "";
+    public string InstallDir { get; set; } = "";
+    public bool Activated { get; set; }
+    public bool SupportsCurrentVersion { get; set; }
+    public List<string> PluginFiles { get; set; } = [];
+    public List<string> AssetPaths { get; set; } = [];
+    public bool Loose { get; set; }
+    public string? Description { get; set; }
+    public string? IdentifyName { get; set; }
+    public long? InstalledAt { get; set; }
+    public string? ModdedFolder { get; set; }
+    public string? DllFile { get; set; }
+    public string? DllDirectory { get; set; }
+    public string? ConfigFile { get; set; }
+    public GamebananaSource? GamebananaSource { get; set; }
+    public string? Group { get; set; }
 }
 
 public sealed record ReadmeFile(string Name, string Content);
@@ -185,3 +189,58 @@ public sealed record GamebananaSearchResult(
     bool IsComplete,
     int PerPage,
     List<GamebananaSubmission> Items);
+
+/// <summary>One editable entry inside a BepInEx <c>.cfg</c> file.</summary>
+public sealed class CfgEntry
+{
+    public string Key { get; set; } = "";
+    public string Value { get; set; } = "";
+
+    /// <summary>One of <c>boolean</c> / <c>number</c> / <c>select</c> / <c>text</c>.</summary>
+    public string Control { get; set; } = "text";
+    public string? RawType { get; set; }
+    public string? Description { get; set; }
+    public string? DefaultValue { get; set; }
+    public List<string>? Acceptable { get; set; }
+    public double? Min { get; set; }
+    public double? Max { get; set; }
+    public double? Step { get; set; }
+}
+
+public sealed class CfgSection
+{
+    public string Name { get; set; } = "";
+    public string? Heading { get; set; }
+    public List<CfgEntry> Entries { get; set; } = [];
+}
+
+public sealed class ConfigFile
+{
+    public string Path { get; set; } = "";
+    public string FileName { get; set; } = "";
+    public string? Heading { get; set; }
+    public List<CfgSection> Sections { get; set; } = [];
+}
+
+public sealed record CustomLevel(
+    string FileName,
+    string Name,
+    string Author,
+    string Type,
+    long Size,
+    bool Enabled,
+    string? Thumbnail = null);
+
+public sealed record LevelStudioInstallResult(List<string> Playables, List<ReadmeFile> Readmes);
+
+/// <summary>Result of comparing an installed mod against its linked GameBanana file.</summary>
+public sealed record ModUpdateInfo(
+    bool HasUpdate,
+    int SubmissionId,
+    int FileId,
+    string FileName,
+    string DownloadUrl)
+{
+    public string? Version { get; init; }
+    public long? PublishedDate { get; init; }
+}
