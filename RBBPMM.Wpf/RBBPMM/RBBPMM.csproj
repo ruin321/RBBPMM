@@ -11,6 +11,11 @@
     <Content Include="Resources\*.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
+  <!-- 彩蛋素材：打进程序集（WPF 的 Resource 项），和 Electron 版把 gif 打进 bundle 等效 -->
+  <ItemGroup>
+    <Resource Include="Assets\*.gif" />
+  </ItemGroup>
+
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0-windows</TargetFramework>

@@ -5,6 +5,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:vm="clr-namespace:RBBPMM.ViewModels"
         xmlns:views="clr-namespace:RBBPMM.Views"
+        xmlns:easter="clr-namespace:RBBPMM.EasterEggs"
         xmlns:loc="clr-namespace:RBBPMM.Localization"
         mc:Ignorable="d"
         Title="{loc:Loc Key=app.title}"
@@ -94,7 +95,7 @@
                 </DockPanel>
             </Border>
 
-            <ContentControl Grid.Row="1" Margin="14" Content="{Binding Nav.CurrentPage}">
+            <ContentControl x:Name="PageHost" Grid.Row="1" Margin="14" Content="{Binding Nav.CurrentPage}">
                 <ContentControl.Resources>
                     <DataTemplate DataType="{x:Type vm:ModsPageViewModel}">
                         <views:ModsPage/>
@@ -114,5 +115,12 @@
                 </ContentControl.Resources>
             </ContentControl>
         </Grid>
+
+        <!-- 彩蛋层：铺满整窗（突脸要盖住侧边栏），但内部按钮对齐内容区，不压标题栏。
+             背景为 null 所以不吃点击，只有彩蛋自己的按钮/遮罩参与命中测试。 -->
+        <easter:EggLayer Grid.Column="0" Grid.ColumnSpan="2"
+                         Panel.ZIndex="100"
+                         FieldTarget="{Binding ElementName=PageHost}"
+                         Eggs="{Binding Eggs}"/>
     </Grid>
 </Window>

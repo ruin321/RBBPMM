@@ -22,11 +22,12 @@ public sealed class MainViewModel : ViewModelBase
     private string _themeGlyph = "🌙";
 
     public MainViewModel(NavigationService nav, ThemeManager theme, UserSettings settings,
-        ILogger<MainViewModel>? log = null)
+        EggService eggs, ILogger<MainViewModel>? log = null)
     {
         _nav = nav;
         _theme = theme;
         _settings = settings;
+        Eggs = eggs;
         _log = log;
         SetTitle("app.title", "RBBPMM");
 
@@ -73,6 +74,9 @@ public sealed class MainViewModel : ViewModelBase
     public IReadOnlyList<NavItem> NavItems { get; }
 
     public NavigationService Nav => _nav;
+
+    /// <summary>哪个隐藏页被解锁 —— 外壳上的彩蛋层绑定它。</summary>
+    public EggService Eggs { get; }
 
     public string ThemeGlyph
     {

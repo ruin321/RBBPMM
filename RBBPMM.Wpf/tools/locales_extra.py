@@ -97,6 +97,8 @@ KEYS_EXTRA = [
     "status.updated",
     "status.checking",
     "status.searching",
+    "egg.flee.arm",
+    "egg.flee.armed",
 ]
 
 # ---------------------------------------------------------------------------
@@ -185,6 +187,8 @@ EXTRA: dict[str, dict[str, str]] = {
         "status.updated": "Updated",
         "status.checking": "Checking…",
         "status.searching": "Searching…",
+        "egg.flee.arm": "Do not click",
+        "egg.flee.armed": "Welp.",
     },
     "zh-CN": {
         "common.refresh": "刷新",
@@ -268,6 +272,8 @@ EXTRA: dict[str, dict[str, str]] = {
         "status.updated": "已更新",
         "status.checking": "正在检查…",
         "status.searching": "正在搜索…",
+        "egg.flee.arm": "别点",
+        "egg.flee.armed": "完蛋",
     },
     "zh-TW": {
         "common.refresh": "重新整理",
@@ -351,6 +357,8 @@ EXTRA: dict[str, dict[str, str]] = {
         "status.updated": "已更新",
         "status.checking": "正在檢查…",
         "status.searching": "正在搜尋…",
+        "egg.flee.arm": "別點",
+        "egg.flee.armed": "完蛋",
     },
     "ja": {
         "common.refresh": "更新",
@@ -434,6 +442,8 @@ EXTRA: dict[str, dict[str, str]] = {
         "status.updated": "更新しました",
         "status.checking": "確認中…",
         "status.searching": "検索中…",
+        "egg.flee.arm": "押すな",
+        "egg.flee.armed": "終わった",
     },
     "ko": {
         "common.refresh": "새로 고침",
@@ -517,6 +527,8 @@ EXTRA: dict[str, dict[str, str]] = {
         "status.updated": "업데이트됨",
         "status.checking": "확인 중…",
         "status.searching": "검색 중…",
+        "egg.flee.arm": "누르지 마",
+        "egg.flee.armed": "망했다",
     },
     "es": {
         "common.refresh": "Actualizar",
@@ -600,6 +612,8 @@ EXTRA: dict[str, dict[str, str]] = {
         "status.updated": "Actualizado",
         "status.checking": "Comprobando…",
         "status.searching": "Buscando…",
+        "egg.flee.arm": "No hagas clic",
+        "egg.flee.armed": "Ay, no.",
     },
     "pt": {
         "common.refresh": "Atualizar",
@@ -683,6 +697,8 @@ EXTRA: dict[str, dict[str, str]] = {
         "status.updated": "Atualizado",
         "status.checking": "Verificando…",
         "status.searching": "Buscando…",
+        "egg.flee.arm": "Não clique",
+        "egg.flee.armed": "Ferrou.",
     },
     "fr": {
         "common.refresh": "Actualiser",
@@ -766,6 +782,8 @@ EXTRA: dict[str, dict[str, str]] = {
         "status.updated": "Mis à jour",
         "status.checking": "Vérification…",
         "status.searching": "Recherche…",
+        "egg.flee.arm": "Clique pas",
+        "egg.flee.armed": "C'est foutu.",
     },
     "de": {
         "common.refresh": "Aktualisieren",
@@ -849,6 +867,8 @@ EXTRA: dict[str, dict[str, str]] = {
         "status.updated": "Aktualisiert",
         "status.checking": "Prüfe…",
         "status.searching": "Suche…",
+        "egg.flee.arm": "Nicht klicken",
+        "egg.flee.armed": "Tja.",
     },
     "ru": {
         "common.refresh": "Обновить",
@@ -932,6 +952,8 @@ EXTRA: dict[str, dict[str, str]] = {
         "status.updated": "Обновлено",
         "status.checking": "Проверка…",
         "status.searching": "Поиск…",
+        "egg.flee.arm": "Не нажимай",
+        "egg.flee.armed": "Всё пропало.",
     },
     # 亚等约语（彩蛋语言）—— 沿用第一阶段那套词根
     "ydyy": {

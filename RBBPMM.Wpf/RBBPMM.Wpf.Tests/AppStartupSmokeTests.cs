@@ -1,10 +1,10 @@
 using System.IO;
-using System.Runtime.ExceptionServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Media;
 using System.Windows.Threading;
+using RBBPMM.Core;
 using RBBPMM.Navigation;
 using RBBPMM.Services;
 using RBBPMM.ViewModels;
@@ -43,6 +43,8 @@ public class AppStartupSmokeTests
             "Views/LevelsPage.xaml",
             "Views/GameBananaPage.xaml",
             "Views/SettingsPage.xaml",
+            // 彩蛋素材：漏打进程序集的话，突脸只会放个黑屏，平时完全看不出来
+            "Assets/scare-703263.gif",
         ];
 
         RunSta(() =>
@@ -101,16 +103,17 @@ public class AppStartupSmokeTests
             Assert.Equal(12, loc.AvailableLanguages.Count);
 
             // 对应 DI 里的导航注册
+            var eggs = TestServices.Eggs();
             var nav = new NavigationService();
             nav.Register("mods", () => TestServices.ModsVm());
             nav.Register("textures", () => TestServices.TexturesVm());
             nav.Register("levels", () => TestServices.LevelsVm());
-            nav.Register("gamebanana", () => TestServices.BananaVm());
+            nav.Register("gamebanana", () => TestServices.BananaVm(eggs));
             nav.Register("settings", () => new SettingsPageViewModel(settings, theme, loc));
 
             try
             {
-                var mainVm = new MainViewModel(nav, theme, settings);
+                var mainVm = new MainViewModel(nav, theme, settings, eggs);
                 var window = new MainWindow { DataContext = mainVm };
 
                 // Window 自身没有 HwndSource 时不会往下走布局，改从它的根内容开始量。
@@ -165,6 +168,36 @@ public class AppStartupSmokeTests
                 Lay(root);
                 Assert.Equal("Light", theme.CurrentTheme);
 
+                // 8) 彩蛋层：MainWindow 确实把 FieldTarget / Eggs 接上了，且场地框停在内容区里。
+                //    这一条防的是「场地框越界压标题栏」—— Electron 版踩过的坑。
+                var layer = Descendants(root).OfType<EasterEggs.EggLayer>().SingleOrDefault();
+                Assert.True(layer is not null, "视觉树里没有 EggLayer。实际树:\n" + Dump(root));
+
+                var pageHost = Descendants(root).OfType<ContentControl>()
+                    .FirstOrDefault(c => c.Name == "PageHost");
+                Assert.True(pageHost is not null, "视觉树里没有 PageHost");
+
+                var field = layer!.FieldBounds;
+                Assert.Equal(pageHost!.ActualHeight, field.Height, 1);
+                Assert.Equal(pageHost.ActualWidth, field.Width, 1);
+                Assert.True(field.Top > 0,
+                    $"彩蛋场地压到了标题栏：Top={field.Top}");
+
+                // 未解锁时一个按钮都不显示；解锁跑路彩蛋后只剩它自己
+                Assert.Equal(0, VisibleButtons(layer).Count);
+
+                mainVm.Eggs.SetFromSubmission(EasterEggCatalog.Flee);
+                Lay(root);
+
+                var visible = VisibleButtons(layer);
+                Assert.True(visible.Count == 1, $"跑路彩蛋应只有一个按钮可见，实际 {visible.Count}");
+                Assert.Equal(loc.Get("egg.flee.arm"), visible[0].Content);
+
+                // 收起彩蛋：按钮必须跟着消失（否则离开彩蛋页后还会挂在别的页面上）
+                mainVm.Eggs.Clear();
+                Lay(root);
+                Assert.Equal(0, VisibleButtons(layer).Count);
+
                 window.Close();
             }
             finally
@@ -202,6 +235,12 @@ public class AppStartupSmokeTests
     private static List<string> Texts(DependencyObject root)
         => Descendants(root).OfType<TextBlock>().Select(t => t.Text).ToList();
 
+    /// <summary>彩蛋层里当前真正可见的按钮（突脸 / 跑路各一个，未解锁时都收起来）。</summary>
+    private static List<Button> VisibleButtons(DependencyObject root)
+        => Descendants(root).OfType<Button>()
+            .Where(b => b.Visibility == Visibility.Visible)
+            .ToList();
+
     private static string Dump(DependencyObject root)
     {
         if (VisualTreeHelper.GetChildrenCount(root) == 0)
@@ -210,29 +249,5 @@ public class AppStartupSmokeTests
         return string.Join("\n", Descendants(root).Select(d => "  " + d.GetType().Name));
     }
 
-    private static void RunSta(Action action)
-    {
-        Exception? failure = null;
-
-        var thread = new Thread(() =>
-        {
-            try
-            {
-                action();
-            }
-            catch (Exception ex)
-            {
-                failure = ex;
-            }
-        });
-        thread.SetApartmentState(ApartmentState.STA);
-        thread.IsBackground = true;
-        thread.Start();
-
-        Assert.True(thread.Join(TimeSpan.FromSeconds(120)), "STA 测试超时");
-
-        // 保留原始堆栈后重抛，方便定位
-        if (failure is not null)
-            ExceptionDispatchInfo.Capture(failure).Throw();
-    }
+    private static void RunSta(Action action) => TestSta.Run(action);
 }

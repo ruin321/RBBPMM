@@ -30,6 +30,8 @@ public class LocaleResourceTests
         "app", "nav", "page", "shell", "settings", "theme", "mods", "textures", "levels", "gamebanana",
         // Phase 5 功能页新增的命名空间
         "common", "game", "status", "banana",
+        // Phase 6 彩蛋（文案在 EggLayer.xaml.cs 里按启用态切换）
+        "egg",
     ];
 
     private static string ResourcesDir => TestFs.ResourcesDir();

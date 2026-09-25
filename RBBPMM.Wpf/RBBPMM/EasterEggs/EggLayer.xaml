@@ -1,0 +1,40 @@
+<UserControl x:Class="RBBPMM.EasterEggs.EggLayer"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:controls="clr-namespace:RBBPMM.Controls"
+             mc:Ignorable="d">
+
+    <!-- 铺满整个窗口：突脸遮罩要盖住侧边栏，所以这一层不能只放在内容区里。
+         根 Grid 背景为 null —— 不拦截点击，只有彩蛋自己的按钮/遮罩会命中。 -->
+    <Grid x:Name="Root" Background="{x:Null}" ClipToBounds="True">
+
+        <!-- 场地：由代码对齐到页面内容区矩形。
+             彩蛋按钮挂在这里，因此永远不会压到顶部那条标题栏。 -->
+        <Canvas x:Name="FieldHost" Background="{x:Null}">
+            <Grid x:Name="Field" Background="{x:Null}">
+                <Button x:Name="FleeButton"
+                        HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                        Margin="16" Padding="10,6" MinWidth="72"
+                        Visibility="Collapsed" Click="OnFleeClick"/>
+
+                <Button x:Name="ScareButton"
+                        HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                        Margin="16" Padding="0" BorderThickness="0"
+                        Background="Transparent" Cursor="Hand"
+                        Visibility="Collapsed" Click="OnScareClick">
+                    <controls:AnimatedGif x:Name="ScareThumb"
+                                          Width="110"
+                                          GifSource="pack://application:,,,/RBBPMM;component/Assets/scare-703263.gif"/>
+                </Button>
+            </Grid>
+        </Canvas>
+
+        <!-- 突脸：先黑底，再把 gif 从一个小点放大到铺满 -->
+        <Rectangle x:Name="Scrim" Fill="#FF000000" Visibility="Collapsed"/>
+        <Image x:Name="ScareImage" Stretch="Uniform"
+               HorizontalAlignment="Center" VerticalAlignment="Center"
+               Visibility="Collapsed"/>
+    </Grid>
+</UserControl>

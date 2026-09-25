@@ -19,6 +19,7 @@ public sealed class GameBananaPageViewModel : ViewModelBase
 {
     private readonly GamebananaService _banana;
     private readonly ArchiveInstaller _archives;
+    private readonly EggService _eggs;
     private readonly ILogger<GameBananaPageViewModel>? _log;
 
     private string _query = "";
@@ -33,10 +34,12 @@ public sealed class GameBananaPageViewModel : ViewModelBase
     public GameBananaPageViewModel(
         GamebananaService banana,
         ArchiveInstaller archives,
+        EggService eggs,
         ILogger<GameBananaPageViewModel>? log = null)
     {
         _banana = banana;
         _archives = archives;
+        _eggs = eggs;
         _log = log;
         SetTitle("page.gamebanana.title", "Browse GameBanana");
 
@@ -141,6 +144,10 @@ public sealed class GameBananaPageViewModel : ViewModelBase
                 OnPropertyChanged(nameof(HasSelection));
                 OnPropertyChanged(nameof(AllFiles));
                 OnPropertyChanged(nameof(HasRequirements));
+
+                // 彩蛋就挂在这里：某些 submissionId 会解锁隐藏页（714303 / 703263）。
+                _eggs.SetFromSubmission(value?.Id ?? 0);
+
                 _ = LoadDetailsAsync(value);
             }
         }

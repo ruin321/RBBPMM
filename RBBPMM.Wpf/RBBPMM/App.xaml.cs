@@ -59,6 +59,9 @@ public partial class App : Application
         services.AddSingleton<LocalizationService>();
         services.AddSingleton<GameFolderService>();
 
+        // 彩蛋状态：页面写、外壳的彩蛋层读，所以必须是单例。
+        services.AddSingleton<EggService>();
+
         // 无参构造会自建 HttpClient；这里显式给一个带超时的实例，避免默认 100s 卡住 UI。
         services.AddSingleton(_ => new GamebananaService(
             new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(30) }));

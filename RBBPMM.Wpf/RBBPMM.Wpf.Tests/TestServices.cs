@@ -38,6 +38,13 @@ internal static class TestServices
 
     public static CustomLevelRepository Levels() => new();
 
+    /// <summary>
+    /// 彩蛋状态共享服务。真机上由 DI 给成单例；测试里必须把**同一个**实例交给
+    /// GameBanana 页和 MainViewModel，否则「页面选到彩蛋投稿 → 外壳亮出彩蛋」这条
+    /// 链路永远断在中间。
+    /// </summary>
+    public static EggService Eggs() => new();
+
     // ---------------------------------------------------------------- 页面 VM
 
     public static ModsPageViewModel ModsVm()
@@ -58,10 +65,10 @@ internal static class TestServices
         return new LevelsPageViewModel(Levels(), game, Picker());
     }
 
-    public static GameBananaPageViewModel BananaVm()
+    public static GameBananaPageViewModel BananaVm(EggService? eggs = null)
     {
         var game = Game();
-        return new GameBananaPageViewModel(Banana(), Archives(game));
+        return new GameBananaPageViewModel(Banana(), Archives(game), eggs ?? Eggs());
     }
 
     private sealed class NullPicker : IFilePicker

@@ -49,15 +49,11 @@ KEYS_BASE = [
     "settings.current",
     "theme.light",
     "theme.dark",
-    "mods.empty",
-    "mods.emptyHint",
-    "textures.empty",
-    "textures.emptyHint",
-    "levels.empty",
-    "levels.emptyHint",
 ]
 
-# 完整键集 = 第一阶段（外壳/导航/设置）+ 功能页
+# 完整键集 = 第一阶段（外壳/导航/设置）+ 功能页。
+# 这里保留首次出现的位置：曾经有 6 个键同时出现在两个列表里，dict 构建会把重复悄悄吃掉，
+# 于是"语言 × 键"的计数比真实键数多算，改文案时也分不清哪份生效。现在有守卫兜住。
 KEYS = KEYS_BASE + KEYS_EXTRA
 
 LANGUAGES: dict[str, dict[str, str]] = {
@@ -84,12 +80,8 @@ LANGUAGES: dict[str, dict[str, str]] = {
         "settings.current": "Current",
         "theme.light": "Light",
         "theme.dark": "Dark",
-        "mods.empty": "Installed mods will be listed here, with enable / disable / uninstall and rollback.",
-        "mods.emptyHint": "(Wired to the Core scan / install / activate services in Phase 5.)",
-        "textures.empty": "Texture pack install / uninstall and README preview will appear here.",
-        "textures.emptyHint": "(Wired to Core.TexturePackService in Phase 5.)",
-        "levels.empty": "Custom level management will appear here.",
-        "levels.emptyHint": "(Wired to the Core level services in Phase 5.)",
+        "egg.flee.arm": "Do not click",
+        "egg.flee.armed": "Welp.",
     },
     "zh-CN": {
         "app.title": "RBBPMM — Baldi's Basics Plus 模组管理器",
@@ -114,12 +106,8 @@ LANGUAGES: dict[str, dict[str, str]] = {
         "settings.current": "当前",
         "theme.light": "浅色",
         "theme.dark": "深色",
-        "mods.empty": "已安装的模组将在此列出，支持启用 / 停用 / 卸载与回滚。",
-        "mods.emptyHint": "（功能页将在 Phase 5 接入 Core 的扫描 / 安装 / 激活服务）",
-        "textures.empty": "材质包安装 / 卸载、README 预览将在此呈现。",
-        "textures.emptyHint": "（功能页将在 Phase 5 接入 Core.TexturePackService）",
-        "levels.empty": "自定义关卡的管理将在此呈现。",
-        "levels.emptyHint": "（功能页将在 Phase 5 接入 Core 关卡服务）",
+        "egg.flee.arm": "别点",
+        "egg.flee.armed": "完蛋",
     },
     "zh-TW": {
         "app.title": "RBBPMM — Baldi's Basics Plus 模組管理器",
@@ -144,12 +132,8 @@ LANGUAGES: dict[str, dict[str, str]] = {
         "settings.current": "目前",
         "theme.light": "淺色",
         "theme.dark": "深色",
-        "mods.empty": "已安裝的模組將在此列出，支援啟用 / 停用 / 卸載與回復。",
-        "mods.emptyHint": "（功能頁將於 Phase 5 接入 Core 的掃描 / 安裝 / 啟用服務）",
-        "textures.empty": "材質包安裝 / 卸載與 README 預覽將在此呈現。",
-        "textures.emptyHint": "（功能頁將於 Phase 5 接入 Core.TexturePackService）",
-        "levels.empty": "自訂關卡的管理將在此呈現。",
-        "levels.emptyHint": "（功能頁將於 Phase 5 接入 Core 關卡服務）",
+        "egg.flee.arm": "別點",
+        "egg.flee.armed": "完蛋",
     },
     "ja": {
         "app.title": "RBBPMM — Baldi's Basics Plus MOD マネージャー",
@@ -174,12 +158,8 @@ LANGUAGES: dict[str, dict[str, str]] = {
         "settings.current": "現在",
         "theme.light": "ライト",
         "theme.dark": "ダーク",
-        "mods.empty": "インストール済みの MOD がここに一覧表示され、有効化 / 無効化 / アンインストールとロールバックに対応します。",
-        "mods.emptyHint": "（Phase 5 で Core のスキャン / インストール / 有効化サービスに接続します）",
-        "textures.empty": "テクスチャパックのインストール / アンインストールと README プレビューがここに表示されます。",
-        "textures.emptyHint": "（Phase 5 で Core.TexturePackService に接続します）",
-        "levels.empty": "カスタムレベルの管理がここに表示されます。",
-        "levels.emptyHint": "（Phase 5 で Core のレベルサービスに接続します）",
+        "egg.flee.arm": "押すな",
+        "egg.flee.armed": "終わった",
     },
     "ko": {
         "app.title": "RBBPMM — Baldi's Basics Plus 모드 관리자",
@@ -204,12 +184,8 @@ LANGUAGES: dict[str, dict[str, str]] = {
         "settings.current": "현재",
         "theme.light": "라이트",
         "theme.dark": "다크",
-        "mods.empty": "설치된 모드가 여기에 표시되며, 활성화 / 비활성화 / 제거와 롤백을 지원합니다.",
-        "mods.emptyHint": "(Phase 5에서 Core 스캔 / 설치 / 활성화 서비스에 연결됩니다)",
-        "textures.empty": "텍스처 팩 설치 / 제거와 README 미리보기가 여기에 표시됩니다.",
-        "textures.emptyHint": "(Phase 5에서 Core.TexturePackService에 연결됩니다)",
-        "levels.empty": "커스텀 레벨 관리가 여기에 표시됩니다.",
-        "levels.emptyHint": "(Phase 5에서 Core 레벨 서비스에 연결됩니다)",
+        "egg.flee.arm": "누르지 마",
+        "egg.flee.armed": "망했다",
     },
     "es": {
         "app.title": "RBBPMM — Gestor de mods de Baldi's Basics Plus",
@@ -234,12 +210,8 @@ LANGUAGES: dict[str, dict[str, str]] = {
         "settings.current": "Actual",
         "theme.light": "Claro",
         "theme.dark": "Oscuro",
-        "mods.empty": "Los mods instalados aparecerán aquí, con activar / desactivar / desinstalar y reversión.",
-        "mods.emptyHint": "(Se conectará a los servicios de escaneo / instalación / activación de Core en la Fase 5.)",
-        "textures.empty": "La instalación / desinstalación de paquetes de texturas y la vista previa del README aparecerán aquí.",
-        "textures.emptyHint": "(Se conectará a Core.TexturePackService en la Fase 5.)",
-        "levels.empty": "La gestión de niveles personalizados aparecerá aquí.",
-        "levels.emptyHint": "(Se conectará a los servicios de niveles de Core en la Fase 5.)",
+        "egg.flee.arm": "No hagas clic",
+        "egg.flee.armed": "Ay, no.",
     },
     "pt": {
         "app.title": "RBBPMM — Gerenciador de mods de Baldi's Basics Plus",
@@ -264,12 +236,8 @@ LANGUAGES: dict[str, dict[str, str]] = {
         "settings.current": "Atual",
         "theme.light": "Claro",
         "theme.dark": "Escuro",
-        "mods.empty": "Os mods instalados aparecerão aqui, com ativar / desativar / desinstalar e reversão.",
-        "mods.emptyHint": "(Será conectado aos serviços de varredura / instalação / ativação do Core na Fase 5.)",
-        "textures.empty": "A instalação / desinstalação de pacotes de texturas e a prévia do README aparecerão aqui.",
-        "textures.emptyHint": "(Será conectado ao Core.TexturePackService na Fase 5.)",
-        "levels.empty": "O gerenciamento de níveis personalizados aparecerá aqui.",
-        "levels.emptyHint": "(Será conectado aos serviços de níveis do Core na Fase 5.)",
+        "egg.flee.arm": "Não clique",
+        "egg.flee.armed": "Ferrou.",
     },
     "fr": {
         "app.title": "RBBPMM — Gestionnaire de mods pour Baldi's Basics Plus",
@@ -294,12 +262,8 @@ LANGUAGES: dict[str, dict[str, str]] = {
         "settings.current": "Actuel",
         "theme.light": "Clair",
         "theme.dark": "Sombre",
-        "mods.empty": "Les mods installés seront listés ici, avec activer / désactiver / désinstaller et restauration.",
-        "mods.emptyHint": "(Sera relié aux services de scan / installation / activation du Core en phase 5.)",
-        "textures.empty": "L'installation / désinstallation des packs de textures et l'aperçu du README apparaîtront ici.",
-        "textures.emptyHint": "(Sera relié à Core.TexturePackService en phase 5.)",
-        "levels.empty": "La gestion des niveaux personnalisés apparaîtra ici.",
-        "levels.emptyHint": "(Sera relié aux services de niveaux du Core en phase 5.)",
+        "egg.flee.arm": "Clique pas",
+        "egg.flee.armed": "C'est foutu.",
     },
     "de": {
         "app.title": "RBBPMM — Mod-Manager für Baldi's Basics Plus",
@@ -324,12 +288,8 @@ LANGUAGES: dict[str, dict[str, str]] = {
         "settings.current": "Aktuell",
         "theme.light": "Hell",
         "theme.dark": "Dunkel",
-        "mods.empty": "Installierte Mods werden hier aufgelistet – mit Aktivieren / Deaktivieren / Deinstallieren und Rollback.",
-        "mods.emptyHint": "(Wird in Phase 5 an die Scan- / Installations- / Aktivierungsdienste des Core angebunden.)",
-        "textures.empty": "Installation / Deinstallation von Texturpaketen und README-Vorschau erscheinen hier.",
-        "textures.emptyHint": "(Wird in Phase 5 an Core.TexturePackService angebunden.)",
-        "levels.empty": "Die Verwaltung eigener Level erscheint hier.",
-        "levels.emptyHint": "(Wird in Phase 5 an die Level-Dienste des Core angebunden.)",
+        "egg.flee.arm": "Nicht klicken",
+        "egg.flee.armed": "Tja.",
     },
     "ru": {
         "app.title": "RBBPMM — менеджер модов для Baldi's Basics Plus",
@@ -354,12 +314,8 @@ LANGUAGES: dict[str, dict[str, str]] = {
         "settings.current": "Текущая",
         "theme.light": "Светлая",
         "theme.dark": "Тёмная",
-        "mods.empty": "Установленные моды появятся здесь: включение / отключение / удаление и откат.",
-        "mods.emptyHint": "(В фазе 5 подключится к службам сканирования / установки / активации Core.)",
-        "textures.empty": "Установка / удаление текстур-паков и предпросмотр README появятся здесь.",
-        "textures.emptyHint": "(В фазе 5 подключится к Core.TexturePackService.)",
-        "levels.empty": "Управление своими уровнями появится здесь.",
-        "levels.emptyHint": "(В фазе 5 подключится к службам уровней Core.)",
+        "egg.flee.arm": "Не нажимай",
+        "egg.flee.armed": "Всё пропало.",
     },
     # 亚等约语（彩蛋语言）—— 词根与 Electron 版 ydyy 保持一致
     "ydyy": {
@@ -391,6 +347,9 @@ LANGUAGES: dict[str, dict[str, str]] = {
         "textures.emptyHint": "(Phase 5 — Core.TexturePackService.)",
         "levels.empty": "Lávas pametion hic.",
         "levels.emptyHint": "(Phase 5 — Core lávas motás.)",
+
+        "egg.flee.arm": "Cuna nal!",
+        "egg.flee.armed": "Sálva.",
     },
     # fish（彩蛋语言）：Electron 版 fish 的每个键都是字面量 'FISH'
     "fish": {k: "FISH" for k in KEYS},
@@ -409,6 +368,14 @@ def main() -> int:
 
     # 先做一致性自检，避免写出缺键/多键的语言包
     problems: list[str] = []
+
+    # 键不能重复声明：合并后的 dict 会把重复悄悄吃掉，导致"键数"虚高且看不出哪份译文生效。
+    seen: set[str] = set()
+    for key in KEYS:
+        if key in seen:
+            problems.append(f"键重复声明: {key}")
+        seen.add(key)
+
     for lang in EXTRA:
         if lang not in LANGUAGES:
             problems.append(f"{lang}: locales_extra 有译文但 LANGUAGES 未登记该语言")

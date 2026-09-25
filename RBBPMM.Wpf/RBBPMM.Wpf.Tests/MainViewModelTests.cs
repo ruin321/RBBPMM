@@ -9,11 +9,12 @@ public class MainViewModelTests
 {
     private static (MainViewModel vm, ThemeManager theme, UserSettings settings) Build()
     {
+        var eggs = TestServices.Eggs();
         var nav = new NavigationService();
         nav.Register("mods", () => TestServices.ModsVm());
         nav.Register("textures", () => TestServices.TexturesVm());
         nav.Register("levels", () => TestServices.LevelsVm());
-        nav.Register("gamebanana", () => TestServices.BananaVm());
+        nav.Register("gamebanana", () => TestServices.BananaVm(eggs));
         nav.Register("settings", () => new SettingsPageViewModel(new UserSettings(), new ThemeManager(new ResourceDictionary())));
 
         var theme = new ThemeManager(
@@ -21,7 +22,7 @@ public class MainViewModelTests
             loader: name => new ResourceDictionary { ["__ThemeTag__"] = name });
         var settings = new UserSettings();
 
-        var vm = new MainViewModel(nav, theme, settings);
+        var vm = new MainViewModel(nav, theme, settings, eggs);
         return (vm, theme, settings);
     }
 
