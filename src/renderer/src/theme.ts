@@ -2,9 +2,39 @@ export interface ThemeDef {
     id: string;
     name: string;
     dark: boolean;
+    /** 原生档位：不走「现代设计」那套观感，改由 globals.css 的 html.ui-native 复位成系统原生形态 */
+    native?: boolean;
     vars?: Record<string, string>;
 }
 export const THEMES: ThemeDef[] = [
+    {
+        id: 'windows',
+        name: 'Windows',
+        dark: false,
+        native: true,
+        vars: {
+            '--background': '0 0% 100%',
+            '--foreground': '0 0% 0%',
+            '--card': '0 0% 100%',
+            '--card-foreground': '0 0% 0%',
+            '--popover': '0 0% 100%',
+            '--popover-foreground': '0 0% 0%',
+            '--primary': '206 100% 42%',
+            '--primary-foreground': '0 0% 100%',
+            '--secondary': '0 0% 88%',
+            '--secondary-foreground': '0 0% 0%',
+            '--muted': '0 0% 92%',
+            '--muted-foreground': '0 0% 37%',
+            '--accent': '206 100% 92%',
+            '--accent-foreground': '0 0% 0%',
+            '--destructive': '5 75% 44%',
+            '--destructive-foreground': '0 0% 100%',
+            '--border': '0 0% 80%',
+            '--input': '0 0% 67%',
+            '--ring': '206 100% 42%',
+            '--radius': '0px'
+        }
+    },
     { id: 'dark', name: 'Midnight', dark: true },
     { id: 'light', name: 'Ivory', dark: false },
     {
@@ -137,7 +167,8 @@ const VARIABLE_KEYS = [
     '--destructive-foreground',
     '--border',
     '--input',
-    '--ring'
+    '--ring',
+    '--radius'
 ] as const;
 export function findTheme(id: string): ThemeDef {
     return THEMES.find((t) => t.id === id) ?? THEMES[0];
@@ -146,6 +177,7 @@ export function applyThemeToDom(id: string): void {
     const def = findTheme(id);
     const root = document.documentElement;
     root.classList.toggle('dark', def.dark);
+    root.classList.toggle('ui-native', def.native === true);
     const style = root.style;
     for (const k of VARIABLE_KEYS) {
         const v = def.vars?.[k];

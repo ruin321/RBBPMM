@@ -79,6 +79,14 @@ export function App(): React.JSX.Element {
             setNavPrefLoaded(true);
         });
     }
+    const [verticalLayout, setVerticalLayout] = useState(false);
+    const [vertPrefLoaded, setVertPrefLoaded] = useState(false);
+    if (!vertPrefLoaded) {
+        void window.api.app.getVerticalLayout().then((v) => {
+            setVerticalLayout(v);
+            setVertPrefLoaded(true);
+        });
+    }
     const toggleNav = (): void => {
         setNavOpen((o) => {
             void window.api.app.setNavOpen(!o);
@@ -185,18 +193,29 @@ export function App(): React.JSX.Element {
     return (<TooltipProvider delayDuration={220}>
     <div className="app-root flex h-full flex-col overflow-hidden">
       <TitleBar />
-      <div className="relative flex flex-1 select-none overflow-hidden" onDragOver={(e) => {
+      <div className={'relative flex flex-1 select-none overflow-hidden' + (verticalLayout ? ' flex-col' : '')} onDragOver={(e) => {
             if (e.dataTransfer.types.includes('Files')) {
                 e.preventDefault();
                 setDragging(true);
             }
         }} onDragLeave={() => setDragging(false)} onDrop={handleDrop}>
       <Toaster theme={isDark ? 'dark' : 'light'} position="bottom-right"/>
-      
-      <aside className={'flex flex-col gap-1 overflow-hidden border-r bg-muted/40 py-4 transition-[width] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ' +
-            (navOpen ? 'w-48' : 'w-16')}>
-        <div className={navOpen ? 'flex items-center justify-between gap-1 px-3' : 'flex flex-col items-center gap-2'}>
-          <Package className={'shrink-0 text-primary transition-transform duration-200 ' + (navOpen ? 'h-7 w-7' : 'h-6 w-6')}/>
+
+      <aside className={
+            (verticalLayout
+              ? 'order-1 shrink-0 flex-row items-center gap-1 overflow-x-auto border-t bg-muted/40 px-2 py-1.5'
+              : 'flex-col gap-1 overflow-hidden border-r bg-muted/40 py-4 transition-[width] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ' +
+                (navOpen ? 'w-48' : 'w-16'))
+          }>
+        <div className={
+              verticalLayout
+                ? 'flex shrink-0 flex-row items-center gap-2'
+                : navOpen
+                  ? 'flex items-center justify-between gap-1 px-3'
+                  : 'flex flex-col items-center gap-2'
+            }>
+          <Package className={'shrink-0 text-primary transition-transform duration-200 ' +
+              (verticalLayout ? 'h-5 w-5' : navOpen ? 'h-7 w-7' : 'h-6 w-6')}/>
           <WithTooltip title={navOpen ? t('nav.collapse') : t('nav.expand')}>
           <Button variant="ghost" size="icon" onClick={toggleNav} className="h-9 w-9 shrink-0">
             <span className="transition-transform duration-200 ease-out">
@@ -206,40 +225,56 @@ export function App(): React.JSX.Element {
           </WithTooltip>
         </div>
 
-        <div className={navOpen ? 'mt-2 space-y-1' : 'mt-2 flex flex-col items-center gap-1'}>
-          <NavButton active={page === 'home'} onClick={() => setPage('home')} label={t('nav.home')} open={navOpen}>
-            <Home className="h-5 w-5"/>
+        <div className={
+              verticalLayout
+                ? 'flex flex-1 flex-row items-center gap-1 overflow-x-auto'
+                : navOpen
+                  ? 'mt-2 space-y-1'
+                  : 'mt-2 flex flex-col items-center gap-1'
+            }>
+          <NavButton active={page === 'home'} onClick={() => setPage('home')} label={t('nav.home')} open={navOpen} horizontal={verticalLayout}>
+            <Home className={verticalLayout ? 'h-4 w-4' : 'h-5 w-5'}/>
           </NavButton>
-          <NavButton active={page === 'mods'} onClick={() => setPage('mods')} label={t('nav.mods')} open={navOpen}>
-            <Package className="h-5 w-5"/>
+          <NavButton active={page === 'mods'} onClick={() => setPage('mods')} label={t('nav.mods')} open={navOpen} horizontal={verticalLayout}>
+            <Package className={verticalLayout ? 'h-4 w-4' : 'h-5 w-5'}/>
           </NavButton>
-          <NavButton active={page === 'browse'} onClick={() => setPage('browse')} label={t('nav.browse')} open={navOpen}>
-            <Store className="h-5 w-5"/>
+          <NavButton active={page === 'browse'} onClick={() => setPage('browse')} label={t('nav.browse')} open={navOpen} horizontal={verticalLayout}>
+            <Store className={verticalLayout ? 'h-4 w-4' : 'h-5 w-5'}/>
           </NavButton>
-          {texturesTabVisible ? (<NavButton active={page === 'textures'} onClick={() => setPage('textures')} label={t('nav.textures')} open={navOpen}>
-              <Palette className="h-5 w-5"/>
+          {texturesTabVisible ? (<NavButton active={page === 'textures'} onClick={() => setPage('textures')} label={t('nav.textures')} open={navOpen} horizontal={verticalLayout}>
+              <Palette className={verticalLayout ? 'h-4 w-4' : 'h-5 w-5'}/>
             </NavButton>) : null}
-          {mapTabVisible ? (<NavButton active={page === 'maps'} onClick={() => setPage('maps')} label={t('nav.maps')} open={navOpen}>
-              <MapIcon className="h-5 w-5"/>
+          {mapTabVisible ? (<NavButton active={page === 'maps'} onClick={() => setPage('maps')} label={t('nav.maps')} open={navOpen} horizontal={verticalLayout}>
+              <MapIcon className={verticalLayout ? 'h-4 w-4' : 'h-5 w-5'}/>
             </NavButton>) : null}
-          <NavButton active={page === 'config'} onClick={() => setPage('config')} label={t('nav.config')} open={navOpen}>
-            <SlidersHorizontal className="h-5 w-5"/>
+          <NavButton active={page === 'config'} onClick={() => setPage('config')} label={t('nav.config')} open={navOpen} horizontal={verticalLayout}>
+            <SlidersHorizontal className={verticalLayout ? 'h-4 w-4' : 'h-5 w-5'}/>
           </NavButton>
-          <NavButton active={page === 'settings'} onClick={() => setPage('settings')} label={t('nav.settings')} open={navOpen}>
-            <Settings className="h-5 w-5"/>
+          <NavButton active={page === 'settings'} onClick={() => setPage('settings')} label={t('nav.settings')} open={navOpen} horizontal={verticalLayout}>
+            <Settings className={verticalLayout ? 'h-4 w-4' : 'h-5 w-5'}/>
           </NavButton>
-          <NavButton active={page === 'toolbox'} onClick={() => setPage('toolbox')} label={t('nav.toolbox')} open={navOpen}>
-            <Wrench className="h-5 w-5"/>
+          <NavButton active={page === 'toolbox'} onClick={() => setPage('toolbox')} label={t('nav.toolbox')} open={navOpen} horizontal={verticalLayout}>
+            <Wrench className={verticalLayout ? 'h-4 w-4' : 'h-5 w-5'}/>
           </NavButton>
         </div>
 
-        <div className="flex-1"/>
-        <div className={navOpen ? 'space-y-1' : 'flex flex-col items-center gap-1'}>
-          <NavButton onClick={toggle} label={isDark ? t('nav.light') : t('nav.dark')} open={navOpen}>
-            {isDark ? <Sun className="h-5 w-5"/> : <Moon className="h-5 w-5"/>}
+        <div className={
+              verticalLayout
+                ? 'ml-auto flex shrink-0 flex-row items-center gap-1'
+                : 'flex-1'
+            }/>
+        <div className={
+              verticalLayout
+                ? 'flex shrink-0 flex-row items-center gap-1'
+                : navOpen
+                  ? 'space-y-1'
+                  : 'flex flex-col items-center gap-1'
+            }>
+          <NavButton onClick={toggle} label={isDark ? t('nav.light') : t('nav.dark')} open={navOpen} horizontal={verticalLayout}>
+            {isDark ? <Sun className={verticalLayout ? 'h-4 w-4' : 'h-5 w-5'}/> : <Moon className={verticalLayout ? 'h-4 w-4' : 'h-5 w-5'}/>}
           </NavButton>
-          <NavButton onClick={() => setAboutOpen(true)} label={t('nav.about')} open={navOpen}>
-            <Info className="h-5 w-5"/>
+          <NavButton onClick={() => setAboutOpen(true)} label={t('nav.about')} open={navOpen} horizontal={verticalLayout}>
+            <Info className={verticalLayout ? 'h-4 w-4' : 'h-5 w-5'}/>
           </NavButton>
         </div>
       </aside>
@@ -296,14 +331,23 @@ export function App(): React.JSX.Element {
     </div>
     </TooltipProvider>);
 }
-function NavButton({ active, label, onClick, children, open, disabled }: {
+function NavButton({ active, label, onClick, children, open, disabled, horizontal }: {
     active?: boolean;
     label?: string;
     onClick?: () => void;
     children: React.ReactNode;
     open?: boolean;
     disabled?: boolean;
+    horizontal?: boolean;
 }): React.JSX.Element {
+    if (horizontal) {
+        return (<WithTooltip title={label}>
+        <Button variant="ghost" size="icon" onClick={onClick} aria-label={label} disabled={disabled} className={cn('flex h-9 items-center gap-2 overflow-hidden rounded-md px-3 transition-colors', 'w-auto justify-start', active && 'bg-primary/15 text-primary')}>
+          <span className="inline-flex shrink-0">{children}</span>
+          <span className="whitespace-nowrap text-sm">{label}</span>
+        </Button>
+        </WithTooltip>);
+    }
     return (<WithTooltip title={label}>
     <Button variant="ghost" size="icon" onClick={onClick} aria-label={label} disabled={disabled} className={cn('flex h-9 items-center overflow-hidden rounded-md transition-[width,padding,gap] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]', open ? 'w-full justify-start gap-2 px-2' : 'w-9 justify-center gap-0 px-0', active && 'bg-primary/15 text-primary')}>
       <span className="inline-flex shrink-0">{children}</span>

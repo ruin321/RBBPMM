@@ -1,6 +1,6 @@
 import { execFile } from 'child_process';
 import { ipcMain, BrowserWindow, nativeTheme } from 'electron';
-import { getFontFamily, getLocale, getTheme, setFontFamily, setLocale, setTheme, resetAllSettings, getSplashEnabled, setSplashEnabled, getDebugLogging, setDebugLogging, getNavOpen, setNavOpen } from '../store';
+import { getFontFamily, getLocale, getTheme, setFontFamily, setLocale, setTheme, resetAllSettings, getSplashEnabled, setSplashEnabled, getDebugLogging, setDebugLogging, getNavOpen, setNavOpen, getVerticalLayout, setVerticalLayout } from '../store';
 import { isDarkTheme } from '../constants';
 function syncNativeTheme(): void {
     nativeTheme.themeSource = isDarkTheme(getTheme()) ? 'dark' : 'light';
@@ -97,6 +97,12 @@ export function registerAppIpc(): void {
         open: boolean;
     }): Promise<void> => {
         setNavOpen(open);
+    });
+    ipcMain.handle('app:get-vertical-layout', async (): Promise<boolean> => getVerticalLayout());
+    ipcMain.handle('app:set-vertical-layout', async (_e, { enabled }: {
+        enabled: boolean;
+    }): Promise<void> => {
+        setVerticalLayout(enabled);
     });
     ipcMain.handle('app:reset-settings', async (): Promise<void> => {
         const defaults = resetAllSettings();

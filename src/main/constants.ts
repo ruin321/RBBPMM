@@ -22,7 +22,7 @@ export const SCRIPT_FILE = 'script.txt';
 export const DISABLED_EXTENSION = 'disabled';
 export const TEMP_FOLDER = 'temp';
 export const SUPPORTED_VERSION_PREFIX = 'supVer_';
-export const THEME_DEFAULT = 'dark';
+export const THEME_DEFAULT = 'windows';
 export const DARK_THEME_IDS = new Set([
     'dark',
     'baldi-black',

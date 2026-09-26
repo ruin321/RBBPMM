@@ -9,6 +9,7 @@ import { LanguagePicker } from '@/components/LanguagePicker';
 import { ResetSettingsCard } from '@/components/ResetSettingsCard';
 import { SplashToggleCard } from '@/components/SplashToggleCard';
 import { AnimationToggleCard } from '@/components/AnimationToggleCard';
+import { VerticalLayoutToggleCard } from '@/components/VerticalLayoutToggleCard';
 import { DebugLogCard } from '@/components/DebugLogCard';
 import { PageHeader } from '@/components/PageHeader';
 interface Props {
@@ -40,6 +41,7 @@ export function SettingsPage({ env, loading, onSelect, font, fonts, onSelectFont
       <FontPicker font={font} fonts={fonts} onSelect={onSelectFont}/>
       <SplashToggleCard />
       <AnimationToggleCard />
+      <VerticalLayoutToggleCard />
       <DebugLogCard />
       <ResetSettingsCard />
     </div>);

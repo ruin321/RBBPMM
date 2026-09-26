@@ -842,3 +842,126 @@ main:has(.magnet-715561) *::after {
 .milk-btn:active {
   transform: scale(0.94);
 }
+
+/* ────────────────────────────────────────────────────────────────
+   主题：Windows 原生档（theme.ts 里 native: true 的那个主题，
+   applyThemeToDom 会给 documentElement 挂上 html.ui-native）
+
+   这一档不追求「设计」，追求「像系统自带的小工具」。套路跟
+   .retro-page / .glitch-nocss 是同一套：把现代 UI 的装饰按作用域
+   逐项压掉，再把系统原生的形态补回来。
+
+   为什么不能只靠主题令牌：令牌只管颜色和 --radius。而字体（内联在
+   body.style 上，见 useFont.ts）、背景光晕、box-shadow、
+   backdrop-filter、滚动条、动效，全都不走令牌 —— 必须在 CSS 层再压一道。
+
+   为什么圆角挑着清零：rounded-full 留给开关胶囊、单选钮、状态圆点，
+   Win10 自带控件里这些本来就是圆的，一并拍方反而不像原生。
+   ──────────────────────────────────────────────────────────────── */
+
+html.ui-native body {
+  /* useFont.ts 是给 document.body.style.fontFamily 直接赋值（普通声明），
+     这里的 !important 压得住；等宽字体不动，留给代码块和 ASCII 滚动条 */
+  font-family: 'Segoe UI', 'Segoe UI Variable Text', 'Microsoft YaHei UI', 'Microsoft YaHei', system-ui, sans-serif !important;
+  /* 那三层径向光晕是「AI 味」最重的一处，直接归零 */
+  background-image: none !important;
+}
+
+html.ui-native .font-sans {
+  font-family: 'Segoe UI', 'Segoe UI Variable Text', 'Microsoft YaHei UI', 'Microsoft YaHei', system-ui, sans-serif !important;
+}
+
+/* 圆角：除 rounded-full 外一律拍方 */
+html.ui-native .rounded,
+html.ui-native .rounded-sm,
+html.ui-native .rounded-md,
+html.ui-native .rounded-lg,
+html.ui-native .rounded-xl,
+html.ui-native .rounded-2xl,
+html.ui-native .rounded-3xl {
+  border-radius: 0 !important;
+}
+
+/* 层级感改由 1px 边框承担，不再靠阴影和毛玻璃 */
+html.ui-native * {
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* button.tsx 是 focus-visible:outline-none + ring，而 ring 也是 box-shadow，
+   上面那条把 ring 清掉了，所以在这里把焦点框换回系统原生的点线框 */
+html.ui-native button:focus-visible,
+html.ui-native a:focus-visible,
+html.ui-native [role='button']:focus-visible,
+html.ui-native input:focus-visible,
+html.ui-native select:focus-visible,
+html.ui-native textarea:focus-visible {
+  outline: 1px dotted #000000 !important;
+  outline-offset: -3px !important;
+}
+
+/* 侧栏：Win10 是一整条浅灰，不是叠在白底上的半透明 */
+html.ui-native .app-root aside {
+  background-color: #f0f0f0 !important;
+}
+/* 彩蛋页里的 aside 是文档中的图集，别被上面那条染灰 */
+html.ui-native .app-root .retro-page aside {
+  background-color: transparent !important;
+}
+
+/* 自绘窗口的圆角外框：原生窗是方的，描边保留 */
+html.ui-native.self-rounded .app-root {
+  border-radius: 0 !important;
+  box-shadow: inset 0 0 0 1px #d0d0d0 !important;
+}
+
+/* 滚动条：回到系统灰条（覆盖上面那套渐变圆头） */
+html.ui-native * {
+  scrollbar-width: auto;
+}
+html.ui-native *::-webkit-scrollbar {
+  width: 17px;
+  height: 17px;
+}
+html.ui-native *::-webkit-scrollbar-track {
+  background: #f0f0f0;
+}
+html.ui-native *::-webkit-scrollbar-thumb {
+  background: #cdcdcd;
+  border: 1px solid #f0f0f0;
+  border-radius: 0;
+  background-clip: border-box;
+}
+html.ui-native *::-webkit-scrollbar-thumb:hover {
+  background: #a6a6a6;
+}
+html.ui-native *::-webkit-scrollbar-thumb:active {
+  background: #787878;
+}
+html.ui-native *::-webkit-scrollbar-corner {
+  background: #f0f0f0;
+}
+
+/* 标题栏：Win10 是纯色条 + 撑满高度的方角按钮，不是渐变条 */
+html.ui-native .titlebar-drag {
+  background-image: none !important;
+  background-color: #f0f0f0 !important;
+  border-bottom-color: #d0d0d0 !important;
+}
+html.ui-native .titlebar-no-drag button {
+  height: 100% !important;
+  width: 46px !important;
+  border-radius: 0 !important;
+}
+html.ui-native .titlebar-no-drag button:active {
+  transform: none !important;
+}
+
+/* 动效收敛：原生控件不做位移和缩放，只留淡入 */
+html.ui-native .page-fade {
+  animation-name: fade-in !important;
+}
+html.ui-native .preview-zoom {
+  animation: none !important;
+}

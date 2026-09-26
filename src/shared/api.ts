@@ -112,6 +112,8 @@ export interface AppApi {
         setDebugLogging: (enabled: boolean) => Promise<void>;
         getNavOpen: () => Promise<boolean>;
         setNavOpen: (open: boolean) => Promise<void>;
+        getVerticalLayout: () => Promise<boolean>;
+        setVerticalLayout: (enabled: boolean) => Promise<void>;
         resetSettings: () => Promise<void>;
         onThemeChanged: (cb: (theme: string) => void) => () => void;
         onFontChanged: (cb: (font: string) => void) => () => void;

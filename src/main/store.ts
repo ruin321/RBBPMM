@@ -11,6 +11,7 @@ interface StoreSchema {
     splashEnabled?: boolean;
     debugLogging?: boolean;
     navOpen?: boolean;
+    verticalLayout?: boolean;
 }
 const store = new Store<StoreSchema>({
     defaults: {
@@ -18,7 +19,8 @@ const store = new Store<StoreSchema>({
         fontFamily: FONT_DEFAULT,
         splashEnabled: true,
         debugLogging: false,
-        navOpen: true
+        navOpen: true,
+        verticalLayout: false
     }
 });
 export function getStoredExePath(): string | undefined {
@@ -79,6 +81,12 @@ export function getNavOpen(): boolean {
 export function setNavOpen(v: boolean): void {
     store.set('navOpen', v);
 }
+export function getVerticalLayout(): boolean {
+    return store.get('verticalLayout', false);
+}
+export function setVerticalLayout(v: boolean): void {
+    store.set('verticalLayout', v);
+}
 export function resetAllSettings(): {
     theme: string;
     fontFamily: string;
@@ -91,6 +99,7 @@ export function resetAllSettings(): {
     store.delete('locale');
     setSplashEnabled(true);
     setDebugLogging(false);
+    setVerticalLayout(false);
     setStoredExePath(undefined);
     runtimeState.environment = null;
     return {

@@ -110,6 +110,8 @@ const api: AppApi = {
         setDebugLogging: (enabled) => ipcRenderer.invoke('app:set-debug-logging', { enabled }),
         getNavOpen: () => ipcRenderer.invoke('app:get-nav-open'),
         setNavOpen: (open) => ipcRenderer.invoke('app:set-nav-open', { open }),
+        getVerticalLayout: () => ipcRenderer.invoke('app:get-vertical-layout'),
+        setVerticalLayout: (enabled) => ipcRenderer.invoke('app:set-vertical-layout', { enabled }),
         resetSettings: () => ipcRenderer.invoke('app:reset-settings'),
         onThemeChanged: (cb) => {
             const handler = (_e: unknown, theme: unknown): void => cb(theme as string);
