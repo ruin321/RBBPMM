@@ -1,16 +1,11 @@
 import { Languages } from 'lucide-react';
-import { toast } from 'sonner';
 import { useI18n } from '@/i18n';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-const CREDIT_LOCALE = 'ydyy';
-const CREDIT_TEXT = 'By Eilmetion';
 export function LanguagePicker(): React.JSX.Element {
     const { locale, setLocale, locales, t } = useI18n();
     const pick = (id: string): void => {
         setLocale(id as Parameters<typeof setLocale>[0]);
-        if (id === CREDIT_LOCALE)
-            toast(CREDIT_TEXT);
     };
     if (locale === 'fish') {
         return (<Card className="w-full">

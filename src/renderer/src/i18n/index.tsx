@@ -29,8 +29,7 @@ export const LOCALES: LocaleDef[] = [
     { id: 'de', name: 'German', native: 'Deutsch' },
     { id: 'es', name: 'Spanish', native: 'Español' },
     { id: 'pt', name: 'Portuguese', native: 'Português' },
-    { id: 'ru', name: 'Russian', native: 'Русский' },
-    { id: 'ydyy', name: 'Yadengyue', native: '亚等约语' }
+    { id: 'ru', name: 'Russian', native: 'Русский' }
 ];
 export const fish: Messages = Object.fromEntries(Object.keys(en).map((k) => [k, 'FISH'])) as Messages;
 export const messages: Record<Locale, Messages> = {
