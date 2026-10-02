@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { CalendarDays, Download, Eye, Loader2, Package, Search, Store, X } from 'lucide-react';
 import type { GamebananaSubmissionDto, LevelStudioPrereqItem } from '@shared/types';
-import { BALDI_COMMUNITY_CATEGORY_ID, LEVEL_STUDIO_CATEGORY_ID, TEXTURE_PACK_CATEGORY_ID } from '@shared/types';
+import { BALDI_COMMUNITY_CATEGORY_ID, CUSTOM_POSTERS_SUBMISSION_ID, LEVEL_STUDIO_CATEGORY_ID, POSTER_PACK_CATEGORY_ID, TEXTURE_PACK_CATEGORY_ID } from '@shared/types';
 import { useI18n } from '@/i18n';
 import type { MessageKey } from '@/i18n';
 import { Button } from '@/components/ui/button';
@@ -53,6 +53,7 @@ export function BananaPage({ onInstalled, initialSubmissionId, onInitialConsumed
     const [milestone, setMilestone] = useState(1);
     const [paused, setPaused] = useState(false);
     const [needTextureDep, setNeedTextureDep] = useState(false);
+    const [needPosterDep, setNeedPosterDep] = useState(false);
     const [lsPrereq, setLsPrereq] = useState<LevelStudioPrereqItem[] | null>(null);
     const RANSOM_SUBMISSION_ID = 716138;
     const [ransomUnlocked, setRansomUnlocked] = useState(false);
@@ -212,6 +213,16 @@ export function BananaPage({ onInstalled, initialSubmissionId, onInitialConsumed
                 return;
             }
         }
+        if (cat === POSTER_PACK_CATEGORY_ID) {
+            let installed = false;
+            const r = await window.api.mods.list();
+            if (r.ok && r.value)
+                installed = r.value.some((m) => /customposters|custom posters/i.test(m.name));
+            if (!installed) {
+                setNeedPosterDep(true);
+                return;
+            }
+        }
         if (cat === LEVEL_STUDIO_CATEGORY_ID) {
             const pr = await window.api.banana.levelStudioPrereq();
             if (pr.ok && pr.value && pr.value.some((p) => !p.installed)) {
@@ -293,6 +304,7 @@ export function BananaPage({ onInstalled, initialSubmissionId, onInitialConsumed
         }} className="w-44" ariaLabel={t('banana.catFilter')} options={[
             { value: String(BALDI_COMMUNITY_CATEGORY_ID), label: t('banana.catMods') },
             { value: String(TEXTURE_PACK_CATEGORY_ID), label: t('banana.catTextures') },
+            { value: String(POSTER_PACK_CATEGORY_ID), label: t('banana.catPosters') },
             { value: String(LEVEL_STUDIO_CATEGORY_ID), label: t('banana.catLevelStudio') }
         ]}/>
           </div>
@@ -407,6 +419,35 @@ export function BananaPage({ onInstalled, initialSubmissionId, onInitialConsumed
             openSubmission(482089);
         }}>
               {t('textureDep.go')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      
+      <Dialog open={needPosterDep} onOpenChange={setNeedPosterDep}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Package className="h-5 w-5 text-primary"/>
+              {t('posterDep.title')}
+            </DialogTitle>
+            <DialogDescription asChild>
+              <div className="pt-2">
+                <p className="text-sm text-foreground">{t('posterDep.desc')}</p>
+                <p className="mt-2 font-mono text-xs text-muted-foreground">UncertainLuei.CustomPosters</p>
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="ghost">{t('dialog.close')}</Button>
+            </DialogClose>
+            <Button onClick={() => {
+            setNeedPosterDep(false);
+            openSubmission(CUSTOM_POSTERS_SUBMISSION_ID);
+        }}>
+              {t('posterDep.go')}
             </Button>
           </DialogFooter>
         </DialogContent>

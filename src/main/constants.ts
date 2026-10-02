@@ -75,6 +75,18 @@ export function bepinexModInfoDir(gameRoot: string): string {
 export function texturePacksDir(gameRoot: string): string {
     return path.join(gameRoot, ...TEXTURE_PACKS_RELATIVE);
 }
+// Custom Posters (io.github.uncertainluei.baldiplus.customposters) reads every
+// sub-folder of its Posters directory as a poster pack.
+export const CUSTOM_POSTERS_GUID = 'io.github.uncertainluei.baldiplus.customposters';
+export const CUSTOM_POSTERS_DLL = 'UncertainLuei.CustomPosters.dll';
+export const CUSTOM_POSTERS_DISABLED_FOLDER = 'DisabledPosters';
+export const POSTER_IMAGE_EXT = /\.(png|jpe?g)$/i;
+export function customPostersDir(gameRoot: string): string {
+    return path.join(gameRoot, 'BALDI_Data', 'StreamingAssets', 'Modded', CUSTOM_POSTERS_GUID, 'Posters');
+}
+export function customPostersDisabledDir(gameRoot: string): string {
+    return path.join(gameRoot, 'BALDI_Data', 'StreamingAssets', 'Modded', CUSTOM_POSTERS_GUID, CUSTOM_POSTERS_DISABLED_FOLDER);
+}
 export const GAME_SAVE_COMPANY = 'Basically Games';
 export const GAME_SAVE_PRODUCT = "Baldi's Basics Plus";
 export const GAME_MODDED_SAVES_FOLDER = 'Modded';

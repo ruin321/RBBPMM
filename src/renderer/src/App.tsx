@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import type React from 'react';
-import { Package, Moon, Sun, Settings, Store, Info, FileArchive, SlidersHorizontal, Palette, Map as MapIcon, PanelLeftClose, PanelLeftOpen, Home, Wrench, PackageX, Wand2, Loader2 } from 'lucide-react';
+import { Package, Moon, Sun, Settings, Store, Info, FileArchive, SlidersHorizontal, Palette, Map as MapIcon, Image as ImageIcon, PanelLeftClose, PanelLeftOpen, Home, Wrench, PackageX, Wand2, Loader2 } from 'lucide-react';
 import { toast, Toaster } from 'sonner';
 import { useGame } from '@/hooks/useGame';
 import { useTheme } from '@/hooks/useTheme';
@@ -25,8 +25,9 @@ import { FishSplash } from '@/components/FishSplash';
 import { SetupWizardDialog } from '@/components/SetupWizardDialog';
 import { DeepLinkInstallDialog } from '@/components/DeepLinkInstallDialog';
 import { CustomLevelsPage } from '@/pages/CustomLevelsPage';
+import { PostersPage } from '@/pages/PostersPage';
 import { cn } from '@/lib/utils';
-type Page = 'home' | 'mods' | 'browse' | 'textures' | 'maps' | 'settings' | 'config' | 'toolbox';
+type Page = 'home' | 'mods' | 'browse' | 'textures' | 'posters' | 'maps' | 'settings' | 'config' | 'toolbox';
 interface ConfigRequest {
     cfgPath?: string;
     search?: string;
@@ -43,6 +44,7 @@ export function App(): React.JSX.Element {
     const [dragging, setDragging] = useState(false);
     const [dropPath, setDropPath] = useState<string | null>(null);
     const [textureDropPath, setTextureDropPath] = useState<string | null>(null);
+    const [posterDropPath, setPosterDropPath] = useState<string | null>(null);
     const [navOpen, setNavOpen] = useState(true);
     const [cfgRequest, setCfgRequest] = useState<ConfigRequest | null>(null);
     const [deepLinkInstall, setDeepLinkInstall] = useState<{
@@ -149,12 +151,17 @@ export function App(): React.JSX.Element {
             n.includes('plusstudylevel'));
     });
     const texturesTabVisible = installedMods.some((m) => (m.name || '').toLowerCase().includes('balditexturepacks'));
+    const postersTabVisible = installedMods.some((m) => {
+        const n = (m.name || '').toLowerCase();
+        return n.includes('customposters') || n.includes('custom posters');
+    });
     useEffect(() => {
         if ((page === 'textures' && !texturesTabVisible) ||
+            (page === 'posters' && !postersTabVisible) ||
             (page === 'maps' && !mapTabVisible)) {
             setPage('mods');
         }
-    }, [page, texturesTabVisible, mapTabVisible]);
+    }, [page, texturesTabVisible, postersTabVisible, mapTabVisible]);
     const handleDrop = (e: React.DragEvent): void => {
         e.preventDefault();
         setDragging(false);
@@ -169,6 +176,14 @@ export function App(): React.JSX.Element {
                         setTextureDropPath(path);
                         setPage('textures');
                         return;
+                    }
+                    if (postersTabVisible) {
+                        const pr = await window.api.posters.probe(path);
+                        if (pr.ok && pr.value) {
+                            setPosterDropPath(path);
+                            setPage('posters');
+                            return;
+                        }
                     }
                     if (mapTabVisible) {
                         const lr = await window.api.customLevel.probe(path);
@@ -246,6 +261,9 @@ export function App(): React.JSX.Element {
           {texturesTabVisible ? (<NavButton active={page === 'textures'} onClick={() => setPage('textures')} label={t('nav.textures')} open={navOpen} horizontal={verticalLayout}>
               <Palette className={verticalLayout ? 'h-4 w-4' : 'h-5 w-5'}/>
             </NavButton>) : null}
+          {postersTabVisible ? (<NavButton active={page === 'posters'} onClick={() => setPage('posters')} label={t('nav.posters')} open={navOpen} horizontal={verticalLayout}>
+              <ImageIcon className={verticalLayout ? 'h-4 w-4' : 'h-5 w-5'}/>
+            </NavButton>) : null}
           {mapTabVisible ? (<NavButton active={page === 'maps'} onClick={() => setPage('maps')} label={t('nav.maps')} open={navOpen} horizontal={verticalLayout}>
               <MapIcon className={verticalLayout ? 'h-4 w-4' : 'h-5 w-5'}/>
             </NavButton>) : null}
@@ -306,7 +324,7 @@ export function App(): React.JSX.Element {
                 {t('banana.notReadyInstall')}
               </Button>
             </div>) : (<BananaPage onInstalled={() => {
-            }}/>)) : page === 'maps' ? (<CustomLevelsPage modInstalled={mapTabVisible}/>) : page === 'textures' ? (<TexturePacksPage env={env} dropPath={textureDropPath} onDropConsumed={() => setTextureDropPath(null)}/>) : page === 'toolbox' ? (<ToolboxPage onSetup={() => setSetupOpen(true)} env={env}/>) : page === 'config' ? (<ConfigsPage externalCfgPath={cfgRequest?.cfgPath} externalSearch={cfgRequest?.search} onExternalConsumed={() => setCfgRequest(null)}/>) : (<SettingsPage env={env} loading={loading} onSelect={select} font={font} fonts={fonts} onSelectFont={setFont} themeId={themeId} onSelectTheme={setThemeId} onSetup={() => setSetupOpen(true)}/>)}
+            }}/>)) : page === 'maps' ? (<CustomLevelsPage modInstalled={mapTabVisible}/>) : page === 'textures' ? (<TexturePacksPage env={env} dropPath={textureDropPath} onDropConsumed={() => setTextureDropPath(null)}/>) : page === 'posters' ? (<PostersPage env={env} dropPath={posterDropPath} onDropConsumed={() => setPosterDropPath(null)} modInstalled={postersTabVisible}/>) : page === 'toolbox' ? (<ToolboxPage onSetup={() => setSetupOpen(true)} env={env}/>) : page === 'config' ? (<ConfigsPage externalCfgPath={cfgRequest?.cfgPath} externalSearch={cfgRequest?.search} onExternalConsumed={() => setCfgRequest(null)}/>) : (<SettingsPage env={env} loading={loading} onSelect={select} font={font} fonts={fonts} onSelectFont={setFont} themeId={themeId} onSelectTheme={setThemeId} onSetup={() => setSetupOpen(true)}/>)}
       </main>
 
       {dragging && (<div className="pointer-events-none absolute inset-0 z-50 flex items-center justify-center bg-background/60 backdrop-blur-sm">

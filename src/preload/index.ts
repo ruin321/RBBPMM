@@ -52,6 +52,13 @@ const api: AppApi = {
         toggle: (fileName, enabled) => ipcRenderer.invoke('customLevel:toggle', { fileName, enabled }),
         delete: (fileName) => ipcRenderer.invoke('customLevel:delete', { fileName })
     },
+    posters: {
+        list: () => ipcRenderer.invoke('posters:list'),
+        install: (archivePath) => ipcRenderer.invoke('posters:install', { archivePath }),
+        uninstall: (folderName) => ipcRenderer.invoke('posters:uninstall', { folderName }),
+        toggleEnabled: (folderName, enabled) => ipcRenderer.invoke('posters:toggle-enabled', { folderName, enabled }),
+        probe: (archivePath) => ipcRenderer.invoke('posters:probe', { archivePath })
+    },
     ui: {
         pickZip: () => ipcRenderer.invoke('ui:pick-zip'),
         openFolder: (p) => ipcRenderer.invoke('ui:open-folder', { path: p }),
@@ -159,6 +166,11 @@ const api: AppApi = {
             const handler = (_e: unknown, p: unknown): void => cb(p as never);
             ipcRenderer.on('textures:install-progress', handler);
             return () => ipcRenderer.removeListener('textures:install-progress', handler);
+        },
+        onPosterPackProgress: (cb) => {
+            const handler = (_e: unknown, p: unknown): void => cb(p as never);
+            ipcRenderer.on('posters:install-progress', handler);
+            return () => ipcRenderer.removeListener('posters:install-progress', handler);
         },
         onOpenUrl: (cb) => {
             const handler = (_e: unknown, url: unknown): void => cb(url as never);

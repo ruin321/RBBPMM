@@ -1,6 +1,8 @@
 export const BALDI_COMMUNITY_CATEGORY_ID = 4609;
 export const TEXTURE_PACK_CATEGORY_ID = 28929;
 export const LEVEL_STUDIO_CATEGORY_ID = 28926;
+export const POSTER_PACK_CATEGORY_ID = 36957;
+export const CUSTOM_POSTERS_SUBMISSION_ID = 498780;
 export interface LevelStudioPrereqItem {
     modId: number;
     nameKey: string;
@@ -276,4 +278,23 @@ export interface TexturePackProgress {
 export interface TexturePackListResult {
     installDir: string;
     packs: TexturePackDto[];
+}
+export interface PosterPackDto {
+    folderName: string;
+    name: string;
+    posterCount: number;
+    enabled: boolean;
+    thumbnail?: string;
+}
+export interface PosterPackInstallResult {
+    installed: PosterPackDto[];
+    installDir: string;
+    readmes: ReadmeFileDto[];
+}
+export interface PosterPackListResult {
+    installDir: string;
+    packs: PosterPackDto[];
+}
+export interface PosterPackProgress {
+    stage: 'extracting' | 'installing';
 }

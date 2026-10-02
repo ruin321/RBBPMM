@@ -1,4 +1,4 @@
-import type { ConfigFileDto, GamebananaCommentDto, GamebananaCommentsDto, GameEnvironment, GamebananaSearchResult, GamebananaSubmissionDto, GamebananaUpdatesDto, InstallProgress, InstallResult, JobProgress, LevelStudioInstallResult, LevelStudioPrereqItem, ModInstallOutcome, ModItemDto, ModUpdateInfoDto, OpenUrlPayload, ReadmeFileDto, Result, TexturePackInstallResult, TexturePackListResult, TexturePackProgress, ToolboxDirDto, CustomLevelDto } from './types';
+import type { ConfigFileDto, GamebananaCommentDto, GamebananaCommentsDto, GameEnvironment, GamebananaSearchResult, GamebananaSubmissionDto, GamebananaUpdatesDto, InstallProgress, InstallResult, JobProgress, LevelStudioInstallResult, LevelStudioPrereqItem, ModInstallOutcome, ModItemDto, ModUpdateInfoDto, OpenUrlPayload, PosterPackInstallResult, PosterPackListResult, PosterPackProgress, ReadmeFileDto, Result, TexturePackInstallResult, TexturePackListResult, TexturePackProgress, ToolboxDirDto, CustomLevelDto } from './types';
 export interface AppApi {
     game: {
         selectDir: () => Promise<Result<GameEnvironment>>;
@@ -94,6 +94,13 @@ export interface AppApi {
         toggle: (fileName: string, enabled: boolean) => Promise<Result>;
         delete: (fileName: string) => Promise<Result>;
     };
+    posters: {
+        list: () => Promise<Result<PosterPackListResult>>;
+        install: (archivePath: string) => Promise<Result<PosterPackInstallResult>>;
+        uninstall: (folderName: string) => Promise<Result>;
+        toggleEnabled: (folderName: string, enabled: boolean) => Promise<Result>;
+        probe: (archivePath: string) => Promise<Result<boolean>>;
+    };
     setup: {
         status: () => Promise<Result<{
             hasBepInEx: boolean;
@@ -130,6 +137,7 @@ export interface AppApi {
         onGameCleared: (cb: () => void) => () => void;
         onInstallProgress: (cb: (p: InstallProgress) => void) => () => void;
         onTexturePackProgress: (cb: (p: TexturePackProgress) => void) => () => void;
+        onPosterPackProgress: (cb: (p: PosterPackProgress) => void) => () => void;
         onOpenUrl: (cb: (url: OpenUrlPayload) => void) => () => void;
     };
 }

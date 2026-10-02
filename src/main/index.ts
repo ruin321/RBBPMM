@@ -11,6 +11,7 @@ import { registerAppIpc, applyFontToRenderer, applyThemeToRenderer } from './ipc
 import { registerConfigsIpc } from './ipc/configs.ipc';
 import { registerTexturesIpc } from './ipc/textures.ipc';
 import { registerCustomLevelIpc } from './ipc/customLevel.ipc';
+import { registerPostersIpc } from './ipc/posters.ipc';
 import { registerSetupIpc } from './ipc/setup.ipc';
 import { getStoredExePath, getTheme, getFontFamily } from './store';
 import { isDarkTheme } from './constants';
@@ -154,6 +155,7 @@ else {
         registerConfigsIpc();
         registerTexturesIpc();
         registerCustomLevelIpc();
+        registerPostersIpc();
         registerSetupIpc(() => mainWindow?.webContents ?? null);
         createWindow();
         mainWindow?.webContents.on('did-finish-load', () => {

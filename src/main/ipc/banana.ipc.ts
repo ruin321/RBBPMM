@@ -6,13 +6,14 @@ import { installModArchive, installUnmanaged, hasManifest } from '../services/Mo
 import { createTempDir, extractArchive } from '../services/ModArchiveExtractor';
 import { installTexturePacksFromRoot, findPackDirs, hasModStructureInRoot } from '../services/TexturePackService';
 import { installLevelStudioPlayable } from '../services/LevelStudioInstaller';
+import { installPosterPacksFromRoot } from '../services/PosterPackService';
 import { downloadMod, getComments, getPostReplies, getSubmission, getUpdates, searchMods } from '../services/GamebananaService';
 import { runtimeState, getAutoInstallAfterDownload } from '../store';
 import { debugLog, debugError } from '../logger';
 import { linkKnownSubmission } from '../services/ModSourceLinker';
 import { loadModManifest } from '../services/ManifestLoader';
 import { invalidateModScan, scanRepositoryCached } from '../services/ModRepositoryScanner';
-import { LEVEL_STUDIO_CATEGORY_ID, TEXTURE_PACK_CATEGORY_ID } from '../../shared/types';
+import { LEVEL_STUDIO_CATEGORY_ID, POSTER_PACK_CATEGORY_ID, TEXTURE_PACK_CATEGORY_ID } from '../../shared/types';
 import type { GamebananaCommentDto, GamebananaCommentsDto, GamebananaSearchResult, GamebananaSubmissionDto, GamebananaUpdatesDto, InstallResult, JobProgress, LevelStudioPrereqItem, Result } from '../../shared/types';
 import { downloadManager } from '../services/DownloadManager';
 function requireEnv(): {
@@ -166,6 +167,8 @@ export function registerBananaIpc(getWebContents: () => WebContents | null): voi
 
                         if (submission.categoryId === LEVEL_STUDIO_CATEGORY_ID) {
                             await installLevelStudioPlayable(extractRoot);
+                        } else if (submission.categoryId === POSTER_PACK_CATEGORY_ID) {
+                            await installPosterPacksFromRoot(env.value, extractRoot, path.basename(tmpFile).replace(/\.(zip|rar|7z|tar|gz|bz2|xz|tgz|jar)$/i, ''));
                         } else if (modStructure) {
                             if (hasManifest(extractRoot)) {
                                 const result = await installModArchive(env.value, tmpFile, runtimeState.environment?.gameVersion,
