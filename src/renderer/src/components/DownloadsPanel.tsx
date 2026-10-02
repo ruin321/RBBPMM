@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
-import { X, Trash2, Download, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, Trash2, Loader2 } from 'lucide-react';
 import type { JobProgress } from '@shared/types';
 import { cn } from '@/lib/utils';
+import downloadsBg from '@/assets/downloads-bg.png';
 
 interface JobItem {
     id: string;
@@ -14,9 +15,22 @@ interface JobItem {
 
 const TERMINAL_STAGES = new Set(['done', 'error', 'cancelled']);
 
+// Character-based progress bar: green █ filled + gray ░ empty
+function CharProgress({ percent }: { percent: number }): React.JSX.Element {
+    const width = 20;
+    const filled = Math.round((percent / 100) * width);
+    const empty = width - filled;
+    return (
+        <span className="font-mono text-[11px] leading-none tracking-[0.5px]">
+            <span style={{ color: '#22c55e' }}>{'█'.repeat(filled)}</span>
+            <span style={{ color: '#6b7280' }}>{'░'.repeat(empty)}</span>
+            <span className="ml-1 text-xs text-foreground">{percent}%</span>
+        </span>
+    );
+}
+
 export function DownloadsPanel(): React.JSX.Element {
     const [jobs, setJobs] = useState<Map<string, JobItem>>(new Map());
-    const [open, setOpen] = useState(false);
     const cleanupTimers = useRef<Map<string, number>>(new Map());
 
     useEffect(() => {
@@ -43,11 +57,8 @@ export function DownloadsPanel(): React.JSX.Element {
                             return n;
                         });
                         cleanupTimers.current.delete(p.id);
-                    }, 6000);
+                    }, 8000);
                     cleanupTimers.current.set(p.id, t);
-                } else {
-                    // auto-open on new download
-                    setOpen(true);
                 }
                 return next;
             });
@@ -61,129 +72,152 @@ export function DownloadsPanel(): React.JSX.Element {
     const jobsArr = Array.from(jobs.values());
     const runningCount = jobsArr.filter((j) => !TERMINAL_STAGES.has(j.stage)).length;
 
-    const cancelJob = (id: string): void => {
-        void window.api.banana.cancelJob(id);
-    };
-
+    const cancelJob = (id: string): void => { void window.api.banana.cancelJob(id); };
     const clearJob = (id: string): void => {
         void window.api.banana.clearJob(id);
-        setJobs((prev) => {
-            const n = new Map(prev);
-            n.delete(id);
-            return n;
-        });
+        setJobs((prev) => { const n = new Map(prev); n.delete(id); return n; });
     };
-
     const clearDone = (): void => {
         void window.api.banana.clearCompleted();
         setJobs((prev) => {
             const n = new Map(prev);
-            for (const [id, j] of n) {
-                if (TERMINAL_STAGES.has(j.stage)) n.delete(id);
-            }
+            for (const [id, j] of n) if (TERMINAL_STAGES.has(j.stage)) n.delete(id);
             return n;
         });
     };
 
-    // Floating trigger button when closed + has jobs
     if (jobsArr.length === 0) return null;
 
-    return (<div className="pointer-events-none fixed right-4 bottom-4 z-50 flex items-end gap-2">
-        {/* Trigger button when collapsed */}
-        {!open && (<button type="button" onClick={() => setOpen(true)} className="pointer-events-auto flex items-center gap-1.5 rounded-full border bg-popover px-3 py-2 shadow-lg transition-all hover:scale-105 hover:bg-accent">
-            <Download className={cn('h-4 w-4', runningCount > 0 && 'animate-bounce text-primary')}/>
-            <span className="text-xs font-medium">
-                {runningCount > 0 ? `${runningCount} downloading` : `${jobsArr.length} done`}
-            </span>
-        </button>)}
-
-        {/* Sliding panel */}
-        <div className={cn(
-            'pointer-events-auto flex w-80 max-h-[70vh] flex-col overflow-hidden rounded-xl border bg-popover shadow-2xl transition-all duration-300 ease-out',
-            open
-                ? 'translate-x-0 opacity-100'
-                : 'translate-x-4 opacity-0 pointer-events-none'
-        )}>
-            <div className="flex items-center justify-between border-b px-3 py-2">
-                <div className="flex items-center gap-2">
-                    <Download className={cn('h-4 w-4', runningCount > 0 ? 'text-primary' : 'text-muted-foreground')}/>
-                    <span className="text-sm font-semibold">Downloads</span>
-                    {runningCount > 0 && (
-                        <span className="rounded-full bg-primary/20 px-1.5 py-0.5 text-[10px] font-bold text-primary">
-                            {runningCount}
-                        </span>
-                    )}
-                </div>
-                <div className="flex items-center gap-0.5">
-                    {jobsArr.some((j) => TERMINAL_STAGES.has(j.stage)) && (
-                        <button type="button" onClick={clearDone} className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground" title="Clear completed">
-                            <Trash2 className="h-3.5 w-3.5"/>
-                        </button>
-                    )}
-                    <button type="button" onClick={() => setOpen(false)} className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground" title="Collapse">
-                        <ChevronRight className="h-3.5 w-3.5"/>
-                    </button>
-                </div>
-            </div>
-
-            <div className="flex-1 space-y-1.5 overflow-y-auto p-2">
-                {jobsArr.map((job) => {
-                    const isTerminal = TERMINAL_STAGES.has(job.stage);
-                    const isError = job.stage === 'error';
-                    const isDone = job.stage === 'done';
-                    const pct = job.percent;
-
-                    return (<div key={job.id} className={cn(
-                        'rounded-lg border p-2 transition-colors',
-                        isError && 'border-destructive/40 bg-destructive/5',
-                        isDone && 'border-green-500/30 bg-green-500/5',
-                        !isTerminal && 'border-border bg-background/60'
-                    )}>
-                        <div className="flex items-start justify-between gap-2">
-                            <div className="flex min-w-0 flex-1 items-center gap-1.5">
-                                {!isTerminal && <Loader2 className="mt-0.5 h-3.5 w-3.5 shrink-0 animate-spin text-primary"/>}
-                                <span className="truncate text-xs font-medium">{job.name}</span>
-                            </div>
-                            <div className="flex shrink-0 items-center gap-0.5">
-                                {!isTerminal ? (
-                                    <button type="button" onClick={() => cancelJob(job.id)} className="rounded p-0.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive" title="Cancel">
-                                        <X className="h-3 w-3"/>
-                                    </button>
-                                ) : (
-                                    <button type="button" onClick={() => clearJob(job.id)} className="rounded p-0.5 text-muted-foreground hover:bg-accent hover:text-foreground" title="Remove">
-                                        <X className="h-3 w-3"/>
-                                    </button>
-                                )}
-                            </div>
-                        </div>
-
-                        <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-muted">
-                            <div className={cn(
-                                'h-full transition-all duration-300',
-                                isError ? 'bg-destructive' : isDone ? 'bg-green-500' : 'bg-primary'
-                            )} style={{
-                                width: pct !== undefined ? `${pct}%` : '0%',
-                                opacity: pct === undefined ? 0.3 : 1
-                            }}/>
-                        </div>
-
-                        <div className="mt-1 flex items-center justify-between text-[10px] text-muted-foreground">
-                            <span className="truncate">
-                                {isError ? (job.error || 'Failed') : job.message || job.stage}
-                            </span>
-                            {pct !== undefined && (
-                                <span className="shrink-0 tabular-nums font-mono">{pct}%</span>
+    return (
+        <div
+            className={cn(
+                'pointer-events-auto fixed inset-x-0 bottom-0 z-50 mx-auto max-w-2xl p-2 transition-transform duration-300 ease-out',
+                // 默认在屏幕底部静静待着，只露出顶部一点点
+                // hover 时 transform 变回 0% 完整升上来
+                'translate-y-[calc(100%-36px)]',
+                'hover:translate-y-0'
+            )}
+        >
+            {/* 背景图层 */}
+            <div
+                className="relative rounded-lg overflow-hidden"
+                style={{
+                    backgroundImage: `url(${downloadsBg})`,
+                    backgroundSize: '100% 100%',
+                    backgroundRepeat: 'no-repeat',
+                    backgroundPosition: 'center',
+                }}
+            >
+                {/* 内容层 */}
+                <div className="relative p-4 pt-6">
+                    {/* 标题栏 */}
+                    <div className="mb-3 flex items-center justify-between">
+                        <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                            <span>📥</span>
+                            <span>Downloads</span>
+                            {runningCount > 0 && (
+                                <span className="rounded bg-green-600/20 px-1.5 py-0.5 text-xs font-mono text-green-600">
+                                    {runningCount}
+                                </span>
                             )}
                         </div>
-                    </div>);
-                })}
-            </div>
+                        <div className="flex items-center gap-1">
+                            {jobsArr.some((j) => TERMINAL_STAGES.has(j.stage)) && (
+                                <button
+                                    type="button"
+                                    onClick={clearDone}
+                                    className="rounded p-1 text-xs text-muted-foreground hover:bg-accent hover:text-foreground"
+                                    title="Clear completed"
+                                >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                </button>
+                            )}
+                        </div>
+                    </div>
 
-            {/* Drag handle / collapse hint */}
-            <button type="button" onClick={() => setOpen(false)} className="flex items-center justify-center gap-1 border-t py-1 text-[10px] text-muted-foreground hover:bg-accent">
-                <ChevronLeft className="h-3 w-3"/>
-                <span>Click outside to collapse</span>
-            </button>
+                    {/* 卡片列表 */}
+                    <div className="space-y-2">
+                        {jobsArr.map((job) => {
+                            const isTerminal = TERMINAL_STAGES.has(job.stage);
+                            const isError = job.stage === 'error';
+                            const isDone = job.stage === 'done';
+                            const pct = job.percent;
+
+                            return (
+                                <div
+                                    key={job.id}
+                                    className={cn(
+                                        'flex items-center gap-3 rounded border px-3 py-2 text-sm',
+                                        'bg-background/80 backdrop-blur-sm',
+                                        isError && 'border-red-400/60 bg-red-50/90',
+                                        isDone && 'border-green-400/60 bg-green-50/90',
+                                    )}
+                                >
+                                    {/* 状态图标 */}
+                                    <div className="shrink-0">
+                                        {!isTerminal ? (
+                                            <Loader2 className="h-4 w-4 animate-spin text-green-600" />
+                                        ) : isError ? (
+                                            <span className="text-red-500 text-lg leading-none">✗</span>
+                                        ) : isDone ? (
+                                            <span className="text-green-600 text-lg leading-none">✓</span>
+                                        ) : (
+                                            <span className="text-xs text-muted-foreground">✦</span>
+                                        )}
+                                    </div>
+
+                                    {/* 名字 + 字符进度条 */}
+                                    <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                                        <span className="truncate font-medium">{job.name}</span>
+                                        <div className="flex items-center gap-2">
+                                            {pct !== undefined ? (
+                                                <CharProgress percent={pct} />
+                                            ) : (
+                                                <span className="font-mono text-xs text-gray-500">░░░░░░░░░░░░░░░░░░░░  --%</span>
+                                            )}
+                                            {job.message && (
+                                                <span className="truncate text-xs text-muted-foreground">
+                                                    {isError ? (job.error || 'Failed') : job.message}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* 操作按钮 */}
+                                    <div className="shrink-0">
+                                        {!isTerminal ? (
+                                            <button
+                                                type="button"
+                                                onClick={() => cancelJob(job.id)}
+                                                className="rounded p-1 text-muted-foreground hover:bg-red-100 hover:text-red-600"
+                                                title="Cancel"
+                                            >
+                                                <X className="h-3.5 w-3.5" />
+                                            </button>
+                                        ) : (
+                                            <button
+                                                type="button"
+                                                onClick={() => clearJob(job.id)}
+                                                className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
+                                                title="Remove"
+                                            >
+                                                <X className="h-3.5 w-3.5" />
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+
+                    {/* hover 提示条（收起状态下露出来的那一条） */}
+                    <div className="pointer-events-none absolute left-0 right-0 top-0 h-9 flex items-center justify-center text-[11px] text-muted-foreground/70">
+                        {runningCount > 0
+                            ? `${runningCount} downloading...`
+                            : `${jobsArr.length} completed (hover to view)`}
+                    </div>
+                </div>
+            </div>
         </div>
-    </div>);
+    );
 }
