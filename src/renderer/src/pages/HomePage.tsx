@@ -38,9 +38,14 @@ const FEATURES: {
 export function HomePage({ env, running, onLaunch, onLaunchSteam, onStop, onSelectDir, onNavigate }: Props): React.JSX.Element {
     const { t } = useI18n();
     const [modsCount, setModsCount] = useState(0);
+    const [modsEnabledCount, setModsEnabledCount] = useState(0);
     const [texCount, setTexCount] = useState(0);
     useEffect(() => {
-        void window.api.mods.list().then((r) => setModsCount(r.ok ? (r.value?.length ?? 0) : 0));
+        void window.api.mods.list().then((r) => {
+            const list = r.ok ? (r.value ?? []) : [];
+            setModsCount(list.length);
+            setModsEnabledCount(list.filter((m) => m.activated).length);
+        });
         void window.api.textures.list().then((r) => setTexCount(r.ok ? (r.value?.packs.length ?? 0) : 0));
     }, []);
     const launch = async (): Promise<void> => {
@@ -104,7 +109,10 @@ export function HomePage({ env, running, onLaunch, onLaunchSteam, onStop, onSele
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold tabular-nums">{modsCount}</p>
+            <p className="text-2xl font-bold tabular-nums">
+              {modsEnabledCount}
+              <span className="text-base font-normal text-muted-foreground">/{modsCount}</span>
+            </p>
           </CardContent>
         </Card>
         <Card className="col-span-1">

@@ -5,6 +5,7 @@ export interface CompatibilityEntry {
     devApi: string | null;
 }
 export const DEV_API_COMPATIBILITY: CompatibilityEntry[] = [
+    { gameVersion: '0.14.5', devApi: '11.2.0.0' },
     { gameVersion: '0.14', devApi: '11.0.0.1' },
     { gameVersion: '0.13.1', devApi: '10.2.0.1' },
     { gameVersion: '0.13', devApi: '10.0.0.2' },

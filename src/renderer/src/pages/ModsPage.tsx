@@ -184,6 +184,7 @@ export function ModsPage({ env, onLaunch, onLaunchSteam, running, onStop, dropPa
             return a.name.localeCompare(b.name);
         });
     }, [mods, search, timeFilter, sortKey, pins]);
+    const enabledCount = useMemo(() => filtered.filter((m) => m.activated).length, [filtered]);
     const groups = useMemo(() => {
         const ordered: Array<{
             name: string;
@@ -313,7 +314,10 @@ export function ModsPage({ env, onLaunch, onLaunchSteam, running, onStop, dropPa
             : 'done';
     return (<>
       <div className="mx-auto w-full max-w-3xl space-y-6">
-      <PageHeader icon={<Package className="h-6 w-6"/>} title={t('mods.title')} desc={t('mods.countInstalled', { n: filtered.length })}>
+      <PageHeader icon={<Package className="h-6 w-6"/>} title={t('mods.title')} desc={t('mods.groupOn', {
+        enabled: String(enabledCount),
+        total: String(filtered.length)
+    })}>
         {running ? (<WithTooltip title={t('mods.stop')}>
           <Button variant="outline" onClick={() => void stop()}>
             <Square className="mr-2 h-4 w-4"/>
