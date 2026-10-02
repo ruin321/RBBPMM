@@ -2,6 +2,7 @@
 import { deleteCustomLevel, listCustomLevels, toggleCustomLevel } from '../services/CustomLevelService';
 import { findPbplFiles, installLevelStudioPlayable } from '../services/LevelStudioInstaller';
 import { extractArchive } from '../services/ModArchiveExtractor';
+import { installTracker } from '../services/InstallTracker';
 import { logInfo, logWarn } from '../logger';
 import * as fs from 'fs';
 import * as os from 'os';
@@ -52,16 +53,21 @@ export function registerCustomLevelIpc(): void {
             return { ok: false, error: `file not found: ${archivePath}` };
         }
         const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'ls-install-'));
+        const instId = installTracker.begin(path.basename(archivePath));
         try {
             logInfo('customLevel:install extract =', archivePath);
+            installTracker.progress(instId, { stage: 'extracting', message: 'Extracting archive' });
             const extractRoot = await extractArchive(archivePath, tmpRoot);
+            installTracker.progress(instId, { stage: 'installing', message: 'Installing level' });
             const result = await installLevelStudioPlayable(extractRoot);
             logInfo('customLevel:install installed =', result.playables.length, result.playables);
+            installTracker.done(instId);
             return { ok: true, value: result };
         }
         catch (err) {
             const msg = err instanceof Error ? err.message : String(err);
             logWarn('customLevel:install failed =', msg);
+            installTracker.fail(instId, msg);
             return { ok: false, error: msg };
         }
         finally {

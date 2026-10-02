@@ -20,7 +20,7 @@ import { ToolboxPage } from '@/pages/ToolboxPage';
 import { AboutDialog } from '@/components/AboutDialog';
 import { DevBuildDialog } from '@/components/DevBuildDialog';
 import { SplashScreen } from '@/components/SplashScreen';
-import { DownloadsPanel } from '@/components/DownloadsPanel';
+import { DownloadsPanel, InstallsPanel } from '@/components/DownloadsPanel';
 import { TitleBar } from '@/components/TitleBar';
 import { FishSplash } from '@/components/FishSplash';
 import { SetupWizardDialog } from '@/components/SetupWizardDialog';
@@ -397,7 +397,10 @@ export function App(): React.JSX.Element {
 
       
       {splashOn ? <SplashScreen onDone={() => setSplashOn(false)}/> : null}
-      <DownloadsPanel />
+      <div className="pointer-events-none fixed bottom-0 right-4 z-50 flex flex-row items-end">
+        <InstallsPanel />
+        <DownloadsPanel />
+      </div>
       <FishSplash />
     </div>
     </div>

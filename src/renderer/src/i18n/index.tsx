@@ -10,10 +10,11 @@ import { de } from './locales/de';
 import { es } from './locales/es';
 import { pt } from './locales/pt';
 import { ru } from './locales/ru';
+import { tr } from './locales/tr';
 import { ydyy } from './locales/ydyy';
 import type { Messages } from './messages';
 export type { Messages };
-export type Locale = 'en' | 'zh-CN' | 'zh-TW' | 'ja' | 'ko' | 'fr' | 'de' | 'es' | 'pt' | 'ru' | 'ydyy' | 'fish';
+export type Locale = 'en' | 'zh-CN' | 'zh-TW' | 'ja' | 'ko' | 'fr' | 'de' | 'es' | 'pt' | 'ru' | 'tr' | 'ydyy' | 'fish';
 export interface LocaleDef {
     id: Locale;
     name: string;
@@ -29,7 +30,8 @@ export const LOCALES: LocaleDef[] = [
     { id: 'de', name: 'German', native: 'Deutsch' },
     { id: 'es', name: 'Spanish', native: 'Español' },
     { id: 'pt', name: 'Portuguese', native: 'Português' },
-    { id: 'ru', name: 'Russian', native: 'Русский' }
+    { id: 'ru', name: 'Russian', native: 'Русский' },
+    { id: 'tr', name: 'Turkish', native: 'Türkçe' }
 ];
 export const fish: Messages = Object.fromEntries(Object.keys(en).map((k) => [k, 'FISH'])) as Messages;
 export const messages: Record<Locale, Messages> = {
@@ -43,6 +45,7 @@ export const messages: Record<Locale, Messages> = {
     es,
     pt,
     ru,
+    tr,
     ydyy,
     fish
 };

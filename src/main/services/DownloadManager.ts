@@ -1,10 +1,12 @@
 import crypto from 'crypto';
+import type { JobKind } from '../../shared/types';
 
 export type JobStatus = 'pending' | 'downloading' | 'extracting' | 'installing' | 'done' | 'error' | 'cancelled';
 
 export interface JobProgress {
     id: string;
     name: string;
+    kind?: JobKind;
     stage: JobStatus;
     percent?: number;
     message?: string;
@@ -14,6 +16,7 @@ export interface JobProgress {
 export interface DownloadJob {
     id: string;
     name: string;
+    kind: JobKind;
     status: JobStatus;
     percent?: number;
     message?: string;
@@ -45,42 +48,43 @@ class DownloadManager {
         }
     }
 
-    submit(name: string, runner: JobRunner): string {
+    submit(name: string, runner: JobRunner, kind: JobKind = 'download'): string {
         const id = crypto.randomBytes(6).toString('hex');
         const controller = new AbortController();
 
         const job: DownloadJob = {
             id,
             name,
+            kind,
             status: 'pending',
             controller,
             promise: Promise.resolve()
         };
         this.jobs.set(id, job);
-        this.emit({ id, name, stage: 'pending' });
+        this.emit({ id, name, kind, stage: 'pending' });
 
         job.promise = runner(controller, (p) => {
             job.status = p.stage;
             job.percent = p.percent;
             job.message = p.message;
-            this.emit({ id, name, ...p });
+            this.emit({ id, name, kind, ...p });
         }).then(() => {
             if (controller.signal.aborted) {
                 job.status = 'cancelled';
-                this.emit({ id, name, stage: 'cancelled' });
+                this.emit({ id, name, kind, stage: 'cancelled' });
             } else {
                 job.status = 'done';
                 job.percent = 100;
-                this.emit({ id, name, stage: 'done', percent: 100 });
+                this.emit({ id, name, kind, stage: 'done', percent: 100 });
             }
         }).catch((err) => {
             if (controller.signal.aborted) {
                 job.status = 'cancelled';
-                this.emit({ id, name, stage: 'cancelled' });
+                this.emit({ id, name, kind, stage: 'cancelled' });
             } else {
                 job.status = 'error';
                 job.error = err instanceof Error ? err.message : String(err);
-                this.emit({ id, name, stage: 'error', error: job.error });
+                this.emit({ id, name, kind, stage: 'error', error: job.error });
             }
         }).finally(() => {
             this.runningCount--;

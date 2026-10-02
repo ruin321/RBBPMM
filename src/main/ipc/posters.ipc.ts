@@ -2,6 +2,8 @@
 import { installPosterPack, listPosterPacks, probePosterPackArchive, setPosterPackEnabled, uninstallPosterPack } from '../services/PosterPackService';
 import { customPostersDir } from '../constants';
 import { runtimeState } from '../store';
+import { installTracker } from '../services/InstallTracker';
+import path from 'path';
 import type { PosterPackInstallResult, PosterPackListResult, PosterPackProgress, Result } from '../../shared/types';
 function requireEnv(): {
     ok: true;
@@ -46,6 +48,7 @@ export function registerPostersIpc(): void {
         const env = requireEnv();
         if (!env.ok)
             return env;
+        const instId = installTracker.begin(path.basename(archivePath));
         try {
             const value = await installPosterPack(env.value, archivePath, (stage) => {
                 const wc = _e.sender;
@@ -53,11 +56,15 @@ export function registerPostersIpc(): void {
                     const p: PosterPackProgress = { stage };
                     wc.send('posters:install-progress', p);
                 }
+                installTracker.progress(instId, { stage });
             });
+            installTracker.done(instId);
             return { ok: true, value };
         }
         catch (err) {
-            return { ok: false, error: err instanceof Error ? err.message : String(err) };
+            const msg = err instanceof Error ? err.message : String(err);
+            installTracker.fail(instId, msg);
+            return { ok: false, error: msg };
         }
     });
     ipcMain.handle('posters:uninstall', async (_e, { folderName }: {

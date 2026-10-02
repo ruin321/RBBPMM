@@ -94,9 +94,11 @@ export interface InstallProgress {
     percent?: number;
     message?: string;
 }
+export type JobKind = 'download' | 'install';
 export interface JobProgress {
     id: string;
     name: string;
+    kind: JobKind;
     stage: string;
     percent?: number;
     message?: string;

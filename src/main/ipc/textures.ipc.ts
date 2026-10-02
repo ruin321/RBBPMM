@@ -2,6 +2,8 @@
 import { installTexturePack, listTexturePacks, probeTexturePackArchive, setTexturePackEnabled, uninstallTexturePack } from '../services/TexturePackService';
 import { texturePacksDir } from '../constants';
 import { runtimeState } from '../store';
+import { installTracker } from '../services/InstallTracker';
+import path from 'path';
 import type { Result, TexturePackInstallResult, TexturePackListResult, TexturePackProgress } from '../../shared/types';
 function requireEnv(): {
     ok: true;
@@ -46,19 +48,24 @@ export function registerTexturesIpc(): void {
         const env = requireEnv();
         if (!env.ok)
             return env;
+        const instId = installTracker.begin(path.basename(archivePath));
         try {
             const emit = (p: TexturePackProgress): void => {
                 const wc = _e.sender;
                 if (!wc.isDestroyed())
                     wc.send('textures:install-progress', p);
+                installTracker.progress(instId, p);
             };
             const value = await installTexturePack(env.value, archivePath, (stage) => {
                 emit({ stage });
             });
+            installTracker.done(instId);
             return { ok: true, value };
         }
         catch (err) {
-            return { ok: false, error: err instanceof Error ? err.message : String(err) };
+            const msg = err instanceof Error ? err.message : String(err);
+            installTracker.fail(instId, msg);
+            return { ok: false, error: msg };
         }
     });
     ipcMain.handle('textures:uninstall', async (_e, { folderName }: {

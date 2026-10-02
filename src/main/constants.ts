@@ -61,6 +61,8 @@ export function inferSystemLocale(systemLocale: string): string {
         return 'pt';
     if (base === 'ru')
         return 'ru';
+    if (base === 'tr')
+        return 'tr';
     return LOCALE_DEFAULT;
 }
 export function bepinexPluginsDir(gameRoot: string): string {

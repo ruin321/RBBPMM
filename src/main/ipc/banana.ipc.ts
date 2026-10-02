@@ -8,7 +8,7 @@ import { installTexturePacksFromRoot, findPackDirs, hasModStructureInRoot } from
 import { installLevelStudioPlayable } from '../services/LevelStudioInstaller';
 import { installPosterPacksFromRoot } from '../services/PosterPackService';
 import { downloadMod, getComments, getPostReplies, getSubmission, getUpdates, searchMods } from '../services/GamebananaService';
-import { runtimeState } from '../store';
+import { runtimeState, getAutoInstallAfterDownload } from '../store';
 import { debugLog, debugError } from '../logger';
 import { linkKnownSubmission } from '../services/ModSourceLinker';
 import { loadModManifest } from '../services/ManifestLoader';
@@ -16,6 +16,7 @@ import { invalidateModScan, scanRepositoryCached } from '../services/ModReposito
 import { LEVEL_STUDIO_CATEGORY_ID, POSTER_PACK_CATEGORY_ID, TEXTURE_PACK_CATEGORY_ID } from '../../shared/types';
 import type { GamebananaCommentDto, GamebananaCommentsDto, GamebananaSearchResult, GamebananaSubmissionDto, GamebananaUpdatesDto, InstallResult, JobProgress, LevelStudioPrereqItem, Result } from '../../shared/types';
 import { downloadManager } from '../services/DownloadManager';
+import { installTracker } from '../services/InstallTracker';
 function requireEnv(): {
     ok: true;
     value: string;
@@ -136,6 +137,13 @@ export function registerBananaIpc(getWebContents: () => WebContents | null): voi
 
             const jobId = downloadManager.submit(jobName, async (controller, onProgress) => {
                 let tmpFile: string | null = null;
+                let instId: string | null = null;
+                // 安装阶段的进度同时喂给安装面板（各自过滤 kind）
+                const track = (p: Parameters<typeof onProgress>[0]): void => {
+                    onProgress(p);
+                    if (instId)
+                        installTracker.progress(instId, p);
+                };
                 try {
                     onProgress({ stage: 'downloading', percent: 0, message: `Downloading ${file.fileName}` });
                     tmpFile = await downloadMod(url, (p) => {
@@ -153,21 +161,24 @@ export function registerBananaIpc(getWebContents: () => WebContents | null): voi
                     const savedPath = path.join(dlDir, path.basename(tmpFile));
                     try { fs.copyFileSync(tmpFile, savedPath); } catch { /* noop */ }
 
-                    // Ask renderer whether to install
-                    getWebContents()?.send('banana:need-install-choice', { jobId, savedPath, submissionName: submission.name });
-                    const shouldInstall = await new Promise<boolean>((resolve) => {
-                        choiceResolvers.set(jobId, resolve);
-                    });
+                    // 开关「开」→ 弹 Dialog 问；「关」→ 直接装，不问
+                    const shouldInstall = getAutoInstallAfterDownload()
+                        ? await new Promise<boolean>((resolve) => {
+                            getWebContents()?.send('banana:need-install-choice', { jobId, savedPath, submissionName: submission.name });
+                            choiceResolvers.set(jobId, resolve);
+                        })
+                        : true;
 
                     if (!shouldInstall) {
                         onProgress({ stage: 'done', percent: 100, message: `Saved to ${savedPath}` });
                         return;
                     }
 
-                    onProgress({ stage: 'installing', percent: undefined, message: 'Installing...' });
+                    instId = installTracker.begin(submission.name);
+                    track({ stage: 'installing', message: 'Installing...' });
                     const exTemp = createTempDir(env.value);
                     try {
-                        onProgress({ stage: 'extracting', message: 'Extracting archive' });
+                        track({ stage: 'extracting', message: 'Extracting archive' });
                         const extractRoot = await extractArchive(tmpFile, exTemp);
                         const packDirs = findPackDirs(extractRoot);
                         const modStructure = hasModStructureInRoot(extractRoot);
@@ -179,7 +190,7 @@ export function registerBananaIpc(getWebContents: () => WebContents | null): voi
                         } else if (modStructure) {
                             if (hasManifest(extractRoot)) {
                                 const result = await installModArchive(env.value, tmpFile, runtimeState.environment?.gameVersion,
-                                    (p) => onProgress({ stage: p.stage as 'extracting' | 'installing', percent: p.percent, message: p.message }),
+                                    (p) => track({ stage: p.stage as 'extracting' | 'installing', percent: p.percent, message: p.message }),
                                     () => controller.signal.aborted, extractRoot);
                                 if (result.mod) {
                                     const mm = loadModManifest(result.mod.installDir);
@@ -189,7 +200,7 @@ export function registerBananaIpc(getWebContents: () => WebContents | null): voi
                                 }
                             } else {
                                 installUnmanaged(extractRoot, env.value,
-                                    (p) => onProgress({ stage: p.stage as 'extracting' | 'installing', percent: p.percent, message: p.message }),
+                                    (p) => track({ stage: p.stage as 'extracting' | 'installing', percent: p.percent, message: p.message }),
                                     () => controller.signal.aborted);
                             }
                             invalidateModScan(env.value);
@@ -197,17 +208,21 @@ export function registerBananaIpc(getWebContents: () => WebContents | null): voi
                             await installTexturePacksFromRoot(env.value, extractRoot, path.basename(tmpFile).replace(/\.(zip|rar|7z|tar|gz|bz2|xz|tgz|jar)$/i, ''));
                         } else {
                             installUnmanaged(extractRoot, env.value,
-                                (p) => onProgress({ stage: p.stage as 'extracting' | 'installing', percent: p.percent, message: p.message }),
+                                (p) => track({ stage: p.stage as 'extracting' | 'installing', percent: p.percent, message: p.message }),
                                 () => controller.signal.aborted);
                             invalidateModScan(env.value);
                         }
-                        onProgress({ stage: 'done', percent: 100, message: 'Install complete' });
+                        track({ stage: 'done', percent: 100, message: 'Install complete' });
+                        if (instId)
+                            installTracker.done(instId, 'Install complete');
                     } finally {
                         try { fs.rmSync(exTemp, { recursive: true, force: true }); } catch { /* noop */ }
                     }
                 } catch (err) {
                     const msg = err instanceof Error ? err.message : String(err);
                     debugError('banana:install job failed:', msg);
+                    if (instId)
+                        installTracker.fail(instId, msg);
                     throw err;
                 } finally {
                     if (tmpFile) {
@@ -243,6 +258,7 @@ export function registerBananaIpc(getWebContents: () => WebContents | null): voi
         return downloadManager.getAll().map((j) => ({
             id: j.id,
             name: j.name,
+            kind: j.kind,
             stage: j.status,
             percent: j.percent,
             message: j.message,
@@ -264,6 +280,13 @@ export function registerBananaIpc(getWebContents: () => WebContents | null): voi
 
         const jobId = downloadManager.submit(jobName, async (controller, onProgress) => {
             let tmpFile: string | null = null;
+            let instId: string | null = null;
+            // 安装阶段的进度同时喂给安装面板（各自过滤 kind）
+            const track = (p: Parameters<typeof onProgress>[0]): void => {
+                onProgress(p);
+                if (instId)
+                    installTracker.progress(instId, p);
+            };
             try {
                 onProgress({ stage: 'downloading', percent: 0, message: `Downloading...` });
                 tmpFile = await downloadMod(url, (p) => {
@@ -281,21 +304,24 @@ export function registerBananaIpc(getWebContents: () => WebContents | null): voi
                 const savedPath = path.join(dlDir, path.basename(tmpFile));
                 try { fs.copyFileSync(tmpFile, savedPath); } catch { /* noop */ }
 
-                // Ask renderer
-                getWebContents()?.send('banana:need-install-choice', { jobId, savedPath, submissionName: path.basename(url.split('?')[0]) || 'mod' });
-                const shouldInstall = await new Promise<boolean>((resolve) => {
-                    choiceResolvers.set(jobId, resolve);
-                });
+                // 开关「开」→ 弹 Dialog 问；「关」→ 直接装，不问
+                const shouldInstall = getAutoInstallAfterDownload()
+                    ? await new Promise<boolean>((resolve) => {
+                        getWebContents()?.send('banana:need-install-choice', { jobId, savedPath, submissionName: path.basename(url.split('?')[0]) || 'mod' });
+                        choiceResolvers.set(jobId, resolve);
+                    })
+                    : true;
 
                 if (!shouldInstall) {
                     onProgress({ stage: 'done', percent: 100, message: `Saved to ${savedPath}` });
                     return;
                 }
 
-                onProgress({ stage: 'installing', message: 'Installing...' });
+                instId = installTracker.begin(jobName);
+                track({ stage: 'installing', message: 'Installing...' });
                 const exTemp = createTempDir(env.value);
                 try {
-                    onProgress({ stage: 'extracting', message: 'Extracting archive' });
+                    track({ stage: 'extracting', message: 'Extracting archive' });
                     const extractRoot = await extractArchive(tmpFile, exTemp);
                     const mt = (modType || '').toLowerCase();
                     if (mt.includes('level') || mt.includes('map')) {
@@ -305,22 +331,26 @@ export function registerBananaIpc(getWebContents: () => WebContents | null): voi
                     } else {
                         if (hasManifest(extractRoot)) {
                             await installModArchive(env.value, tmpFile, runtimeState.environment?.gameVersion,
-                                (p) => onProgress({ stage: p.stage as 'extracting' | 'installing', percent: p.percent, message: p.message }),
+                                (p) => track({ stage: p.stage as 'extracting' | 'installing', percent: p.percent, message: p.message }),
                                 () => controller.signal.aborted, extractRoot);
                         } else {
                             installUnmanaged(extractRoot, env.value,
-                                (p) => onProgress({ stage: p.stage as 'extracting' | 'installing', percent: p.percent, message: p.message }),
+                                (p) => track({ stage: p.stage as 'extracting' | 'installing', percent: p.percent, message: p.message }),
                                 () => controller.signal.aborted);
                         }
                         invalidateModScan(env.value);
                     }
-                    onProgress({ stage: 'done', percent: 100, message: 'Install complete' });
+                    track({ stage: 'done', percent: 100, message: 'Install complete' });
+                    if (instId)
+                        installTracker.done(instId, 'Install complete');
                 } finally {
                     try { fs.rmSync(exTemp, { recursive: true, force: true }); } catch { /* noop */ }
                 }
             } catch (err) {
                 const msg = err instanceof Error ? err.message : String(err);
                 debugError('banana:install-url job failed:', msg);
+                if (instId)
+                    installTracker.fail(instId, msg);
                 throw err;
             } finally {
                 if (tmpFile) {

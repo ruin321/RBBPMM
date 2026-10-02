@@ -50,6 +50,12 @@ export interface AppApi {
         onJobProgress: (cb: (p: JobProgress) => void) => () => void;
         confirmInstallChoice: (jobId: string, shouldInstall: boolean) => Promise<void>;
     };
+    install: {
+        clearJob: (jobId: string) => Promise<void>;
+        clearCompleted: () => Promise<void>;
+        getJobs: () => Promise<JobProgress[]>;
+        onJobProgress: (cb: (p: JobProgress) => void) => () => void;
+    };
     ui: {
         pickZip: () => Promise<Result<{
             path: string;

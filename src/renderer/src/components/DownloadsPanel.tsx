@@ -1,15 +1,7 @@
 import { useEffect, useState } from 'react';
 import { X, Trash2, Loader2 } from 'lucide-react';
 import downloadsBg from '@/assets/downloads-bg.png';
-
-interface JobItem {
-    id: string;
-    name: string;
-    stage: string;
-    percent?: number;
-    message?: string;
-    error?: string;
-}
+import type { JobKind, JobProgress } from '@shared/types';
 
 const TERMINAL_STAGES = new Set(['done', 'error', 'cancelled']);
 
@@ -46,11 +38,18 @@ function CharProgress({ percent }: { percent: number }): React.JSX.Element {
     );
 }
 
-export function DownloadsPanel(): React.JSX.Element | null {
-    const [jobs, setJobs] = useState<Map<string, JobItem>>(new Map());
+function JobsPanel({ kind, title }: {
+    kind: JobKind;
+    title: string;
+}): React.JSX.Element | null {
+    const [jobs, setJobs] = useState<Map<string, JobProgress>>(new Map());
+    const isDownload = kind === 'download';
 
     useEffect(() => {
-        const upsert = (p: JobItem): void => {
+        const upsert = (p: JobProgress): void => {
+            // 两个面板各过滤各的
+            if ((p.kind ?? 'download') !== kind)
+                return;
             setJobs((prev) => {
                 const next = new Map(prev);
                 next.set(p.id, p);
@@ -58,27 +57,19 @@ export function DownloadsPanel(): React.JSX.Element | null {
             });
         };
 
-        const off = window.api.banana.onJobProgress((p) => {
-            upsert({
-                id: p.id,
-                name: p.name,
-                stage: p.stage,
-                percent: p.percent,
-                message: p.message,
-                error: p.error
-            });
-        });
+        const off = isDownload
+            ? window.api.banana.onJobProgress(upsert)
+            : window.api.install.onJobProgress(upsert);
 
         // 拉一次主进程的任务快照：切换页面 / 组件重挂载后进度不会丢
-        void window.api.banana
-            .getJobs()
+        void (isDownload ? window.api.banana.getJobs() : window.api.install.getJobs())
             .then((list) => {
                 for (const p of list) upsert(p);
             })
             .catch(() => { /* noop */ });
 
         return () => off();
-    }, []);
+    }, [kind, isDownload]);
 
     const jobsArr = Array.from(jobs.values());
     const runningCount = jobsArr.filter((j) => !TERMINAL_STAGES.has(j.stage)).length;
@@ -92,7 +83,7 @@ export function DownloadsPanel(): React.JSX.Element | null {
         });
     };
     const clearJob = (id: string): void => {
-        void window.api.banana.clearJob(id);
+        void (isDownload ? window.api.banana.clearJob(id) : window.api.install.clearJob(id));
         setJobs((prev) => {
             const n = new Map(prev);
             n.delete(id);
@@ -100,7 +91,7 @@ export function DownloadsPanel(): React.JSX.Element | null {
         });
     };
     const clearDone = (): void => {
-        void window.api.banana.clearCompleted();
+        void (isDownload ? window.api.banana.clearCompleted() : window.api.install.clearCompleted());
         setJobs((prev) => {
             const n = new Map(prev);
             for (const [id, j] of n) if (TERMINAL_STAGES.has(j.stage)) n.delete(id);
@@ -118,14 +109,14 @@ export function DownloadsPanel(): React.JSX.Element | null {
         // 外层盒子只占「头部」这一条的高度 —— hover 判定区就只在这一条上，
         // 不会像之前那样整块面板（含隐藏的行）都算触发区。
         <div
-            className="group pointer-events-auto fixed bottom-0 right-4 z-50 w-[480px] text-black"
+            className="group pointer-events-auto relative w-[480px] text-black"
             style={{ height: VISIBLE_H, ['--panel-h' as string]: `${panelH}px` }}
         >
             {/* 内层绝对定位在盒子底部：收起时下移只露头部，hover 时上滑露出全部内容 */}
             <div className="absolute bottom-0 left-0 w-full translate-y-[calc(var(--panel-h)-72px)] transition-transform duration-300 ease-out group-hover:translate-y-0">
                 {/* 头部 — 用图片上半部分，文本居中在灰条下方 */}
                 <div style={BG_TOP} className="relative flex h-[72px] items-center justify-center pt-[50px]">
-                    <span className="text-sm font-bold">Downloads</span>
+                    <span className="text-sm font-bold">{title}</span>
                     {runningCount > 0 && (
                         <span className="ml-1.5 font-mono text-[10px] font-bold">({runningCount})</span>
                     )}
@@ -182,18 +173,28 @@ export function DownloadsPanel(): React.JSX.Element | null {
                                 )}
                             </div>
 
-                            <button
-                                type="button"
-                                onClick={() => isTerminal ? clearJob(job.id) : cancelJob(job.id)}
-                                className="shrink-0 rounded p-0.5 text-black hover:bg-black/10"
-                                title={isTerminal ? 'Remove' : 'Cancel'}
-                            >
-                                <X className="h-3 w-3" />
-                            </button>
+                            {(isTerminal || isDownload) && (
+                                <button
+                                    type="button"
+                                    onClick={() => isTerminal ? clearJob(job.id) : cancelJob(job.id)}
+                                    className="shrink-0 rounded p-0.5 text-black hover:bg-black/10"
+                                    title={isTerminal ? 'Remove' : 'Cancel'}
+                                >
+                                    <X className="h-3 w-3" />
+                                </button>
+                            )}
                         </div>
                     );
                 })}
             </div>
         </div>
     );
+}
+
+export function DownloadsPanel(): React.JSX.Element | null {
+    return <JobsPanel kind="download" title="Downloads" />;
+}
+
+export function InstallsPanel(): React.JSX.Element | null {
+    return <JobsPanel kind="install" title="Installs" />;
 }

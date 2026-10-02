@@ -46,6 +46,16 @@ const api: AppApi = {
         },
         confirmInstallChoice: (jobId, shouldInstall) => ipcRenderer.invoke('banana:confirm-install-choice', { jobId, shouldInstall })
     },
+    install: {
+        clearJob: (jobId) => ipcRenderer.invoke('install:clear-job', { jobId }),
+        clearCompleted: () => ipcRenderer.invoke('install:clear-completed'),
+        getJobs: () => ipcRenderer.invoke('install:get-jobs'),
+        onJobProgress: (cb) => {
+            const handler = (_e: unknown, p: unknown): void => cb(p as never);
+            ipcRenderer.on('install:job-progress', handler);
+            return () => ipcRenderer.removeListener('install:job-progress', handler);
+        }
+    },
     customLevel: {
         list: () => ipcRenderer.invoke('customLevel:list'),
         probe: (archivePath) => ipcRenderer.invoke('customLevel:probe', { archivePath }),

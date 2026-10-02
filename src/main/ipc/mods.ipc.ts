@@ -10,6 +10,7 @@ import { toggleActivation, toggleLegacyPlugin } from '../services/ModActivator';
 import { deleteMod, deleteLegacyPlugin } from '../services/ModUnInstaller';
 import { checkForUpdate, persistArchiveName, updateMod } from '../services/ModSourceLinker';
 import { isInside } from '../services/PathGuard';
+import { installTracker } from '../services/InstallTracker';
 import { BEPINEX_FOLDER, PLUGINS_FOLDER } from '../constants';
 import { runtimeState } from '../store';
 import path from 'path';
@@ -45,10 +46,13 @@ function findMod(gameRoot: string, guid: string): {
     return { mod, manifest };
 }
 let progressSink: ((p: InstallProgress) => void) | null = null;
+let activeInstallId: string | null = null;
 export function registerModsIpc(getWebContents: () => WebContents | null): void {
     const emit = (p: InstallProgress): void => {
         progressSink?.(p);
         getWebContents()?.send('mods:install-progress', p);
+        if (activeInstallId)
+            installTracker.progress(activeInstallId, p);
     };
     ipcMain.handle('mods:list', async (): Promise<Result<ModItemDto[]>> => {
         const env = requireEnv();
@@ -66,6 +70,9 @@ export function registerModsIpc(getWebContents: () => WebContents | null): void 
         runtimeState.cancelController = new AbortController();
         const signal = runtimeState.cancelController.signal;
         progressSink = () => { };
+        const instId = installTracker.begin(path.basename(archivePath));
+        activeInstallId = instId;
+        let failed = false;
         const tempRoot = createTempDir(env.value);
         try {
             emit({ stage: 'start', percent: 0, message: 'Starting install' });
@@ -91,7 +98,15 @@ export function registerModsIpc(getWebContents: () => WebContents | null): void 
             invalidateModScan(env.value);
             return { ok: true, value: { mode: 'unmanaged', modName, readmes } };
         }
+        catch (err) {
+            failed = true;
+            installTracker.fail(instId, err instanceof Error ? err.message : String(err));
+            throw err;
+        }
         finally {
+            if (!failed)
+                installTracker.done(instId);
+            activeInstallId = null;
             if (fs.existsSync(tempRoot))
                 removeDirIfInside(env.value, tempRoot);
             progressSink = null;
@@ -110,6 +125,9 @@ export function registerModsIpc(getWebContents: () => WebContents | null): void 
         runtimeState.cancelController = new AbortController();
         const signal = runtimeState.cancelController.signal;
         progressSink = () => { };
+        const instId = installTracker.begin(path.basename(archivePath));
+        activeInstallId = instId;
+        let failed = false;
         const tempRoot = createTempDir(env.value);
         try {
             emit({ stage: 'start', percent: 0, message: 'Starting install' });
@@ -121,7 +139,15 @@ export function registerModsIpc(getWebContents: () => WebContents | null): void 
             invalidateModScan(env.value);
             return { ok: true, value: { modName, readmes } };
         }
+        catch (err) {
+            failed = true;
+            installTracker.fail(instId, err instanceof Error ? err.message : String(err));
+            throw err;
+        }
         finally {
+            if (!failed)
+                installTracker.done(instId);
+            activeInstallId = null;
             if (fs.existsSync(tempRoot))
                 removeDirIfInside(env.value, tempRoot);
             progressSink = null;
@@ -228,17 +254,28 @@ export function registerModsIpc(getWebContents: () => WebContents | null): void 
             return found;
         runtimeState.cancelController = new AbortController();
         const signal = runtimeState.cancelController.signal;
+        const instId = installTracker.begin(found.mod.name);
+        activeInstallId = instId;
+        let failed = false;
         try {
             const outcome = await updateMod(env.value, found.mod, found.manifest, (p) => emit(p), () => signal.aborted);
-            if (!outcome.ok)
+            if (!outcome.ok) {
+                failed = true;
+                installTracker.fail(instId, outcome.error ?? 'Update failed');
                 return { ok: false, error: outcome.error ?? 'Update failed' };
+            }
             invalidateModScan(env.value);
             return { ok: true };
         }
         catch (err) {
+            failed = true;
+            installTracker.fail(instId, err instanceof Error ? err.message : String(err));
             return { ok: false, error: err instanceof Error ? err.message : String(err) };
         }
         finally {
+            if (!failed)
+                installTracker.done(instId);
+            activeInstallId = null;
             runtimeState.cancelController = null;
         }
     });

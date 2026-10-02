@@ -10,6 +10,7 @@ import { ResetSettingsCard } from '@/components/ResetSettingsCard';
 import { SplashToggleCard } from '@/components/SplashToggleCard';
 import { AnimationToggleCard } from '@/components/AnimationToggleCard';
 import { VerticalLayoutToggleCard } from '@/components/VerticalLayoutToggleCard';
+import { AutoInstallToggleCard } from '@/components/AutoInstallToggleCard';
 import { DebugLogCard } from '@/components/DebugLogCard';
 import { PageHeader } from '@/components/PageHeader';
 interface Props {
@@ -42,6 +43,7 @@ export function SettingsPage({ env, loading, onSelect, font, fonts, onSelectFont
       <SplashToggleCard />
       <AnimationToggleCard />
       <VerticalLayoutToggleCard />
+      <AutoInstallToggleCard />
       {__DEV_BUILD__ && <DebugLogCard />}
       <ResetSettingsCard />
     </div>);
