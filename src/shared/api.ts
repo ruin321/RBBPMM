@@ -1,4 +1,4 @@
-import type { ConfigFileDto, GamebananaCommentDto, GamebananaCommentsDto, GameEnvironment, GamebananaSearchResult, GamebananaSubmissionDto, GamebananaUpdatesDto, InstallProgress, InstallResult, JobProgress, LevelStudioInstallResult, LevelStudioPrereqItem, ModInstallOutcome, ModItemDto, ModUpdateInfoDto, OpenUrlPayload, ReadmeFileDto, Result, TexturePackInstallResult, TexturePackListResult, TexturePackProgress, ToolboxCleanupDto, ToolboxDirDto, CustomLevelDto } from './types';
+import type { ConfigFileDto, GamebananaCommentDto, GamebananaCommentsDto, GameEnvironment, GamebananaSearchResult, GamebananaSubmissionDto, GamebananaUpdatesDto, InstallProgress, InstallResult, JobProgress, LevelStudioInstallResult, LevelStudioPrereqItem, ModInstallOutcome, ModItemDto, ModUpdateInfoDto, OpenUrlPayload, ReadmeFileDto, Result, TexturePackInstallResult, TexturePackListResult, TexturePackProgress, ToolboxDirDto, CustomLevelDto } from './types';
 export interface AppApi {
     game: {
         selectDir: () => Promise<Result<GameEnvironment>>;
@@ -74,7 +74,6 @@ export interface AppApi {
         readLog: () => Promise<Result<{
             text: string;
         }>>;
-        cleanup: () => Promise<Result<ToolboxCleanupDto>>;
     };
     configs: {
         list: () => Promise<Result<ConfigFileDto[]>>;

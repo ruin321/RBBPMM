@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type React from 'react';
-import { FolderOpen, Wrench, ScrollText, Trash2, Package, Settings2, Wand2 } from 'lucide-react';
+import { FolderOpen, Wrench, ScrollText, Package, Settings2, Wand2 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { GameEnvironment, ToolboxDirDto } from '@shared/types';
 import { useI18n, type MessageKey } from '@/i18n';
@@ -39,18 +39,6 @@ export function ToolboxPage({ onSetup, env }: Props): React.JSX.Element {
             return;
         }
         setLog(r.value?.text ?? '');
-    };
-    const cleanup = async (): Promise<void> => {
-        const r = await window.api.toolbox.cleanup();
-        if (!r.ok) {
-            toast.error(t('toolbox.cleanupFail'), { description: r.error });
-            return;
-        }
-        const n = r.value?.removed ?? 0;
-        if (n === 0)
-            toast.info(t('toolbox.cleanupNone'));
-        else
-            toast.success(t('toolbox.cleanupDone', { n: String(n) }));
     };
     return (<div className="mx-auto w-full max-w-3xl space-y-6">
       <PageHeader icon={<Wrench className="h-6 w-6"/>} title={t('toolbox.title')} desc={t('toolbox.desc')}/>
@@ -92,18 +80,6 @@ export function ToolboxPage({ onSetup, env }: Props): React.JSX.Element {
           {log !== null && (<pre className="max-h-64 overflow-auto rounded-md border bg-muted p-3 text-xs font-mono whitespace-pre-wrap">
               {log.length > 0 ? log : t('toolbox.logEmpty')}
             </pre>)}
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('toolbox.cleanupHeader')}</CardTitle>
-          <CardDescription>{t('toolbox.cleanupDesc')}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button variant="secondary" onClick={() => void cleanup()}>
-            <Trash2 className="mr-2 h-4 w-4"/>
-            {t('toolbox.cleanup')}
-          </Button>
         </CardContent>
       </Card>
     </div>);

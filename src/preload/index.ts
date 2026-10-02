@@ -76,8 +76,7 @@ const api: AppApi = {
     toolbox: {
         dirs: () => ipcRenderer.invoke('toolbox:dirs'),
         openDir: (p) => ipcRenderer.invoke('toolbox:open-dir', { path: p }),
-        readLog: () => ipcRenderer.invoke('toolbox:read-log'),
-        cleanup: () => ipcRenderer.invoke('toolbox:cleanup')
+        readLog: () => ipcRenderer.invoke('toolbox:read-log')
     },
     configs: {
         list: () => ipcRenderer.invoke('configs:list'),

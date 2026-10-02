@@ -113,10 +113,6 @@ export interface ToolboxDirDto {
     key: string;
     path: string;
 }
-export interface ToolboxCleanupDto {
-    removed: number;
-    details: string[];
-}
 export type Result<T = void> = {
     ok: true;
     value?: T;

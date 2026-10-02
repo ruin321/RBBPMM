@@ -3,7 +3,7 @@ import path from 'path';
 import { ipcMain, shell } from 'electron';
 import { runtimeState } from '../store';
 import { BEPINEX_FOLDER, BEPINEX_CONFIG_FOLDER, PLUGINS_FOLDER } from '../constants';
-import type { Result, ToolboxCleanupDto, ToolboxDirDto } from '../../shared/types';
+import type { Result, ToolboxDirDto } from '../../shared/types';
 export function registerToolboxIpc(): void {
     ipcMain.handle('toolbox:dirs', async (): Promise<Result<ToolboxDirDto[]>> => {
         const env = runtimeState.environment;
@@ -48,42 +48,5 @@ export function registerToolboxIpc(): void {
         catch (err) {
             return { ok: false, error: err instanceof Error ? err.message : String(err) };
         }
-    });
-    ipcMain.handle('toolbox:cleanup', async (): Promise<Result<ToolboxCleanupDto>> => {
-        const env = runtimeState.environment;
-        if (!env)
-            return { ok: false, error: 'no game configured' };
-        const root = env.rootPath;
-        const bep = path.join(root, BEPINEX_FOLDER);
-        const details: string[] = [];
-        const scan = (dir: string, test: (name: string, abs: string) => boolean, remove: (p: string) => void): void => {
-            if (!dir || !fs.existsSync(dir))
-                return;
-            let entries: fs.Dirent[] = [];
-            try {
-                entries = fs.readdirSync(dir, { withFileTypes: true });
-            }
-            catch {
-                return;
-            }
-            for (const e of entries) {
-                if (!e.isFile())
-                    continue;
-                const abs = path.join(dir, e.name);
-                if (!test(e.name, abs))
-                    continue;
-                try {
-                    remove(abs);
-                    details.push(abs);
-                }
-                catch {
-                    void 0;
-                }
-            }
-        };
-        const configDir = path.join(bep, BEPINEX_CONFIG_FOLDER);
-        scan(configDir, (n) => n.toLowerCase().endsWith('.cfg') && fs.statSync(path.join(configDir, n)).size === 0, (p) => fs.rmSync(p));
-        scan(path.join(bep, PLUGINS_FOLDER), (n) => /\.(bak|orig|old)$/i.test(n), (p) => fs.rmSync(p));
-        return { ok: true, value: { removed: details.length, details } };
     });
 }
