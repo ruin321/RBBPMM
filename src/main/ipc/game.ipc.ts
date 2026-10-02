@@ -1,4 +1,4 @@
-import { ipcMain, dialog, shell, BrowserWindow } from 'electron';
+import { ipcMain, dialog, BrowserWindow } from 'electron';
 import { spawn } from 'child_process';
 import { resolveEnvironment } from '../services/GameEnvironment';
 import { isGameRunning, stopGame } from '../services/GameProcess';
@@ -86,15 +86,38 @@ export function registerGameIpc(): void {
     ipcMain.handle('game:launch-steam', async (): Promise<Result<{
         launched: boolean;
     }>> => {
-        try {
-            await shell.openExternal(`steam://rungameid/${STEAM_APPID}`);
-            runtimeState.gamePid = null;
-            minimizeMainWindow();
-            return { ok: true, value: { launched: true } };
-        }
-        catch (err) {
-            return { ok: false, error: err instanceof Error ? err.message : String(err) };
-        }
+        const env = loadCurrentEnv();
+        if (!env)
+            return { ok: false, error: 'Game directory not configured' };
+        return new Promise((resolve) => {
+            try {
+                // Launch the user-selected baldi.exe inside Steam's context:
+                // injecting the app id makes the Steam overlay and playtime
+                // tracking attach to this run.
+                const child = spawn(env.executablePath, [], {
+                    cwd: env.rootPath,
+                    detached: true,
+                    stdio: 'ignore',
+                    windowsHide: false,
+                    env: {
+                        ...process.env,
+                        SteamAppId: STEAM_APPID,
+                        SteamGameId: STEAM_APPID,
+                        SteamOverlayGameId: STEAM_APPID
+                    }
+                });
+                child.on('error', (err) => {
+                    resolve({ ok: false, error: err.message });
+                });
+                child.unref();
+                runtimeState.gamePid = child.pid ?? null;
+                minimizeMainWindow();
+                resolve({ ok: true, value: { launched: true } });
+            }
+            catch (err) {
+                resolve({ ok: false, error: err instanceof Error ? err.message : String(err) });
+            }
+        });
     });
     ipcMain.handle('game:is-running', async (): Promise<Result<{
         running: boolean;
