@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { X, Trash2, Loader2 } from 'lucide-react';
 import type { JobProgress } from '@shared/types';
-import { cn } from '@/lib/utils';
 import downloadsBg from '@/assets/downloads-bg.png';
 
 interface JobItem {
@@ -90,45 +89,44 @@ export function DownloadsPanel(): React.JSX.Element {
 
     return (
         <div className="pointer-events-auto fixed right-4 bottom-4 z-50">
-            {/* 九宫格：固定尺寸，不自动伸缩 */}
+            {/* OptionsClipboard 背景：红框 + 灰顶条 + 白心 */}
             <div
+                className="relative"
                 style={{
-                    borderStyle: 'solid',
-                    borderWidth: '10px',
-                    borderImageSource: `url(${downloadsBg})`,
-                    borderImageSlice: '10 fill',
-                    borderImageWidth: '10',
+                    backgroundImage: `url(${downloadsBg})`,
+                    backgroundSize: '100% 100%',
+                    backgroundRepeat: 'no-repeat',
                     width: 480,
                 }}
             >
-                {/* 内容区：padding 匹配 slice，让文字待在图片白心里 */}
-                <div className="px-3 py-2 text-black">
-                    {/* 标题栏 */}
-                    <div className="mb-2 flex items-center justify-between">
-                        <div className="flex items-center gap-1.5 text-sm font-bold">
-                            <span>📥</span>
-                            <span>Downloads</span>
-                            {runningCount > 0 && (
-                                <span className="rounded bg-black/10 px-1 py-0.5 font-mono text-[10px] text-black">
-                                    ({runningCount})
-                                </span>
-                            )}
-                        </div>
-                        <div className="flex items-center gap-1">
-                            {jobsArr.some((j) => TERMINAL_STAGES.has(j.stage)) && (
-                                <button
-                                    type="button"
-                                    onClick={clearDone}
-                                    className="rounded p-0.5 text-black hover:bg-black/10"
-                                    title="Clear completed"
-                                >
-                                    <Trash2 className="h-3 w-3" />
-                                </button>
-                            )}
-                        </div>
+                {/* 标题 — 绝对定位到图片灰顶条上 */}
+                <div
+                    className="absolute left-0 right-0 flex items-center justify-between px-5 text-black"
+                    style={{ top: 6 }}
+                >
+                    <div className="flex items-center gap-1.5 text-sm font-bold">
+                        <span>📥</span>
+                        <span>Downloads</span>
+                        {runningCount > 0 && (
+                            <span className="rounded bg-black/10 px-1 py-0.5 font-mono text-[10px] text-black">
+                                ({runningCount})
+                            </span>
+                        )}
                     </div>
+                    {jobsArr.some((j) => TERMINAL_STAGES.has(j.stage)) && (
+                        <button
+                            type="button"
+                            onClick={clearDone}
+                            className="rounded p-0.5 text-black hover:bg-black/10"
+                            title="Clear completed"
+                        >
+                            <Trash2 className="h-3 w-3" />
+                        </button>
+                    )}
+                </div>
 
-                    {/* 列表 */}
+                {/* 内容区 — paddingTop 跳过灰顶条 */}
+                <div className="px-5 pb-4 pt-9 text-black">
                     <div className="space-y-1.5">
                         {jobsArr.map((job) => {
                             const isTerminal = TERMINAL_STAGES.has(job.stage);
