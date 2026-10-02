@@ -125,8 +125,18 @@ export function DownloadsPanel(): React.JSX.Element {
                     )}
                 </div>
 
-                {/* 内容区 — paddingTop 跳过灰顶条 */}
-                <div className="px-5 pb-4 pt-9 text-black">
+                {/* 内容区 — 严格限制在白色内部区域，右对齐 */}
+                <div
+                    className="text-black text-right"
+                    style={{
+                        position: 'absolute',
+                        left: 24,
+                        right: 24,
+                        top: 44,
+                        bottom: 18,
+                        overflow: 'hidden',
+                    }}
+                >
                     <div className="space-y-1.5">
                         {jobsArr.map((job) => {
                             const isTerminal = TERMINAL_STAGES.has(job.stage);
@@ -135,7 +145,7 @@ export function DownloadsPanel(): React.JSX.Element {
                             const pct = job.percent;
 
                             return (
-                                <div key={job.id} className="flex items-center gap-2 text-xs">
+                                <div key={job.id} className="flex items-center justify-end gap-2 text-xs">
                                     <div className="shrink-0 text-black">
                                         {!isTerminal ? (
                                             <Loader2 className="h-3 w-3 animate-spin" />
