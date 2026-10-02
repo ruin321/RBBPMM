@@ -221,7 +221,7 @@ export function App(): React.JSX.Element {
       <aside className={
             (verticalLayout
               ? 'order-1 shrink-0 flex-row items-center gap-1 overflow-x-auto border-t bg-muted/40 px-2 py-1.5'
-              : 'flex-col gap-1 overflow-hidden border-r bg-muted/40 py-4 transition-[width] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ' +
+              : 'flex h-full flex-col gap-1 overflow-hidden border-r bg-muted/40 py-4 transition-[width] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ' +
                 (navOpen ? 'w-48' : 'w-16'))
           }>
         <div className={
