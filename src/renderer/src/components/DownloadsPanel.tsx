@@ -96,20 +96,20 @@ export function DownloadsPanel(): React.JSX.Element {
                 'hover:translate-y-0'
             )}
         >
-            {/* 自适应宽度：按内容 min-content，限制最大 min(640px, 80vw) 防止过长 */}
+            {/* 九宫格缩放：border-image-slice 只拉伸中间，边缘保持原比例 */}
             <div
-                className="overflow-hidden"
+                className="relative"
                 style={{
-                    backgroundImage: `url(${downloadsBg})`,
-                    backgroundSize: '100% 100%',
-                    backgroundRepeat: 'no-repeat',
-                    backgroundPosition: 'center',
-                    padding: '16px',
+                    borderStyle: 'solid',
+                    borderWidth: '16px',
+                    borderImageSource: `url(${downloadsBg})`,
+                    borderImageSlice: '16 fill',
+                    borderImageWidth: '1',
                     width: 'min(640px, 80vw)',
                     minWidth: 360,
                 }}
             >
-                <div className="relative text-black">
+                <div className="relative p-1 text-black">
                     {/* 标题栏 */}
                     <div className="mb-3 flex items-center justify-between">
                         <div className="flex items-center gap-2 text-base font-bold">
