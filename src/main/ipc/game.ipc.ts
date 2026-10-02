@@ -1,5 +1,7 @@
-import { ipcMain, dialog, BrowserWindow } from 'electron';
+import { ipcMain, dialog, BrowserWindow, shell } from 'electron';
 import { spawn, type ChildProcess } from 'child_process';
+import fs from 'fs';
+import path from 'path';
 import { resolveEnvironment } from '../services/GameEnvironment';
 import { isGameRunning, stopGame } from '../services/GameProcess';
 import { getStoredExePath, setStoredExePath, runtimeState } from '../store';
@@ -43,6 +45,46 @@ function watchForExit(child: ChildProcess): void {
         void broadcastRunning();
     });
 }
+// Steam keeps a manifest next to each installed game
+// (<library>/steamapps/common/<game>), so finding it proves the selected
+// folder is the copy Steam itself manages.
+function isSteamManagedCopy(rootPath: string): boolean {
+    let dir = rootPath;
+    for (let i = 0; i < 4; i++) {
+        const parent = path.dirname(dir);
+        if (parent === dir)
+            break;
+        dir = parent;
+        if (path.basename(dir).toLowerCase() === 'steamapps')
+            return fs.existsSync(path.join(dir, `appmanifest_${STEAM_APPID}.acf`));
+    }
+    return false;
+}
+function launchExecutable(env: GameEnvironment): Promise<Result<{
+    pid?: number;
+}>> {
+    return new Promise((resolve) => {
+        try {
+            const child = spawn(env.executablePath, [], {
+                cwd: env.rootPath,
+                detached: true,
+                stdio: 'ignore',
+                windowsHide: false
+            });
+            child.on('error', (err) => {
+                resolve({ ok: false, error: err.message });
+            });
+            child.unref();
+            runtimeState.gamePid = child.pid ?? null;
+            watchForExit(child);
+            minimizeMainWindow();
+            resolve({ ok: true, value: { pid: child.pid } });
+        }
+        catch (err) {
+            resolve({ ok: false, error: err instanceof Error ? err.message : String(err) });
+        }
+    });
+}
 export function registerGameIpc(): void {
     ipcMain.handle('game:get', async (): Promise<Result<GameEnvironment>> => {
         return envResult(loadCurrentEnv());
@@ -79,27 +121,7 @@ export function registerGameIpc(): void {
         const env = loadCurrentEnv();
         if (!env)
             return { ok: false, error: 'Game directory not configured' };
-        return new Promise((resolve) => {
-            try {
-                const child = spawn(env.executablePath, [], {
-                    cwd: env.rootPath,
-                    detached: true,
-                    stdio: 'ignore',
-                    windowsHide: false
-                });
-                child.on('error', (err) => {
-                    resolve({ ok: false, error: err.message });
-                });
-                child.unref();
-                runtimeState.gamePid = child.pid ?? null;
-                watchForExit(child);
-                minimizeMainWindow();
-                resolve({ ok: true, value: { pid: child.pid } });
-            }
-            catch (err) {
-                resolve({ ok: false, error: err instanceof Error ? err.message : String(err) });
-            }
-        });
+        return launchExecutable(env);
     });
     ipcMain.handle('game:launch-steam', async (): Promise<Result<{
         launched: boolean;
@@ -107,36 +129,22 @@ export function registerGameIpc(): void {
         const env = loadCurrentEnv();
         if (!env)
             return { ok: false, error: 'Game directory not configured' };
-        return new Promise((resolve) => {
+        // Let Steam own the launch whenever it manages this copy. Injecting the
+        // app id into a process Steam did not start makes its overlay hook a
+        // foreign process, which leaks handles and unsettles the Steam UI.
+        if (isSteamManagedCopy(env.rootPath)) {
             try {
-                // Launch the user-selected baldi.exe inside Steam's context:
-                // injecting the app id makes the Steam overlay and playtime
-                // tracking attach to this run.
-                const child = spawn(env.executablePath, [], {
-                    cwd: env.rootPath,
-                    detached: true,
-                    stdio: 'ignore',
-                    windowsHide: false,
-                    env: {
-                        ...process.env,
-                        SteamAppId: STEAM_APPID,
-                        SteamGameId: STEAM_APPID,
-                        SteamOverlayGameId: STEAM_APPID
-                    }
-                });
-                child.on('error', (err) => {
-                    resolve({ ok: false, error: err.message });
-                });
-                child.unref();
-                runtimeState.gamePid = child.pid ?? null;
-                watchForExit(child);
+                await shell.openExternal(`steam://rungameid/${STEAM_APPID}`);
                 minimizeMainWindow();
-                resolve({ ok: true, value: { launched: true } });
+                return { ok: true, value: { launched: true } };
             }
             catch (err) {
-                resolve({ ok: false, error: err instanceof Error ? err.message : String(err) });
+                return { ok: false, error: err instanceof Error ? err.message : String(err) };
             }
-        });
+        }
+        // Not a Steam-managed copy, so Steam cannot launch it: start it directly.
+        const r = await launchExecutable(env);
+        return r.ok ? { ok: true, value: { launched: true } } : r;
     });
     ipcMain.handle('game:is-running', async (): Promise<Result<{
         running: boolean;
