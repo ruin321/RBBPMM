@@ -69,6 +69,10 @@ export function useGame(): {
         return () => window.clearInterval(id);
     }, [refreshRunning]);
     useEffect(() => {
+        const unsub = window.api.game.onRunningChanged((r) => setRunning(r));
+        return unsub;
+    }, []);
+    useEffect(() => {
         const unsub = window.api.app.onGameCleared(() => setEnv(null));
         return unsub;
     }, []);

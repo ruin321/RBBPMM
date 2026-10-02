@@ -16,6 +16,7 @@ export interface AppApi {
         stop: () => Promise<Result<{
             stopped: boolean;
         }>>;
+        onRunningChanged: (cb: (running: boolean) => void) => () => void;
     };
     mods: {
         list: () => Promise<Result<ModItemDto[]>>;

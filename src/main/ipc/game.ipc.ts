@@ -1,5 +1,5 @@
 import { ipcMain, dialog, BrowserWindow } from 'electron';
-import { spawn } from 'child_process';
+import { spawn, type ChildProcess } from 'child_process';
 import { resolveEnvironment } from '../services/GameEnvironment';
 import { isGameRunning, stopGame } from '../services/GameProcess';
 import { getStoredExePath, setStoredExePath, runtimeState } from '../store';
@@ -25,6 +25,23 @@ function minimizeMainWindow(): void {
     const w = BrowserWindow.getAllWindows()[0];
     if (w)
         w.minimize();
+}
+// Tell the renderer the game stopped as soon as the process we spawned exits,
+// instead of waiting for the next poll.
+async function broadcastRunning(): Promise<void> {
+    const running = await isGameRunning();
+    for (const w of BrowserWindow.getAllWindows())
+        w.webContents.send('game:running-changed', running);
+}
+function watchForExit(child: ChildProcess): void {
+    const pid = child.pid;
+    child.on('exit', () => {
+        if (runtimeState.gamePid === pid)
+            runtimeState.gamePid = null;
+        // Re-check instead of blindly reporting false so that a game process
+        // which re-launched itself is not mistaken for a finished one.
+        void broadcastRunning();
+    });
 }
 export function registerGameIpc(): void {
     ipcMain.handle('game:get', async (): Promise<Result<GameEnvironment>> => {
@@ -75,6 +92,7 @@ export function registerGameIpc(): void {
                 });
                 child.unref();
                 runtimeState.gamePid = child.pid ?? null;
+                watchForExit(child);
                 minimizeMainWindow();
                 resolve({ ok: true, value: { pid: child.pid } });
             }
@@ -111,6 +129,7 @@ export function registerGameIpc(): void {
                 });
                 child.unref();
                 runtimeState.gamePid = child.pid ?? null;
+                watchForExit(child);
                 minimizeMainWindow();
                 resolve({ ok: true, value: { launched: true } });
             }

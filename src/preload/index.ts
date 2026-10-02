@@ -8,7 +8,12 @@ const api: AppApi = {
         launch: () => ipcRenderer.invoke('game:launch'),
         launchSteam: () => ipcRenderer.invoke('game:launch-steam'),
         isRunning: () => ipcRenderer.invoke('game:is-running'),
-        stop: () => ipcRenderer.invoke('game:stop')
+        stop: () => ipcRenderer.invoke('game:stop'),
+        onRunningChanged: (cb) => {
+            const handler = (_e: unknown, v: unknown): void => cb(Boolean(v));
+            ipcRenderer.on('game:running-changed', handler);
+            return () => ipcRenderer.removeListener('game:running-changed', handler);
+        }
     },
     mods: {
         list: () => ipcRenderer.invoke('mods:list'),
