@@ -42,7 +42,7 @@ function CharProgress({ percent }: { percent: number }): React.JSX.Element {
     );
 }
 
-export function DownloadsPanel(): React.JSX.Element {
+export function DownloadsPanel(): React.JSX.Element | null {
     const [jobs, setJobs] = useState<Map<string, JobItem>>(new Map());
     const cleanupTimers = useRef<Map<string, number>>(new Map());
 
@@ -99,81 +99,84 @@ export function DownloadsPanel(): React.JSX.Element {
 
     if (jobsArr.length === 0) return null;
 
+    const hasFinished = jobsArr.some((j) => TERMINAL_STAGES.has(j.stage));
+
     return (
-        <div className="pointer-events-auto fixed right-4 bottom-4 z-50 w-[480px] text-black">
-            {/* 头部 — 用图片上半部分 */}
-            <div style={BG_TOP} className="flex h-[90px] items-center justify-between px-[72px]">
-                <div className="flex items-center gap-1.5 text-sm font-bold">
-                    <span>📥</span>
-                    <span>Downloads</span>
+        // 外层固定不动（保证 hover 区域稳定，不然升起后鼠标会掉出去）
+        <div className="group pointer-events-auto fixed right-4 bottom-4 z-50 w-[480px] text-black">
+            {/* 内层负责位移：默认只露头部 90px，hover 整块升起 */}
+            <div className="translate-y-[calc(100%-90px)] transition-transform duration-300 ease-out group-hover:translate-y-0">
+                {/* 头部 — 用图片上半部分，文本居中，无 emoji */}
+                <div style={BG_TOP} className="relative flex h-[90px] items-center justify-center">
+                    <span className="text-sm font-bold">Downloads</span>
                     {runningCount > 0 && (
-                        <span className="font-mono text-[10px]">({runningCount})</span>
+                        <span className="ml-1.5 font-mono text-[10px] font-bold">({runningCount})</span>
                     )}
-                </div>
-                {jobsArr.some((j) => TERMINAL_STAGES.has(j.stage)) && (
-                    <button
-                        type="button"
-                        onClick={clearDone}
-                        className="rounded p-0.5 text-black hover:bg-black/10"
-                        title="Clear completed"
-                    >
-                        <Trash2 className="h-3 w-3" />
-                    </button>
-                )}
-            </div>
-
-            {/* 每一个下载任务一行 — 用图片下半部分，多个任务就多块 */}
-            {jobsArr.map((job) => {
-                const isTerminal = TERMINAL_STAGES.has(job.stage);
-                const isError = job.stage === 'error';
-                const isDone = job.stage === 'done';
-                const pct = job.percent;
-
-                return (
-                    <div
-                        key={job.id}
-                        style={BG_BOTTOM}
-                        className="flex h-[72px] items-center justify-end gap-2 px-[72px] text-xs"
-                    >
-                        <div className="shrink-0">
-                            {!isTerminal ? (
-                                <Loader2 className="h-3 w-3 animate-spin" />
-                            ) : isError ? (
-                                <span className="text-sm font-bold">✗</span>
-                            ) : isDone ? (
-                                <span className="text-sm font-bold">✓</span>
-                            ) : (
-                                <span className="text-sm">✦</span>
-                            )}
-                        </div>
-
-                        <div className="flex min-w-0 flex-1 flex-col items-end gap-0.5 text-right">
-                            <span className="truncate font-semibold text-black">{job.name}</span>
-                            <div className="flex items-center justify-end gap-2">
-                                {pct !== undefined ? (
-                                    <CharProgress percent={pct} />
-                                ) : (
-                                    <span className="font-mono text-xs text-black">|░░░░░░░░░░░░░░░░░░░░ --%|</span>
-                                )}
-                            </div>
-                            {job.message && (
-                                <span className="truncate text-[10px] text-black/70">
-                                    {isError ? (job.error || 'Failed') : job.message}
-                                </span>
-                            )}
-                        </div>
-
+                    {hasFinished && (
                         <button
                             type="button"
-                            onClick={() => isTerminal ? clearJob(job.id) : cancelJob(job.id)}
-                            className="shrink-0 rounded p-0.5 text-black hover:bg-black/10"
-                            title={isTerminal ? 'Remove' : 'Cancel'}
+                            onClick={clearDone}
+                            className="absolute right-[72px] rounded p-0.5 text-black hover:bg-black/10"
+                            title="Clear completed"
                         >
-                            <X className="h-3 w-3" />
+                            <Trash2 className="h-3 w-3" />
                         </button>
-                    </div>
-                );
-            })}
+                    )}
+                </div>
+
+                {/* 每一个下载任务一行 — 用图片下半部分，多个任务就多块 */}
+                {jobsArr.map((job) => {
+                    const isTerminal = TERMINAL_STAGES.has(job.stage);
+                    const isError = job.stage === 'error';
+                    const isDone = job.stage === 'done';
+                    const pct = job.percent;
+
+                    return (
+                        <div
+                            key={job.id}
+                            style={BG_BOTTOM}
+                            className="flex h-[72px] items-center justify-end gap-2 px-[72px] text-xs"
+                        >
+                            <div className="shrink-0">
+                                {!isTerminal ? (
+                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                ) : isError ? (
+                                    <span className="text-sm font-bold">✗</span>
+                                ) : isDone ? (
+                                    <span className="text-sm font-bold">✓</span>
+                                ) : (
+                                    <span className="text-sm">✦</span>
+                                )}
+                            </div>
+
+                            <div className="flex min-w-0 flex-1 flex-col items-end gap-0.5 text-right">
+                                <span className="truncate font-semibold text-black">{job.name}</span>
+                                <div className="flex items-center justify-end gap-2">
+                                    {pct !== undefined ? (
+                                        <CharProgress percent={pct} />
+                                    ) : (
+                                        <span className="font-mono text-xs text-black">|░░░░░░░░░░░░░░░░░░░░ --%|</span>
+                                    )}
+                                </div>
+                                {job.message && (
+                                    <span className="truncate text-[10px] text-black/70">
+                                        {isError ? (job.error || 'Failed') : job.message}
+                                    </span>
+                                )}
+                            </div>
+
+                            <button
+                                type="button"
+                                onClick={() => isTerminal ? clearJob(job.id) : cancelJob(job.id)}
+                                className="shrink-0 rounded p-0.5 text-black hover:bg-black/10"
+                                title={isTerminal ? 'Remove' : 'Cancel'}
+                            >
+                                <X className="h-3 w-3" />
+                            </button>
+                        </div>
+                    );
+                })}
+            </div>
         </div>
     );
 }
