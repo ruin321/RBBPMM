@@ -89,24 +89,16 @@ export function DownloadsPanel(): React.JSX.Element {
     if (jobsArr.length === 0) return null;
 
     return (
-        <div
-            className={cn(
-                'pointer-events-auto fixed right-4 bottom-4 z-50 transition-transform duration-300 ease-out',
-                'translate-y-[calc(100%-32px)]',
-                'hover:translate-y-0'
-            )}
-        >
-            {/* 九宫格：slice=10 对应图片内边框厚度，border-width=10 拉伸边缘 */}
+        <div className="pointer-events-auto fixed right-4 bottom-4 z-50">
+            {/* 九宫格：固定尺寸，不自动伸缩 */}
             <div
-                className="relative"
                 style={{
                     borderStyle: 'solid',
                     borderWidth: '10px',
                     borderImageSource: `url(${downloadsBg})`,
                     borderImageSlice: '10 fill',
                     borderImageWidth: '10',
-                    width: 'min(560px, 75vw)',
-                    minWidth: 320,
+                    width: 480,
                 }}
             >
                 {/* 内容区：padding 匹配 slice，让文字待在图片白心里 */}
@@ -187,13 +179,6 @@ export function DownloadsPanel(): React.JSX.Element {
                                 </div>
                             );
                         })}
-                    </div>
-
-                    {/* 收起提示 */}
-                    <div className="pointer-events-none absolute inset-x-0 top-0 flex h-8 items-center justify-center text-[11px] font-bold text-black">
-                        {runningCount > 0
-                            ? `${runningCount} downloading...`
-                            : `${jobsArr.length} done (hover ↑)`}
                     </div>
                 </div>
             </div>
