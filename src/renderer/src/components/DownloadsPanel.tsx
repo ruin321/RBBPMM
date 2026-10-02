@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import { X, Trash2, Loader2 } from 'lucide-react';
-import type { JobProgress } from '@shared/types';
 import downloadsBg from '@/assets/downloads-bg.png';
 
 interface JobItem {
@@ -13,6 +12,20 @@ interface JobItem {
 }
 
 const TERMINAL_STAGES = new Set(['done', 'error', 'cancelled']);
+
+// 图片 480x360：上半部分（红顶 + 灰条）给头部，下半部分（白心 + 两边红框）给每一行
+const BG_TOP: React.CSSProperties = {
+    backgroundImage: `url(${downloadsBg})`,
+    backgroundSize: '100% 360px',
+    backgroundPosition: '0 0',
+    backgroundRepeat: 'no-repeat',
+};
+const BG_BOTTOM: React.CSSProperties = {
+    backgroundImage: `url(${downloadsBg})`,
+    backgroundSize: '100% 360px',
+    backgroundPosition: '0 100%',
+    backgroundRepeat: 'no-repeat',
+};
 
 function CharProgress({ percent }: { percent: number }): React.JSX.Element {
     const width = 20;
@@ -37,15 +50,14 @@ export function DownloadsPanel(): React.JSX.Element {
         const off = window.api.banana.onJobProgress((p) => {
             setJobs((prev) => {
                 const next = new Map(prev);
-                const item: JobItem = {
+                next.set(p.id, {
                     id: p.id,
                     name: p.name,
                     stage: p.stage,
                     percent: p.percent,
                     message: p.message,
                     error: p.error
-                };
-                next.set(p.id, item);
+                });
                 if (TERMINAL_STAGES.has(p.stage)) {
                     const existing = cleanupTimers.current.get(p.id);
                     if (existing) window.clearTimeout(existing);
@@ -88,108 +100,80 @@ export function DownloadsPanel(): React.JSX.Element {
     if (jobsArr.length === 0) return null;
 
     return (
-        <div className="pointer-events-auto fixed right-4 bottom-4 z-50">
-            {/* OptionsClipboard 背景：红框 + 灰顶条 + 白心 */}
-            <div
-                className="relative"
-                style={{
-                    backgroundImage: `url(${downloadsBg})`,
-                    backgroundSize: '100% 100%',
-                    backgroundRepeat: 'no-repeat',
-                    width: 480,
-                }}
-            >
-                {/* 标题 — 绝对定位到图片灰顶条上 */}
-                <div
-                    className="absolute left-0 right-0 flex items-center justify-between px-5 text-black"
-                    style={{ top: 6 }}
-                >
-                    <div className="flex items-center gap-1.5 text-sm font-bold">
-                        <span>📥</span>
-                        <span>Downloads</span>
-                        {runningCount > 0 && (
-                            <span className="rounded bg-black/10 px-1 py-0.5 font-mono text-[10px] text-black">
-                                ({runningCount})
-                            </span>
-                        )}
-                    </div>
-                    {jobsArr.some((j) => TERMINAL_STAGES.has(j.stage)) && (
-                        <button
-                            type="button"
-                            onClick={clearDone}
-                            className="rounded p-0.5 text-black hover:bg-black/10"
-                            title="Clear completed"
-                        >
-                            <Trash2 className="h-3 w-3" />
-                        </button>
+        <div className="pointer-events-auto fixed right-4 bottom-4 z-50 w-[480px] text-black">
+            {/* 头部 — 用图片上半部分 */}
+            <div style={BG_TOP} className="flex h-[90px] items-center justify-between px-[72px]">
+                <div className="flex items-center gap-1.5 text-sm font-bold">
+                    <span>📥</span>
+                    <span>Downloads</span>
+                    {runningCount > 0 && (
+                        <span className="font-mono text-[10px]">({runningCount})</span>
                     )}
                 </div>
-
-                {/* 内容区 — 严格限制在白色内部区域，右对齐 */}
-                <div
-                    className="text-black text-right"
-                    style={{
-                        position: 'absolute',
-                        left: 24,
-                        right: 24,
-                        top: 44,
-                        bottom: 18,
-                        overflow: 'hidden',
-                    }}
-                >
-                    <div className="space-y-1.5">
-                        {jobsArr.map((job) => {
-                            const isTerminal = TERMINAL_STAGES.has(job.stage);
-                            const isError = job.stage === 'error';
-                            const isDone = job.stage === 'done';
-                            const pct = job.percent;
-
-                            return (
-                                <div key={job.id} className="flex items-center justify-end gap-2 text-xs">
-                                    <div className="shrink-0 text-black">
-                                        {!isTerminal ? (
-                                            <Loader2 className="h-3 w-3 animate-spin" />
-                                        ) : isError ? (
-                                            <span className="font-bold text-sm">✗</span>
-                                        ) : isDone ? (
-                                            <span className="font-bold text-sm">✓</span>
-                                        ) : (
-                                            <span className="text-sm">✦</span>
-                                        )}
-                                    </div>
-
-                                    <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                                        <span className="truncate font-semibold text-black">{job.name}</span>
-                                        <div className="flex items-center gap-2">
-                                            {pct !== undefined ? (
-                                                <CharProgress percent={pct} />
-                                            ) : (
-                                                <span className="font-mono text-xs text-black">|░░░░░░░░░░░░░░░░░░░░░░░░ --%|</span>
-                                            )}
-                                            {job.message && (
-                                                <span className="truncate text-[10px] text-black/70">
-                                                    {isError ? (job.error || 'Failed') : job.message}
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    <div className="shrink-0">
-                                        <button
-                                            type="button"
-                                            onClick={() => isTerminal ? clearJob(job.id) : cancelJob(job.id)}
-                                            className="rounded p-0.5 text-black hover:bg-black/10"
-                                            title={isTerminal ? 'Remove' : 'Cancel'}
-                                        >
-                                            <X className="h-3 w-3" />
-                                        </button>
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
-                </div>
+                {jobsArr.some((j) => TERMINAL_STAGES.has(j.stage)) && (
+                    <button
+                        type="button"
+                        onClick={clearDone}
+                        className="rounded p-0.5 text-black hover:bg-black/10"
+                        title="Clear completed"
+                    >
+                        <Trash2 className="h-3 w-3" />
+                    </button>
+                )}
             </div>
+
+            {/* 每一个下载任务一行 — 用图片下半部分，多个任务就多块 */}
+            {jobsArr.map((job) => {
+                const isTerminal = TERMINAL_STAGES.has(job.stage);
+                const isError = job.stage === 'error';
+                const isDone = job.stage === 'done';
+                const pct = job.percent;
+
+                return (
+                    <div
+                        key={job.id}
+                        style={BG_BOTTOM}
+                        className="flex h-[72px] items-center justify-end gap-2 px-[72px] text-xs"
+                    >
+                        <div className="shrink-0">
+                            {!isTerminal ? (
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : isError ? (
+                                <span className="text-sm font-bold">✗</span>
+                            ) : isDone ? (
+                                <span className="text-sm font-bold">✓</span>
+                            ) : (
+                                <span className="text-sm">✦</span>
+                            )}
+                        </div>
+
+                        <div className="flex min-w-0 flex-1 flex-col items-end gap-0.5 text-right">
+                            <span className="truncate font-semibold text-black">{job.name}</span>
+                            <div className="flex items-center justify-end gap-2">
+                                {pct !== undefined ? (
+                                    <CharProgress percent={pct} />
+                                ) : (
+                                    <span className="font-mono text-xs text-black">|░░░░░░░░░░░░░░░░░░░░ --%|</span>
+                                )}
+                            </div>
+                            {job.message && (
+                                <span className="truncate text-[10px] text-black/70">
+                                    {isError ? (job.error || 'Failed') : job.message}
+                                </span>
+                            )}
+                        </div>
+
+                        <button
+                            type="button"
+                            onClick={() => isTerminal ? clearJob(job.id) : cancelJob(job.id)}
+                            className="shrink-0 rounded p-0.5 text-black hover:bg-black/10"
+                            title={isTerminal ? 'Remove' : 'Cancel'}
+                        >
+                            <X className="h-3 w-3" />
+                        </button>
+                    </div>
+                );
+            })}
         </div>
     );
 }
