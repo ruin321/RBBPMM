@@ -28,7 +28,16 @@ const api: AppApi = {
         getComments: (submissionId) => ipcRenderer.invoke('banana:get-comments', { submissionId }),
         getUpdates: (submissionId) => ipcRenderer.invoke('banana:get-updates', { submissionId }),
         getPostReplies: (postId) => ipcRenderer.invoke('banana:get-post-replies', { postId }),
-        levelStudioPrereq: () => ipcRenderer.invoke('banana:levelstudio-prereq')
+        levelStudioPrereq: () => ipcRenderer.invoke('banana:levelstudio-prereq'),
+        cancel: (jobId) => ipcRenderer.invoke('banana:cancel', { jobId }),
+        cancelJob: (jobId) => ipcRenderer.invoke('banana:cancel-job', { jobId }),
+        clearJob: (jobId) => ipcRenderer.invoke('banana:clear-job', { jobId }),
+        clearCompleted: () => ipcRenderer.invoke('banana:clear-completed'),
+        onJobProgress: (cb) => {
+            const handler = (_e: unknown, p: unknown): void => cb(p as never);
+            ipcRenderer.on('banana:job-progress', handler);
+            return () => ipcRenderer.removeListener('banana:job-progress', handler);
+        }
     },
     customLevel: {
         list: () => ipcRenderer.invoke('customLevel:list'),
@@ -112,6 +121,8 @@ const api: AppApi = {
         setNavOpen: (open) => ipcRenderer.invoke('app:set-nav-open', { open }),
         getVerticalLayout: () => ipcRenderer.invoke('app:get-vertical-layout'),
         setVerticalLayout: (enabled) => ipcRenderer.invoke('app:set-vertical-layout', { enabled }),
+        getAutoInstall: () => ipcRenderer.invoke('app:get-auto-install'),
+        setAutoInstall: (enabled) => ipcRenderer.invoke('app:set-auto-install', { enabled }),
         resetSettings: () => ipcRenderer.invoke('app:reset-settings'),
         onThemeChanged: (cb) => {
             const handler = (_e: unknown, theme: unknown): void => cb(theme as string);

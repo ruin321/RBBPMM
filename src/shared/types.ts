@@ -92,6 +92,14 @@ export interface InstallProgress {
     percent?: number;
     message?: string;
 }
+export interface JobProgress {
+    id: string;
+    name: string;
+    stage: string;
+    percent?: number;
+    message?: string;
+    error?: string;
+}
 export interface OpenUrlPayload {
     action: string;
     id?: number;

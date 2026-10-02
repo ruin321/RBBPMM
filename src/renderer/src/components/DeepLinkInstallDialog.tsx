@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Download, Loader2, Package } from 'lucide-react';
 import { toast } from 'sonner';
-import type { GamebananaSubmissionDto, InstallProgress } from '@shared/types';
+import type { GamebananaSubmissionDto, InstallProgress, JobProgress } from '@shared/types';
 import { useI18n } from '@/i18n';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -20,6 +20,8 @@ export function DeepLinkInstallDialog({ submissionId, fileId, url, modType, modI
     const [error, setError] = useState<string | null>(null);
     const [progress, setProgress] = useState<InstallProgress | null>(null);
     const [installing, setInstalling] = useState(false);
+    const jobIdRef = useRef<string | null>(null);
+
     useEffect(() => {
         let mounted = true;
         if (!submissionId)
@@ -36,21 +38,45 @@ export function DeepLinkInstallDialog({ submissionId, fileId, url, modType, modI
             mounted = false;
         };
     }, [submissionId]);
+
     useEffect(() => {
-        return window.api.app.onInstallProgress((p) => setProgress(p));
-    }, []);
+        return window.api.banana.onJobProgress((p: JobProgress) => {
+            if (jobIdRef.current === p.id) {
+                setProgress({ stage: p.stage, percent: p.percent, message: p.message });
+                if (p.stage === 'done') {
+                    toast.success(t('banana.installedToast', { name: sub?.name ?? 'mod' }));
+                    jobIdRef.current = null;
+                    onDone();
+                } else if (p.stage === 'error') {
+                    toast.error(p.error || t('banana.failInstall'));
+                    jobIdRef.current = null;
+                    onDone();
+                } else if (p.stage === 'cancelled') {
+                    toast.info('Cancelled');
+                    jobIdRef.current = null;
+                    onDone();
+                }
+            }
+        });
+    }, [sub?.name, onDone, t]);
+
     const install = async (): Promise<void> => {
         setInstalling(true);
-        setProgress(null);
-        const displayName = sub?.name ?? (modId ? String(modId) : t('mods.installedFallback'));
-        const r = url
-            ? await window.api.banana.installUrl(url, modType, modId)
-            : await window.api.banana.install(submissionId!, fileId);
-        if (r.ok)
-            toast.success(t('banana.installedToast', { name: displayName }));
-        else
-            toast.error(r.error || t('banana.failInstall'));
-        onDone();
+        setProgress({ stage: 'pending', percent: 0 });
+        try {
+            const r = url
+                ? await window.api.banana.installUrl(url, modType, modId)
+                : await window.api.banana.install(submissionId!, fileId);
+            if (r.ok && r.value) {
+                jobIdRef.current = r.value.jobId;
+            } else {
+                toast.error(r.error || t('banana.failInstall'));
+                onDone();
+            }
+        } catch (e) {
+            toast.error(e instanceof Error ? e.message : String(e));
+            onDone();
+        }
     };
     const percent = typeof progress?.percent === 'number' ? Math.round(progress.percent) : undefined;
     const isUrlMode = !!url;

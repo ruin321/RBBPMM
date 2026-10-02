@@ -18,6 +18,7 @@ import { TexturePacksPage } from '@/pages/TexturePacksPage';
 import { ToolboxPage } from '@/pages/ToolboxPage';
 import { AboutDialog } from '@/components/AboutDialog';
 import { SplashScreen } from '@/components/SplashScreen';
+import { DownloadsPanel } from '@/components/DownloadsPanel';
 import { TitleBar } from '@/components/TitleBar';
 import { FishSplash } from '@/components/FishSplash';
 import { SetupWizardDialog } from '@/components/SetupWizardDialog';
@@ -326,6 +327,7 @@ export function App(): React.JSX.Element {
 
       
       {splashOn ? <SplashScreen onDone={() => setSplashOn(false)}/> : null}
+      <DownloadsPanel />
       <FishSplash />
     </div>
     </div>

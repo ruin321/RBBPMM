@@ -1,4 +1,4 @@
-import type { ConfigFileDto, GamebananaCommentDto, GamebananaCommentsDto, GameEnvironment, GamebananaSearchResult, GamebananaSubmissionDto, GamebananaUpdatesDto, InstallProgress, InstallResult, LevelStudioInstallResult, LevelStudioPrereqItem, ModInstallOutcome, ModItemDto, ModUpdateInfoDto, OpenUrlPayload, ReadmeFileDto, Result, TexturePackInstallResult, TexturePackListResult, TexturePackProgress, ToolboxCleanupDto, ToolboxDirDto, CustomLevelDto } from './types';
+import type { ConfigFileDto, GamebananaCommentDto, GamebananaCommentsDto, GameEnvironment, GamebananaSearchResult, GamebananaSubmissionDto, GamebananaUpdatesDto, InstallProgress, InstallResult, JobProgress, LevelStudioInstallResult, LevelStudioPrereqItem, ModInstallOutcome, ModItemDto, ModUpdateInfoDto, OpenUrlPayload, ReadmeFileDto, Result, TexturePackInstallResult, TexturePackListResult, TexturePackProgress, ToolboxCleanupDto, ToolboxDirDto, CustomLevelDto } from './types';
 export interface AppApi {
     game: {
         selectDir: () => Promise<Result<GameEnvironment>>;
@@ -34,13 +34,18 @@ export interface AppApi {
     };
     banana: {
         search: (page: number, query?: string, category?: number) => Promise<Result<GamebananaSearchResult>>;
-        install: (submissionId: number, fileId?: number) => Promise<Result<InstallResult>>;
-        installUrl: (url: string, modType?: string, modId?: number) => Promise<Result<InstallResult>>;
+        install: (submissionId: number, fileId?: number) => Promise<Result<{ jobId: string }>>;
+        installUrl: (url: string, modType?: string, modId?: number) => Promise<Result<{ jobId: string }>>;
         get: (submissionId: number) => Promise<Result<GamebananaSubmissionDto>>;
         getComments: (submissionId: number) => Promise<Result<GamebananaCommentsDto>>;
         getUpdates: (submissionId: number) => Promise<Result<GamebananaUpdatesDto>>;
         getPostReplies: (postId: number) => Promise<Result<GamebananaCommentDto[]>>;
         levelStudioPrereq: () => Promise<Result<LevelStudioPrereqItem[]>>;
+        cancel: (jobId?: string) => Promise<void>;
+        cancelJob: (jobId: string) => Promise<void>;
+        clearJob: (jobId: string) => Promise<void>;
+        clearCompleted: () => Promise<void>;
+        onJobProgress: (cb: (p: JobProgress) => void) => () => void;
     };
     ui: {
         pickZip: () => Promise<Result<{
@@ -114,6 +119,8 @@ export interface AppApi {
         setNavOpen: (open: boolean) => Promise<void>;
         getVerticalLayout: () => Promise<boolean>;
         setVerticalLayout: (enabled: boolean) => Promise<void>;
+        getAutoInstall: () => Promise<boolean>;
+        setAutoInstall: (enabled: boolean) => Promise<void>;
         resetSettings: () => Promise<void>;
         onThemeChanged: (cb: (theme: string) => void) => () => void;
         onFontChanged: (cb: (font: string) => void) => () => void;

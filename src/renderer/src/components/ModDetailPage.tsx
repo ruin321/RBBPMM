@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, ChevronLeft, ChevronRight, CornerDownRight, Download, ExternalLink, Eye, Files, Gift, History, Image as ImageIcon, Loader2, MessageSquare, Package } from 'lucide-react';
 import { toast } from 'sonner';
-import type { GamebananaCommentDto, GamebananaCommentsDto, GamebananaFileDto, GamebananaRequirementDto, GamebananaSubmissionDto, GamebananaUpdatesDto, InstallProgress, ReadmeFileDto } from '@shared/types';
+import type { GamebananaCommentDto, GamebananaCommentsDto, GamebananaFileDto, GamebananaRequirementDto, GamebananaSubmissionDto, GamebananaUpdatesDto, InstallProgress, JobProgress, ReadmeFileDto } from '@shared/types';
 import { TEXTURE_PACK_CATEGORY_ID } from '@shared/types';
 import { useI18n } from '@/i18n';
 import fishGif from '@/assets/fish.gif';
@@ -125,6 +125,7 @@ export function ModDetailPage({ submissionId, fallback, onBack, onInstalled, onO
     const [activeFileId, setActiveFileId] = useState<number | undefined>(undefined);
     const [progress, setProgress] = useState<InstallProgress | null>(null);
     const [readmes, setReadmes] = useState<ReadmeFileDto[]>([]);
+    const activeJobIdRef = useRef<string | null>(null);
     const { setLocale } = useI18n();
     const isFishPage = submissionId === FISH_SUBMISSION_ID;
     const isRetroPage = submissionId === RETRO_SUBMISSION_ID;
@@ -163,9 +164,27 @@ export function ModDetailPage({ submissionId, fallback, onBack, onInstalled, onO
                 return;
             setUpdates(r.ok && r.value ? r.value : { total: 0, items: [] });
         });
-        const off = window.api.app.onInstallProgress((p) => {
-            if (installingRef.current)
-                setProgress(p);
+        const off = window.api.banana.onJobProgress((p: JobProgress) => {
+            if (activeJobIdRef.current === p.id) {
+                setProgress({ stage: p.stage, percent: p.percent, message: p.message });
+                if (p.stage === 'done') {
+                    toast.success(t('banana.installedToast', { name: display.name }));
+                    onInstalled?.(display.categoryId === TEXTURE_PACK_CATEGORY_ID);
+                    activeJobIdRef.current = null;
+                    setActiveFileId(undefined);
+                    setProgress(null);
+                } else if (p.stage === 'error') {
+                    toast.error(p.error || t('banana.failInstall'));
+                    activeJobIdRef.current = null;
+                    setActiveFileId(undefined);
+                    setProgress(null);
+                } else if (p.stage === 'cancelled') {
+                    toast.info('Cancelled');
+                    activeJobIdRef.current = null;
+                    setActiveFileId(undefined);
+                    setProgress(null);
+                }
+            }
         });
         return () => {
             active = false;
@@ -194,29 +213,25 @@ export function ModDetailPage({ submissionId, fallback, onBack, onInstalled, onO
     const installing = activeFileId !== undefined;
     const totalFiles = visibleFiles.length + archivedFiles.filter((f) => f.id > 0).length;
     const install = async (fileId?: number): Promise<void> => {
-        if (installing) {
+        if (activeJobIdRef.current) {
             toast.error(t('detail.busy'));
             return;
         }
         setActiveFileId(fileId ?? visibleFiles[0]?.id ?? files[0]?.id);
-        setProgress(null);
+        setProgress({ stage: 'pending', percent: 0 });
         try {
             const r = await window.api.banana.install(submissionId, fileId);
-            if (r.ok) {
-                toast.success(t('banana.installedToast', { name: display.name }));
-                onInstalled?.(display.categoryId === TEXTURE_PACK_CATEGORY_ID);
-                const readmeList = r.value?.readmes ?? [];
-                if (readmeList.length > 0)
-                    setReadmes(readmeList);
+            if (r.ok && r.value) {
+                activeJobIdRef.current = r.value.jobId;
             }
             else {
                 toast.error(r.error || t('banana.failInstall'));
+                setActiveFileId(undefined);
+                setProgress(null);
             }
         }
         catch (e) {
             toast.error(e instanceof Error ? e.message : String(e));
-        }
-        finally {
             setActiveFileId(undefined);
             setProgress(null);
         }
