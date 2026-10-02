@@ -83,6 +83,7 @@ const api: AppApi = {
         list: () => ipcRenderer.invoke('textures:list'),
         install: (archivePath) => ipcRenderer.invoke('textures:install', { archivePath }),
         uninstall: (folderName) => ipcRenderer.invoke('textures:uninstall', { folderName }),
+        toggleEnabled: (folderName, enabled) => ipcRenderer.invoke('textures:toggle-enabled', { folderName, enabled }),
         probe: (archivePath) => ipcRenderer.invoke('textures:probe', { archivePath })
     },
     setup: {

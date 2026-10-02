@@ -1,5 +1,5 @@
 import { ipcMain } from 'electron';
-import { installTexturePack, listTexturePacks, probeTexturePackArchive, uninstallTexturePack } from '../services/TexturePackService';
+import { installTexturePack, listTexturePacks, probeTexturePackArchive, setTexturePackEnabled, uninstallTexturePack } from '../services/TexturePackService';
 import { texturePacksDir } from '../constants';
 import { runtimeState } from '../store';
 import type { Result, TexturePackInstallResult, TexturePackListResult, TexturePackProgress } from '../../shared/types';
@@ -69,6 +69,18 @@ export function registerTexturesIpc(): void {
             return env;
         try {
             uninstallTexturePack(env.value, folderName);
+            return { ok: true };
+        }
+        catch (err) {
+            return { ok: false, error: err instanceof Error ? err.message : String(err) };
+        }
+    });
+    ipcMain.handle('textures:toggle-enabled', async (_e, { folderName, enabled }: {
+        folderName: string;
+        enabled: boolean;
+    }): Promise<Result> => {
+        try {
+            setTexturePackEnabled(folderName, enabled);
             return { ok: true };
         }
         catch (err) {

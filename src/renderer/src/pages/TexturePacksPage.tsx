@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { WithTooltip } from '@/components/ui/tooltip';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { RichText } from '@/components/RichText';
 import { PageHeader } from '@/components/PageHeader';
@@ -91,6 +92,14 @@ export function TexturePacksPage({ env, dropPath, onDropConsumed }: Props): Reac
         void installFrom(dropPath);
         onDropConsumed?.();
     }, [dropPath, env]);
+    const toggleEnabled = async (pack: TexturePackDto, enabled: boolean): Promise<void> => {
+        const r = await window.api.textures.toggleEnabled(pack.folderName, enabled);
+        if (!r.ok) {
+            toast.error(enabled ? t('list.failEnable') : t('list.failDisable'), { description: r.error });
+            return;
+        }
+        setPacks((prev) => prev.map((p) => (p.folderName === pack.folderName ? { ...p, enabled } : p)));
+    };
     const uninstall = async (pack: TexturePackDto): Promise<void> => {
         const r = await window.api.textures.uninstall(pack.folderName);
         if (!r.ok) {
@@ -121,13 +130,14 @@ export function TexturePacksPage({ env, dropPath, onDropConsumed }: Props): Reac
             <CardDescription>{t('textures.emptyDesc')}</CardDescription>
           </CardHeader>
         </Card>) : (<div className="space-y-3">
-          {packs.map((p) => (<Card key={p.folderName}>
+          {packs.map((p) => (<Card key={p.folderName} className={p.enabled === false ? 'opacity-60' : ''}>
               <CardContent className="flex items-center justify-between gap-3 p-4">
                 <div className="min-w-0 space-y-1">
                   <div className="flex items-center gap-2">
                     <Palette className="h-4 w-4 shrink-0 text-muted-foreground"/>
                     <RichText text={p.name} className="truncate font-medium"/>
                     {p.version ? <Badge variant="outline">v{p.version}</Badge> : null}
+                    {p.enabled === false ? <Badge variant="outline">{t('textures.disabledBadge')}</Badge> : null}
                   </div>
                   {p.author && (<div className="flex flex-wrap items-center gap-x-1 text-xs text-muted-foreground">
                       <span>{t('textures.author', { author: '' })}</span>
@@ -136,6 +146,11 @@ export function TexturePacksPage({ env, dropPath, onDropConsumed }: Props): Reac
                   {p.description && (<RichText text={p.description} className="line-clamp-2 block text-sm text-muted-foreground"/>)}
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
+                  {p.protected ? null : (<WithTooltip title={p.enabled === false ? t('textures.enable') : t('textures.disable')}>
+                      <span className="flex items-center">
+                        <Switch checked={p.enabled !== false} onCheckedChange={(v) => void toggleEnabled(p, v)} aria-label={p.name}/>
+                      </span>
+                    </WithTooltip>)}
                   <Button variant="outline" size="sm" onClick={() => void window.api.ui.openFolder(installDir + '\\' + p.folderName)}>
                     <FolderOpen className="mr-1 h-3.5 w-3.5"/>
                     {t('textures.openFolder')}

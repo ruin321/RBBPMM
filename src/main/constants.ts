@@ -1,3 +1,4 @@
+import os from 'os';
 import path from 'path';
 export const GAME_EXE_NAME = 'BALDI.exe';
 export function isGameExeName(name: string): boolean {
@@ -73,4 +74,15 @@ export function bepinexModInfoDir(gameRoot: string): string {
 }
 export function texturePacksDir(gameRoot: string): string {
     return path.join(gameRoot, ...TEXTURE_PACKS_RELATIVE);
+}
+export const GAME_SAVE_COMPANY = 'Basically Games';
+export const GAME_SAVE_PRODUCT = "Baldi's Basics Plus";
+export const GAME_MODDED_SAVES_FOLDER = 'Modded';
+export const TEXTURE_PACK_SAVE_GUID = 'mtm101.rulerp.baldiplus.texturepacks';
+export const TEXTURE_PACK_STATE_FILE = 'packs.txt';
+export function gameModdedSavesDir(): string {
+    return path.join(os.homedir(), 'AppData', 'LocalLow', GAME_SAVE_COMPANY, GAME_SAVE_PRODUCT, GAME_MODDED_SAVES_FOLDER);
+}
+export function texturePackStateFile(profile: string): string {
+    return path.join(gameModdedSavesDir(), profile, TEXTURE_PACK_SAVE_GUID, TEXTURE_PACK_STATE_FILE);
 }

@@ -84,6 +84,7 @@ export interface AppApi {
         list: () => Promise<Result<TexturePackListResult>>;
         install: (archivePath: string) => Promise<Result<TexturePackInstallResult>>;
         uninstall: (folderName: string) => Promise<Result>;
+        toggleEnabled: (folderName: string, enabled: boolean) => Promise<Result>;
         probe: (archivePath: string) => Promise<Result<boolean>>;
     };
     customLevel: {

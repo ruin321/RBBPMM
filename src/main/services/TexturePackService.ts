@@ -1,7 +1,7 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import { TEXTURE_PACK_MANIFEST, texturePacksDir, PROTECTED_TEXTURE_PACK_FOLDERS } from '../constants';
+import { TEXTURE_PACK_MANIFEST, texturePacksDir, PROTECTED_TEXTURE_PACK_FOLDERS, gameModdedSavesDir, texturePackStateFile } from '../constants';
 import { isInside } from './PathGuard';
 import { createTempDir, extractArchiveAsync, removeDirIfInside } from './ModArchiveExtractor';
 import { collectReadmes, ReadmeFile } from './ReadmeCollector';
@@ -32,23 +32,98 @@ function readPackJson(dir: string): {
 export function isProtectedTexturePack(folderName: string): boolean {
     return PROTECTED_TEXTURE_PACK_FOLDERS.has(String(folderName).toLowerCase());
 }
+// The texture pack mod keys its per-profile enable list (packs.txt) by the
+// pack folder name without its extension.
+function packStateId(folderName: string): string {
+    return path.parse(folderName).name;
+}
+function listSaveProfiles(): string[] {
+    const dir = gameModdedSavesDir();
+    try {
+        return fs.readdirSync(dir, { withFileTypes: true })
+            .filter((e) => e.isDirectory())
+            .map((e) => e.name);
+    }
+    catch {
+        return [];
+    }
+}
+function readProfilePackStates(profile: string): Map<string, boolean> {
+    const states = new Map<string, boolean>();
+    const file = texturePackStateFile(profile);
+    if (!fs.existsSync(file))
+        return states;
+    try {
+        for (const line of fs.readFileSync(file, 'utf8').split(/\r?\n/)) {
+            const sep = line.indexOf(':');
+            if (sep <= 0)
+                continue;
+            states.set(line.slice(0, sep), line.slice(sep + 1).trim() === 'enabled');
+        }
+    }
+    catch {
+    }
+    return states;
+}
+// A pack counts as enabled when any player profile has it enabled; the toggle
+// writes the same state to every profile since the active one is unknown here.
+function readEnabledPackIds(): Set<string> {
+    const enabled = new Set<string>();
+    for (const profile of listSaveProfiles()) {
+        for (const [id, on] of readProfilePackStates(profile)) {
+            if (on)
+                enabled.add(id);
+        }
+    }
+    return enabled;
+}
+export function setTexturePackEnabled(folderName: string, enabled: boolean): void {
+    if (isProtectedTexturePack(folderName)) {
+        throw new Error(`This is a protected folder and cannot be toggled: ${folderName}`);
+    }
+    const id = packStateId(folderName);
+    const line = `${id}:${enabled ? 'enabled' : 'disabled'}`;
+    const profiles = listSaveProfiles();
+    if (profiles.length === 0)
+        profiles.push('!UnassignedFile');
+    for (const profile of profiles) {
+        const file = texturePackStateFile(profile);
+        const lines: string[] = [];
+        if (fs.existsSync(file)) {
+            for (const raw of fs.readFileSync(file, 'utf8').split(/\r?\n/)) {
+                if (raw.length === 0)
+                    continue;
+                const sep = raw.indexOf(':');
+                if (sep > 0 && raw.slice(0, sep) === id)
+                    continue;
+                lines.push(raw);
+            }
+        }
+        lines.push(line);
+        fs.mkdirSync(path.dirname(file), { recursive: true });
+        fs.writeFileSync(file, lines.join('\r\n') + '\r\n');
+    }
+}
 export function listTexturePacks(gameRoot: string): TexturePackDto[] {
     const dir = texturePacksDir(gameRoot);
     if (!fs.existsSync(dir))
         return [];
+    const enabledIds = readEnabledPackIds();
     const out: TexturePackDto[] = [];
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
         if (!entry.isDirectory())
             continue;
         const full = path.join(dir, entry.name);
         const meta = readPackJson(full);
+        const protectedPack = isProtectedTexturePack(entry.name);
         out.push({
             folderName: entry.name,
             name: meta?.name || entry.name,
             author: meta?.author,
             version: meta?.version,
             description: meta?.description,
-            protected: isProtectedTexturePack(entry.name)
+            protected: protectedPack,
+            enabled: protectedPack || enabledIds.has(packStateId(entry.name))
         });
     }
     return out.sort((a, b) => a.name.localeCompare(b.name));
@@ -139,7 +214,8 @@ function packDto(dir: string, folderName: string, meta: ReturnType<typeof readPa
         name: meta?.name || folderName,
         author: meta?.author,
         version: meta?.version,
-        description: meta?.description
+        description: meta?.description,
+        enabled: false
     };
 }
 export function hasModStructureInRoot(root: string): boolean {

@@ -264,6 +264,7 @@ export interface TexturePackDto {
     version?: string;
     description?: string;
     protected?: boolean;
+    enabled?: boolean;
 }
 export interface TexturePackInstallResult {
     installed: TexturePackDto[];
