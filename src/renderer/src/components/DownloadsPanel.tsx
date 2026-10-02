@@ -15,13 +15,12 @@ interface JobItem {
 
 const TERMINAL_STAGES = new Set(['done', 'error', 'cancelled']);
 
-// Character progress bar: | green █ filled + gray ░ empty |
 function CharProgress({ percent }: { percent: number }): React.JSX.Element {
-    const width = 18;
+    const width = 24;
     const filled = Math.round((percent / 100) * width);
     const empty = width - filled;
     return (
-        <span className="font-mono text-[11px] leading-none">
+        <span className="font-mono text-sm leading-none">
             <span style={{ color: '#111' }}>|</span>
             <span style={{ color: '#16a34a' }}>{'█'.repeat(filled)}</span>
             <span style={{ color: '#6b7280' }}>{'░'.repeat(empty)}</span>
@@ -48,7 +47,6 @@ export function DownloadsPanel(): React.JSX.Element {
                     error: p.error
                 };
                 next.set(p.id, item);
-
                 if (TERMINAL_STAGES.has(p.stage)) {
                     const existing = cleanupTimers.current.get(p.id);
                     if (existing) window.clearTimeout(existing);
@@ -91,35 +89,34 @@ export function DownloadsPanel(): React.JSX.Element {
     if (jobsArr.length === 0) return null;
 
     return (
-        // 右下角定位，小尺寸
         <div
             className={cn(
-                'pointer-events-auto fixed right-4 bottom-4 z-50 w-72 transition-transform duration-300 ease-out',
-                // 默认在屏幕下方静静待着，只露出 32px
-                'translate-y-[calc(100%-32px)]',
+                'pointer-events-auto fixed right-4 bottom-4 z-50 transition-transform duration-300 ease-out',
+                'translate-y-[calc(100%-36px)]',
                 'hover:translate-y-0'
             )}
         >
-            {/* 背景图层 — 缩放到面板大小 */}
+            {/* 自适应宽度：按内容 min-content，限制最大 min(640px, 80vw) 防止过长 */}
             <div
-                className="relative overflow-hidden"
+                className="overflow-hidden"
                 style={{
                     backgroundImage: `url(${downloadsBg})`,
-                    backgroundSize: 'contain',
+                    backgroundSize: '100% 100%',
                     backgroundRepeat: 'no-repeat',
                     backgroundPosition: 'center',
-                    padding: '12px',
+                    padding: '16px',
+                    width: 'min(640px, 80vw)',
+                    minWidth: 360,
                 }}
             >
-                {/* 内容层 — 纯黑字，无任何背景 */}
                 <div className="relative text-black">
                     {/* 标题栏 */}
-                    <div className="mb-2 flex items-center justify-between text-black">
-                        <div className="flex items-center gap-2 text-xs font-bold">
+                    <div className="mb-3 flex items-center justify-between">
+                        <div className="flex items-center gap-2 text-base font-bold">
                             <span>📥</span>
                             <span>Downloads</span>
                             {runningCount > 0 && (
-                                <span className="font-mono text-[11px] text-black">
+                                <span className="rounded bg-black/10 px-1.5 py-0.5 font-mono text-xs text-black">
                                     ({runningCount})
                                 </span>
                             )}
@@ -129,17 +126,17 @@ export function DownloadsPanel(): React.JSX.Element {
                                 <button
                                     type="button"
                                     onClick={clearDone}
-                                    className="rounded p-0.5 text-black hover:underline"
+                                    className="rounded p-1 text-black hover:bg-black/10"
                                     title="Clear completed"
                                 >
-                                    <Trash2 className="h-3 w-3" />
+                                    <Trash2 className="h-4 w-4" />
                                 </button>
                             )}
                         </div>
                     </div>
 
                     {/* 列表 */}
-                    <div className="space-y-1.5">
+                    <div className="space-y-2">
                         {jobsArr.map((job) => {
                             const isTerminal = TERMINAL_STAGES.has(job.stage);
                             const isError = job.stage === 'error';
@@ -147,41 +144,43 @@ export function DownloadsPanel(): React.JSX.Element {
                             const pct = job.percent;
 
                             return (
-                                <div key={job.id} className="flex items-center gap-2 text-xs">
-                                    {/* 状态图标 */}
+                                <div key={job.id} className="flex items-center gap-3 text-sm">
                                     <div className="shrink-0 text-black">
                                         {!isTerminal ? (
-                                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                            <Loader2 className="h-4 w-4 animate-spin" />
                                         ) : isError ? (
-                                            <span className="font-bold">✗</span>
+                                            <span className="font-bold text-base">✗</span>
                                         ) : isDone ? (
-                                            <span className="font-bold">✓</span>
+                                            <span className="font-bold text-base">✓</span>
                                         ) : (
                                             <span>✦</span>
                                         )}
                                     </div>
 
-                                    {/* 名字 + 字符进度条 */}
-                                    <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                                        <span className="truncate font-semibold text-black">{job.name}</span>
-                                        <div className="flex items-center gap-2">
+                                    <div className="flex min-w-0 flex-1 flex-col gap-1">
+                                        <span className="truncate font-bold text-black">{job.name}</span>
+                                        <div className="flex items-center gap-3">
                                             {pct !== undefined ? (
                                                 <CharProgress percent={pct} />
                                             ) : (
-                                                <span className="font-mono text-[11px] text-black">|░░░░░░░░░░░░░░░░░░░░ --%|</span>
+                                                <span className="font-mono text-sm text-black">|░░░░░░░░░░░░░░░░░░░░░░░░ --%|</span>
+                                            )}
+                                            {job.message && (
+                                                <span className="truncate text-xs text-black/70">
+                                                    {isError ? (job.error || 'Failed') : job.message}
+                                                </span>
                                             )}
                                         </div>
                                     </div>
 
-                                    {/* 操作按钮 */}
                                     <div className="shrink-0">
                                         <button
                                             type="button"
                                             onClick={() => isTerminal ? clearJob(job.id) : cancelJob(job.id)}
-                                            className="rounded p-0.5 text-black hover:underline"
+                                            className="rounded p-1 text-black hover:bg-black/10"
                                             title={isTerminal ? 'Remove' : 'Cancel'}
                                         >
-                                            <X className="h-3 w-3" />
+                                            <X className="h-4 w-4" />
                                         </button>
                                     </div>
                                 </div>
@@ -189,8 +188,8 @@ export function DownloadsPanel(): React.JSX.Element {
                         })}
                     </div>
 
-                    {/* 收起状态提示条 */}
-                    <div className="pointer-events-none absolute inset-x-0 top-0 flex h-8 items-center justify-center text-[10px] font-semibold text-black">
+                    {/* 收起提示 */}
+                    <div className="pointer-events-none absolute inset-x-0 top-0 flex h-9 items-center justify-center text-xs font-bold text-black">
                         {runningCount > 0
                             ? `${runningCount} downloading...`
                             : `${jobsArr.length} done (hover ↑)`}
