@@ -104,10 +104,10 @@ export function DownloadsPanel(): React.JSX.Element | null {
     return (
         // 外层固定不动（保证 hover 区域稳定，不然升起后鼠标会掉出去）
         <div className="group pointer-events-auto fixed right-4 bottom-4 z-50 w-[480px] text-black">
-            {/* 内层负责位移：默认只露半个头部 45px，hover 整块升起 */}
-            <div className="translate-y-[calc(100%-45px)] transition-transform duration-300 ease-out group-hover:translate-y-0">
+            {/* 内层负责位移：默认只露半个头部 45px，hover 升起只露出整个头部 90px */}
+            <div className="translate-y-[calc(100%-45px)] transition-transform duration-300 ease-out group-hover:translate-y-[calc(100%-90px)]">
                 {/* 头部 — 用图片上半部分，文本居中，无 emoji */}
-                <div style={BG_TOP} className="relative flex h-[90px] items-center justify-center pt-6">
+                <div style={BG_TOP} className="relative flex h-[90px] items-center justify-center pt-8">
                     <span className="text-sm font-bold">Downloads</span>
                     {runningCount > 0 && (
                         <span className="ml-1.5 font-mono text-[10px] font-bold">({runningCount})</span>
@@ -116,7 +116,7 @@ export function DownloadsPanel(): React.JSX.Element | null {
                         <button
                             type="button"
                             onClick={clearDone}
-                            className="absolute right-[72px] top-[57px] -translate-y-1/2 rounded p-0.5 text-black hover:bg-black/10"
+                            className="absolute right-[72px] top-[61px] -translate-y-1/2 rounded p-0.5 text-black hover:bg-black/10"
                             title="Clear completed"
                         >
                             <Trash2 className="h-3 w-3" />
