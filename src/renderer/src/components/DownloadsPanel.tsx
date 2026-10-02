@@ -16,11 +16,11 @@ interface JobItem {
 const TERMINAL_STAGES = new Set(['done', 'error', 'cancelled']);
 
 function CharProgress({ percent }: { percent: number }): React.JSX.Element {
-    const width = 24;
+    const width = 20;
     const filled = Math.round((percent / 100) * width);
     const empty = width - filled;
     return (
-        <span className="font-mono text-sm leading-none">
+        <span className="font-mono text-xs leading-none">
             <span style={{ color: '#111' }}>|</span>
             <span style={{ color: '#16a34a' }}>{'█'.repeat(filled)}</span>
             <span style={{ color: '#6b7280' }}>{'░'.repeat(empty)}</span>
@@ -92,31 +92,32 @@ export function DownloadsPanel(): React.JSX.Element {
         <div
             className={cn(
                 'pointer-events-auto fixed right-4 bottom-4 z-50 transition-transform duration-300 ease-out',
-                'translate-y-[calc(100%-36px)]',
+                'translate-y-[calc(100%-32px)]',
                 'hover:translate-y-0'
             )}
         >
-            {/* 九宫格缩放：border-image-slice 只拉伸中间，边缘保持原比例 */}
+            {/* 九宫格：slice=10 对应图片内边框厚度，border-width=10 拉伸边缘 */}
             <div
                 className="relative"
                 style={{
                     borderStyle: 'solid',
-                    borderWidth: '16px',
+                    borderWidth: '10px',
                     borderImageSource: `url(${downloadsBg})`,
-                    borderImageSlice: '16 fill',
-                    borderImageWidth: '1',
-                    width: 'min(640px, 80vw)',
-                    minWidth: 360,
+                    borderImageSlice: '10 fill',
+                    borderImageWidth: '10',
+                    width: 'min(560px, 75vw)',
+                    minWidth: 320,
                 }}
             >
-                <div className="relative p-1 text-black">
+                {/* 内容区：padding 匹配 slice，让文字待在图片白心里 */}
+                <div className="px-3 py-2 text-black">
                     {/* 标题栏 */}
-                    <div className="mb-3 flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-base font-bold">
+                    <div className="mb-2 flex items-center justify-between">
+                        <div className="flex items-center gap-1.5 text-sm font-bold">
                             <span>📥</span>
                             <span>Downloads</span>
                             {runningCount > 0 && (
-                                <span className="rounded bg-black/10 px-1.5 py-0.5 font-mono text-xs text-black">
+                                <span className="rounded bg-black/10 px-1 py-0.5 font-mono text-[10px] text-black">
                                     ({runningCount})
                                 </span>
                             )}
@@ -126,17 +127,17 @@ export function DownloadsPanel(): React.JSX.Element {
                                 <button
                                     type="button"
                                     onClick={clearDone}
-                                    className="rounded p-1 text-black hover:bg-black/10"
+                                    className="rounded p-0.5 text-black hover:bg-black/10"
                                     title="Clear completed"
                                 >
-                                    <Trash2 className="h-4 w-4" />
+                                    <Trash2 className="h-3 w-3" />
                                 </button>
                             )}
                         </div>
                     </div>
 
                     {/* 列表 */}
-                    <div className="space-y-2">
+                    <div className="space-y-1.5">
                         {jobsArr.map((job) => {
                             const isTerminal = TERMINAL_STAGES.has(job.stage);
                             const isError = job.stage === 'error';
@@ -144,29 +145,29 @@ export function DownloadsPanel(): React.JSX.Element {
                             const pct = job.percent;
 
                             return (
-                                <div key={job.id} className="flex items-center gap-3 text-sm">
+                                <div key={job.id} className="flex items-center gap-2 text-xs">
                                     <div className="shrink-0 text-black">
                                         {!isTerminal ? (
-                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                            <Loader2 className="h-3 w-3 animate-spin" />
                                         ) : isError ? (
-                                            <span className="font-bold text-base">✗</span>
+                                            <span className="font-bold text-sm">✗</span>
                                         ) : isDone ? (
-                                            <span className="font-bold text-base">✓</span>
+                                            <span className="font-bold text-sm">✓</span>
                                         ) : (
-                                            <span>✦</span>
+                                            <span className="text-sm">✦</span>
                                         )}
                                     </div>
 
-                                    <div className="flex min-w-0 flex-1 flex-col gap-1">
-                                        <span className="truncate font-bold text-black">{job.name}</span>
-                                        <div className="flex items-center gap-3">
+                                    <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                                        <span className="truncate font-semibold text-black">{job.name}</span>
+                                        <div className="flex items-center gap-2">
                                             {pct !== undefined ? (
                                                 <CharProgress percent={pct} />
                                             ) : (
-                                                <span className="font-mono text-sm text-black">|░░░░░░░░░░░░░░░░░░░░░░░░ --%|</span>
+                                                <span className="font-mono text-xs text-black">|░░░░░░░░░░░░░░░░░░░░░░░░ --%|</span>
                                             )}
                                             {job.message && (
-                                                <span className="truncate text-xs text-black/70">
+                                                <span className="truncate text-[10px] text-black/70">
                                                     {isError ? (job.error || 'Failed') : job.message}
                                                 </span>
                                             )}
@@ -177,10 +178,10 @@ export function DownloadsPanel(): React.JSX.Element {
                                         <button
                                             type="button"
                                             onClick={() => isTerminal ? clearJob(job.id) : cancelJob(job.id)}
-                                            className="rounded p-1 text-black hover:bg-black/10"
+                                            className="rounded p-0.5 text-black hover:bg-black/10"
                                             title={isTerminal ? 'Remove' : 'Cancel'}
                                         >
-                                            <X className="h-4 w-4" />
+                                            <X className="h-3 w-3" />
                                         </button>
                                     </div>
                                 </div>
@@ -189,7 +190,7 @@ export function DownloadsPanel(): React.JSX.Element {
                     </div>
 
                     {/* 收起提示 */}
-                    <div className="pointer-events-none absolute inset-x-0 top-0 flex h-9 items-center justify-center text-xs font-bold text-black">
+                    <div className="pointer-events-none absolute inset-x-0 top-0 flex h-8 items-center justify-center text-[11px] font-bold text-black">
                         {runningCount > 0
                             ? `${runningCount} downloading...`
                             : `${jobsArr.length} done (hover ↑)`}
