@@ -15,16 +15,18 @@ interface JobItem {
 
 const TERMINAL_STAGES = new Set(['done', 'error', 'cancelled']);
 
-// Character-based progress bar: green █ filled + gray ░ empty
+// Character progress bar: | green █ filled + gray ░ empty |
 function CharProgress({ percent }: { percent: number }): React.JSX.Element {
-    const width = 20;
+    const width = 18;
     const filled = Math.round((percent / 100) * width);
     const empty = width - filled;
     return (
-        <span className="font-mono text-[11px] leading-none tracking-[0.5px]">
-            <span style={{ color: '#22c55e' }}>{'█'.repeat(filled)}</span>
+        <span className="font-mono text-[11px] leading-none">
+            <span style={{ color: '#111' }}>|</span>
+            <span style={{ color: '#16a34a' }}>{'█'.repeat(filled)}</span>
             <span style={{ color: '#6b7280' }}>{'░'.repeat(empty)}</span>
-            <span className="ml-1 text-xs text-foreground">{percent}%</span>
+            <span style={{ color: '#111' }}>|</span>
+            <span style={{ color: '#111' }}> {percent}%</span>
         </span>
     );
 }
@@ -89,35 +91,36 @@ export function DownloadsPanel(): React.JSX.Element {
     if (jobsArr.length === 0) return null;
 
     return (
+        // 右下角定位，小尺寸
         <div
             className={cn(
-                'pointer-events-auto fixed inset-x-0 bottom-0 z-50 mx-auto max-w-2xl p-2 transition-transform duration-300 ease-out',
-                // 默认在屏幕底部静静待着，只露出顶部一点点
-                // hover 时 transform 变回 0% 完整升上来
-                'translate-y-[calc(100%-36px)]',
+                'pointer-events-auto fixed right-4 bottom-4 z-50 w-72 transition-transform duration-300 ease-out',
+                // 默认在屏幕下方静静待着，只露出 32px
+                'translate-y-[calc(100%-32px)]',
                 'hover:translate-y-0'
             )}
         >
-            {/* 背景图层 */}
+            {/* 背景图层 — 缩放到面板大小 */}
             <div
-                className="relative rounded-lg overflow-hidden"
+                className="relative overflow-hidden"
                 style={{
                     backgroundImage: `url(${downloadsBg})`,
-                    backgroundSize: '100% 100%',
+                    backgroundSize: 'contain',
                     backgroundRepeat: 'no-repeat',
                     backgroundPosition: 'center',
+                    padding: '12px',
                 }}
             >
-                {/* 内容层 */}
-                <div className="relative p-4 pt-6">
+                {/* 内容层 — 纯黑字，无任何背景 */}
+                <div className="relative text-black">
                     {/* 标题栏 */}
-                    <div className="mb-3 flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                    <div className="mb-2 flex items-center justify-between text-black">
+                        <div className="flex items-center gap-2 text-xs font-bold">
                             <span>📥</span>
                             <span>Downloads</span>
                             {runningCount > 0 && (
-                                <span className="rounded bg-green-600/20 px-1.5 py-0.5 text-xs font-mono text-green-600">
-                                    {runningCount}
+                                <span className="font-mono text-[11px] text-black">
+                                    ({runningCount})
                                 </span>
                             )}
                         </div>
@@ -126,17 +129,17 @@ export function DownloadsPanel(): React.JSX.Element {
                                 <button
                                     type="button"
                                     onClick={clearDone}
-                                    className="rounded p-1 text-xs text-muted-foreground hover:bg-accent hover:text-foreground"
+                                    className="rounded p-0.5 text-black hover:underline"
                                     title="Clear completed"
                                 >
-                                    <Trash2 className="h-3.5 w-3.5" />
+                                    <Trash2 className="h-3 w-3" />
                                 </button>
                             )}
                         </div>
                     </div>
 
-                    {/* 卡片列表 */}
-                    <div className="space-y-2">
+                    {/* 列表 */}
+                    <div className="space-y-1.5">
                         {jobsArr.map((job) => {
                             const isTerminal = TERMINAL_STAGES.has(job.stage);
                             const isError = job.stage === 'error';
@@ -144,77 +147,53 @@ export function DownloadsPanel(): React.JSX.Element {
                             const pct = job.percent;
 
                             return (
-                                <div
-                                    key={job.id}
-                                    className={cn(
-                                        'flex items-center gap-3 rounded border px-3 py-2 text-sm',
-                                        'bg-background/80 backdrop-blur-sm',
-                                        isError && 'border-red-400/60 bg-red-50/90',
-                                        isDone && 'border-green-400/60 bg-green-50/90',
-                                    )}
-                                >
+                                <div key={job.id} className="flex items-center gap-2 text-xs">
                                     {/* 状态图标 */}
-                                    <div className="shrink-0">
+                                    <div className="shrink-0 text-black">
                                         {!isTerminal ? (
-                                            <Loader2 className="h-4 w-4 animate-spin text-green-600" />
+                                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
                                         ) : isError ? (
-                                            <span className="text-red-500 text-lg leading-none">✗</span>
+                                            <span className="font-bold">✗</span>
                                         ) : isDone ? (
-                                            <span className="text-green-600 text-lg leading-none">✓</span>
+                                            <span className="font-bold">✓</span>
                                         ) : (
-                                            <span className="text-xs text-muted-foreground">✦</span>
+                                            <span>✦</span>
                                         )}
                                     </div>
 
                                     {/* 名字 + 字符进度条 */}
                                     <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                                        <span className="truncate font-medium">{job.name}</span>
+                                        <span className="truncate font-semibold text-black">{job.name}</span>
                                         <div className="flex items-center gap-2">
                                             {pct !== undefined ? (
                                                 <CharProgress percent={pct} />
                                             ) : (
-                                                <span className="font-mono text-xs text-gray-500">░░░░░░░░░░░░░░░░░░░░  --%</span>
-                                            )}
-                                            {job.message && (
-                                                <span className="truncate text-xs text-muted-foreground">
-                                                    {isError ? (job.error || 'Failed') : job.message}
-                                                </span>
+                                                <span className="font-mono text-[11px] text-black">|░░░░░░░░░░░░░░░░░░░░ --%|</span>
                                             )}
                                         </div>
                                     </div>
 
                                     {/* 操作按钮 */}
                                     <div className="shrink-0">
-                                        {!isTerminal ? (
-                                            <button
-                                                type="button"
-                                                onClick={() => cancelJob(job.id)}
-                                                className="rounded p-1 text-muted-foreground hover:bg-red-100 hover:text-red-600"
-                                                title="Cancel"
-                                            >
-                                                <X className="h-3.5 w-3.5" />
-                                            </button>
-                                        ) : (
-                                            <button
-                                                type="button"
-                                                onClick={() => clearJob(job.id)}
-                                                className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
-                                                title="Remove"
-                                            >
-                                                <X className="h-3.5 w-3.5" />
-                                            </button>
-                                        )}
+                                        <button
+                                            type="button"
+                                            onClick={() => isTerminal ? clearJob(job.id) : cancelJob(job.id)}
+                                            className="rounded p-0.5 text-black hover:underline"
+                                            title={isTerminal ? 'Remove' : 'Cancel'}
+                                        >
+                                            <X className="h-3 w-3" />
+                                        </button>
                                     </div>
                                 </div>
                             );
                         })}
                     </div>
 
-                    {/* hover 提示条（收起状态下露出来的那一条） */}
-                    <div className="pointer-events-none absolute left-0 right-0 top-0 h-9 flex items-center justify-center text-[11px] text-muted-foreground/70">
+                    {/* 收起状态提示条 */}
+                    <div className="pointer-events-none absolute inset-x-0 top-0 flex h-8 items-center justify-center text-[10px] font-semibold text-black">
                         {runningCount > 0
                             ? `${runningCount} downloading...`
-                            : `${jobsArr.length} completed (hover to view)`}
+                            : `${jobsArr.length} done (hover ↑)`}
                     </div>
                 </div>
             </div>
