@@ -294,10 +294,15 @@ export function installUnmanaged(extractRoot: string, gameRoot: string, onProgre
                 if (!fs.existsSync(extra))
                     continue;
                 const extraDest = path.join(path.dirname(dest), path.basename(extra));
-                const existedExtra = fs.existsSync(extraDest);
-                fs.copyFileSync(extra, extraDest);
-                if (!existedExtra)
-                    created.push(extraDest);
+                try {
+                    const existedExtra = fs.existsSync(extraDest);
+                    fs.copyFileSync(extra, extraDest);
+                    if (!existedExtra)
+                        created.push(extraDest);
+                }
+                catch {
+                    // extras 拷贝失败（目标被占用、权限等）不阻塞主流程
+                }
             }
         }
         for (const patcher of targets.patchers) {

@@ -42,7 +42,7 @@ function pluginTarget(absDll: string, rel: string): {
     const dir = path.dirname(absDll);
     const stem = path.basename(absDll, PLUGIN_EXT);
     const extras = [] as string[];
-    for (const f of ['xml', 'pdb']) {
+    for (const f of ['xml']) {
         const p = path.join(dir, `${stem}.${f}`);
         if (fs.existsSync(p))
             extras.push(p);
@@ -171,9 +171,13 @@ function walkHeuristic(extractRoot: string, targets: InstallTargets): void {
     for (const f of files) {
         const lower = f.rel.toLowerCase();
         const stem = stemOf(f.rel).toLowerCase();
-        if (lower.endsWith('.pdb') || lower.endsWith('.xml')) {
+        if (lower.endsWith('.xml')) {
             const owner = findPluginEntry(plugins, f.rel, stem);
             owner?.extras.push(f.abs);
+            continue;
+        }
+        if (lower.endsWith('.pdb')) {
+            // .pdb 是调试符号文件，BepInEx 运行不需要，直接跳过
             continue;
         }
         if (lower.endsWith('.json')) {
