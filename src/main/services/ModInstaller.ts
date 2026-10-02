@@ -301,7 +301,6 @@ export function installUnmanaged(extractRoot: string, gameRoot: string, onProgre
                         created.push(extraDest);
                 }
                 catch {
-                    // extras 拷贝失败（目标被占用、权限等）不阻塞主流程
                 }
             }
         }

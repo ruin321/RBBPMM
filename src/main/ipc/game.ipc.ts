@@ -28,8 +28,6 @@ function minimizeMainWindow(): void {
     if (w)
         w.minimize();
 }
-// Tell the renderer the game stopped as soon as the process we spawned exits,
-// instead of waiting for the next poll.
 async function broadcastRunning(): Promise<void> {
     const running = await isGameRunning();
     for (const w of BrowserWindow.getAllWindows())
@@ -40,14 +38,9 @@ function watchForExit(child: ChildProcess): void {
     child.on('exit', () => {
         if (runtimeState.gamePid === pid)
             runtimeState.gamePid = null;
-        // Re-check instead of blindly reporting false so that a game process
-        // which re-launched itself is not mistaken for a finished one.
         void broadcastRunning();
     });
 }
-// Steam keeps a manifest next to each installed game
-// (<library>/steamapps/common/<game>), so finding it proves the selected
-// folder is the copy Steam itself manages.
 function isSteamManagedCopy(rootPath: string): boolean {
     let dir = rootPath;
     for (let i = 0; i < 4; i++) {
@@ -129,9 +122,6 @@ export function registerGameIpc(): void {
         const env = loadCurrentEnv();
         if (!env)
             return { ok: false, error: 'Game directory not configured' };
-        // Let Steam own the launch whenever it manages this copy. Injecting the
-        // app id into a process Steam did not start makes its overlay hook a
-        // foreign process, which leaks handles and unsettles the Steam UI.
         if (isSteamManagedCopy(env.rootPath)) {
             try {
                 await shell.openExternal(`steam://rungameid/${STEAM_APPID}`);
@@ -142,7 +132,6 @@ export function registerGameIpc(): void {
                 return { ok: false, error: err instanceof Error ? err.message : String(err) };
             }
         }
-        // Not a Steam-managed copy, so Steam cannot launch it: start it directly.
         const r = await launchExecutable(env);
         return r.ok ? { ok: true, value: { launched: true } } : r;
     });

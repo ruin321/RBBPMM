@@ -77,8 +77,6 @@ export function bepinexModInfoDir(gameRoot: string): string {
 export function texturePacksDir(gameRoot: string): string {
     return path.join(gameRoot, ...TEXTURE_PACKS_RELATIVE);
 }
-// Custom Posters (io.github.uncertainluei.baldiplus.customposters) reads every
-// sub-folder of its Posters directory as a poster pack.
 export const CUSTOM_POSTERS_GUID = 'io.github.uncertainluei.baldiplus.customposters';
 export const CUSTOM_POSTERS_DLL = 'UncertainLuei.CustomPosters.dll';
 export const CUSTOM_POSTERS_DISABLED_FOLDER = 'DisabledPosters';

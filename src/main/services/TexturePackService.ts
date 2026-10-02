@@ -32,8 +32,6 @@ function readPackJson(dir: string): {
 export function isProtectedTexturePack(folderName: string): boolean {
     return PROTECTED_TEXTURE_PACK_FOLDERS.has(String(folderName).toLowerCase());
 }
-// The texture pack mod keys its per-profile enable list (packs.txt) by the
-// pack folder name without its extension.
 function packStateId(folderName: string): string {
     return path.parse(folderName).name;
 }
@@ -65,8 +63,6 @@ function readProfilePackStates(profile: string): Map<string, boolean> {
     }
     return states;
 }
-// A pack counts as enabled when any player profile has it enabled; the toggle
-// writes the same state to every profile since the active one is unknown here.
 function readEnabledPackIds(): Set<string> {
     const enabled = new Set<string>();
     for (const profile of listSaveProfiles()) {

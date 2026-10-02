@@ -66,8 +66,6 @@ function listPackDirs(root: string): fs.Dirent[] {
         return [];
     }
 }
-// The mod treats every sub-folder of the Posters directory as a pack. Disabled
-// packs are parked in a sibling folder the mod never scans so they stay inert.
 export function listPosterPacks(gameRoot: string): PosterPackDto[] {
     const out: PosterPackDto[] = [];
     for (const entry of listPackDirs(customPostersDir(gameRoot))) {
@@ -78,9 +76,6 @@ export function listPosterPacks(gameRoot: string): PosterPackDto[] {
     }
     return out.sort((a, b) => a.name.localeCompare(b.name));
 }
-// A poster pack is a folder of .png/.jpg images (optionally with per-image
-// .png.json definitions). Texture packs are ruled out by their pack.json and
-// real mods by their BepInEx/Modded structure, both of which are probed first.
 export async function probePosterPackArchive(archivePath: string): Promise<boolean> {
     if (!fs.existsSync(archivePath))
         return false;
@@ -135,7 +130,6 @@ export async function installPosterPacksFromRoot(gameRoot: string, extractRoot: 
     const rootImages = listImageFiles(extractRoot, false);
     const installed: PosterPackDto[] = [];
     if (rootImages.length > 0) {
-        // Images sit at the archive root: the whole archive is a single pack.
         const dst = path.join(targetRoot, fallbackName);
         await copyDirContents(extractRoot, dst);
         installed.push(packDto(dst, fallbackName, true));

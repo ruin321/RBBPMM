@@ -177,7 +177,6 @@ function walkHeuristic(extractRoot: string, targets: InstallTargets): void {
             continue;
         }
         if (lower.endsWith('.pdb')) {
-            // .pdb 是调试符号文件，BepInEx 运行不需要，直接跳过
             continue;
         }
         if (lower.endsWith('.json')) {

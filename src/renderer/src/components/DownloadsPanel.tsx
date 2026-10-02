@@ -7,9 +7,8 @@ const TERMINAL_STAGES = new Set(['done', 'error', 'cancelled']);
 
 const HEADER_H = 72;
 const ROW_H = 72;
-const VISIBLE_H = HEADER_H; // 收起时只露出一整条头部
+const VISIBLE_H = HEADER_H; 
 
-// 图片 480x360：上半部分（红顶 + 灰条）给头部，下半部分（白心 + 两边红框）给每一行
 const BG_TOP: React.CSSProperties = {
     backgroundImage: `url(${downloadsBg})`,
     backgroundSize: '100% 360px',
@@ -47,7 +46,6 @@ function JobsPanel({ kind, title }: {
 
     useEffect(() => {
         const upsert = (p: JobProgress): void => {
-            // 两个面板各过滤各的
             if ((p.kind ?? 'download') !== kind)
                 return;
             setJobs((prev) => {
@@ -61,12 +59,11 @@ function JobsPanel({ kind, title }: {
             ? window.api.banana.onJobProgress(upsert)
             : window.api.install.onJobProgress(upsert);
 
-        // 拉一次主进程的任务快照：切换页面 / 组件重挂载后进度不会丢
         void (isDownload ? window.api.banana.getJobs() : window.api.install.getJobs())
             .then((list) => {
                 for (const p of list) upsert(p);
             })
-            .catch(() => { /* noop */ });
+            .catch(() => {  });
 
         return () => off();
     }, [kind, isDownload]);
@@ -102,19 +99,16 @@ function JobsPanel({ kind, title }: {
     if (jobsArr.length === 0) return null;
 
     const hasFinished = jobsArr.some((j) => TERMINAL_STAGES.has(j.stage));
-    // 展开后的完整高度 = 头部 + 每行；收起时用 translateY 把行部分藏到视口外
     const panelH = HEADER_H + jobsArr.length * ROW_H;
 
     return (
-        // 外层盒子只占「头部」这一条的高度 —— hover 判定区就只在这一条上，
-        // 不会像之前那样整块面板（含隐藏的行）都算触发区。
         <div
             className="group pointer-events-auto relative w-[480px] text-black"
             style={{ height: VISIBLE_H, ['--panel-h' as string]: `${panelH}px` }}
         >
-            {/* 内层绝对定位在盒子底部：收起时下移只露头部，hover 时上滑露出全部内容 */}
+            {}
             <div className="absolute bottom-0 left-0 w-full translate-y-[calc(var(--panel-h)-72px)] transition-transform duration-300 ease-out group-hover:translate-y-0">
-                {/* 头部 — 用图片上半部分，文本居中在灰条下方 */}
+                {}
                 <div style={BG_TOP} className="relative flex h-[72px] items-center justify-center pt-[50px]">
                     <span className="text-sm font-bold">{title}</span>
                     {runningCount > 0 && (
@@ -132,7 +126,7 @@ function JobsPanel({ kind, title }: {
                     )}
                 </div>
 
-                {/* 每一个下载任务一行 — 用图片下半部分，多个任务就多块 */}
+                {}
                 {jobsArr.map((job) => {
                     const isTerminal = TERMINAL_STAGES.has(job.stage);
                     const isError = job.stage === 'error';

@@ -31,7 +31,6 @@ function requireEnv(): {
 }
 const choiceResolvers = new Map<string, (shouldInstall: boolean) => void>();
 export function registerBananaIpc(getWebContents: () => WebContents | null): void {
-    // Bridge DownloadManager events to renderer with job ids
     downloadManager.subscribe((p) => {
         getWebContents()?.send('banana:job-progress', p);
     });
@@ -138,7 +137,6 @@ export function registerBananaIpc(getWebContents: () => WebContents | null): voi
             const jobId = downloadManager.submit(jobName, async (controller, onProgress) => {
                 let tmpFile: string | null = null;
                 let instId: string | null = null;
-                // 安装阶段的进度同时喂给安装面板（各自过滤 kind）
                 const track = (p: Parameters<typeof onProgress>[0]): void => {
                     onProgress(p);
                     if (instId)
@@ -155,13 +153,11 @@ export function registerBananaIpc(getWebContents: () => WebContents | null): voi
                         });
                     }, () => controller.signal.aborted);
 
-                    // Always save copy to Downloads/BaldiMods first
                     const dlDir = path.join(os.homedir(), 'Downloads', 'BaldiMods');
-                    try { fs.mkdirSync(dlDir, { recursive: true }); } catch { /* noop */ }
+                    try { fs.mkdirSync(dlDir, { recursive: true }); } catch {  }
                     const savedPath = path.join(dlDir, path.basename(tmpFile));
-                    try { fs.copyFileSync(tmpFile, savedPath); } catch { /* noop */ }
+                    try { fs.copyFileSync(tmpFile, savedPath); } catch {  }
 
-                    // 开关「开」→ 弹 Dialog 问；「关」→ 直接装，不问
                     const shouldInstall = getAutoInstallAfterDownload()
                         ? await new Promise<boolean>((resolve) => {
                             getWebContents()?.send('banana:need-install-choice', { jobId, savedPath, submissionName: submission.name });
@@ -195,7 +191,7 @@ export function registerBananaIpc(getWebContents: () => WebContents | null): voi
                                 if (result.mod) {
                                     const mm = loadModManifest(result.mod.installDir);
                                     if (mm) {
-                                        try { await linkKnownSubmission(result.mod, mm, submission, file); } catch { /* noop */ }
+                                        try { await linkKnownSubmission(result.mod, mm, submission, file); } catch {  }
                                     }
                                 }
                             } else {
@@ -216,7 +212,7 @@ export function registerBananaIpc(getWebContents: () => WebContents | null): voi
                         if (instId)
                             installTracker.done(instId, 'Install complete');
                     } finally {
-                        try { fs.rmSync(exTemp, { recursive: true, force: true }); } catch { /* noop */ }
+                        try { fs.rmSync(exTemp, { recursive: true, force: true }); } catch {  }
                     }
                 } catch (err) {
                     const msg = err instanceof Error ? err.message : String(err);
@@ -226,7 +222,7 @@ export function registerBananaIpc(getWebContents: () => WebContents | null): voi
                     throw err;
                 } finally {
                     if (tmpFile) {
-                        try { fs.rmSync(path.dirname(tmpFile), { recursive: true, force: true }); } catch { /* noop */ }
+                        try { fs.rmSync(path.dirname(tmpFile), { recursive: true, force: true }); } catch {  }
                     }
                 }
             });
@@ -240,7 +236,6 @@ export function registerBananaIpc(getWebContents: () => WebContents | null): voi
         if (jobId) {
             downloadManager.cancel(jobId);
         } else {
-            // cancel oldest running if no id
             const running = downloadManager.getAll().filter((j) => j.status === 'downloading' || j.status === 'extracting' || j.status === 'installing');
             if (running.length > 0) downloadManager.cancel(running[0].id);
         }
@@ -281,7 +276,6 @@ export function registerBananaIpc(getWebContents: () => WebContents | null): voi
         const jobId = downloadManager.submit(jobName, async (controller, onProgress) => {
             let tmpFile: string | null = null;
             let instId: string | null = null;
-            // 安装阶段的进度同时喂给安装面板（各自过滤 kind）
             const track = (p: Parameters<typeof onProgress>[0]): void => {
                 onProgress(p);
                 if (instId)
@@ -298,13 +292,11 @@ export function registerBananaIpc(getWebContents: () => WebContents | null): voi
                     });
                 }, () => controller.signal.aborted);
 
-                // Always save copy first
                 const dlDir = path.join(os.homedir(), 'Downloads', 'BaldiMods');
-                try { fs.mkdirSync(dlDir, { recursive: true }); } catch { /* noop */ }
+                try { fs.mkdirSync(dlDir, { recursive: true }); } catch {  }
                 const savedPath = path.join(dlDir, path.basename(tmpFile));
-                try { fs.copyFileSync(tmpFile, savedPath); } catch { /* noop */ }
+                try { fs.copyFileSync(tmpFile, savedPath); } catch {  }
 
-                // 开关「开」→ 弹 Dialog 问；「关」→ 直接装，不问
                 const shouldInstall = getAutoInstallAfterDownload()
                     ? await new Promise<boolean>((resolve) => {
                         getWebContents()?.send('banana:need-install-choice', { jobId, savedPath, submissionName: path.basename(url.split('?')[0]) || 'mod' });
@@ -344,7 +336,7 @@ export function registerBananaIpc(getWebContents: () => WebContents | null): voi
                     if (instId)
                         installTracker.done(instId, 'Install complete');
                 } finally {
-                    try { fs.rmSync(exTemp, { recursive: true, force: true }); } catch { /* noop */ }
+                    try { fs.rmSync(exTemp, { recursive: true, force: true }); } catch {  }
                 }
             } catch (err) {
                 const msg = err instanceof Error ? err.message : String(err);
@@ -354,7 +346,7 @@ export function registerBananaIpc(getWebContents: () => WebContents | null): voi
                 throw err;
             } finally {
                 if (tmpFile) {
-                    try { fs.rmSync(path.dirname(tmpFile), { recursive: true, force: true }); } catch { /* noop */ }
+                    try { fs.rmSync(path.dirname(tmpFile), { recursive: true, force: true }); } catch {  }
                 }
             }
         });

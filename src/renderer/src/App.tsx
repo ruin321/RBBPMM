@@ -181,7 +181,6 @@ export function App(): React.JSX.Element {
         const archives = allFiles.filter((f) => ARCHIVE_EXT.test(f.name));
         const looseDlls = allFiles.filter((f) => LOose_EXT.test(f.name));
 
-        // Each archive handled independently (parallel)
         for (const file of archives) {
             const f = file as File & { path?: string };
             const path = f.path;
@@ -218,7 +217,6 @@ export function App(): React.JSX.Element {
             })();
         }
 
-        // Loose DLLs / plugin files — install directly
         for (const file of looseDlls) {
             const f = file as File & { path?: string };
             const path = f.path;

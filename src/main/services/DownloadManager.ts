@@ -44,7 +44,7 @@ class DownloadManager {
 
     private emit(p: JobProgress): void {
         for (const l of this.listeners) {
-            try { l(p); } catch { /* noop */ }
+            try { l(p); } catch {  }
         }
     }
 

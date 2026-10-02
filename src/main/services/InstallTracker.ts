@@ -7,11 +7,7 @@ export interface InstallProgressUpdate {
     message?: string;
 }
 
-/**
- * Install jobs are executed by their own services (they are not submitted to
- * DownloadManager) — this only tracks them so the install panel can show
- * progress from every install source in one place.
- */
+
 class InstallTracker {
     private jobs = new Map<string, JobProgress>();
     private listeners = new Set<(p: JobProgress) => void>();
@@ -25,7 +21,7 @@ class InstallTracker {
 
     private emit(p: JobProgress): void {
         for (const l of this.listeners) {
-            try { l(p); } catch { /* noop */ }
+            try { l(p); } catch {  }
         }
     }
 

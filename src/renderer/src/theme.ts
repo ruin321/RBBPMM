@@ -2,7 +2,7 @@ export interface ThemeDef {
     id: string;
     name: string;
     dark: boolean;
-    /** 原生档位：不走「现代设计」那套观感，改由 globals.css 的 html.ui-native 复位成系统原生形态 */
+    
     native?: boolean;
     vars?: Record<string, string>;
 }
