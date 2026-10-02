@@ -138,6 +138,11 @@ export function ModDetailPage({ submissionId, fallback, onBack, onInstalled, onO
     const isJumpscarePage = submissionId === JUMPSCARE_SUBMISSION_ID;
     const installingRef = useRef(false);
     installingRef.current = activeFileId !== undefined;
+    const [easterVisible, setEasterVisible] = useState(false);
+    useEffect(() => {
+        const t1 = setTimeout(() => setEasterVisible(true), 120_000);
+        return () => clearTimeout(t1);
+    }, [submissionId]);
     useEffect(() => {
         let active = true;
         setLoading(true);
@@ -245,6 +250,7 @@ export function ModDetailPage({ submissionId, fallback, onBack, onInstalled, onO
         }
     };
     return (<div className={[
+            'relative',
             'space-y-6',
             isRetroPage ? 'retro-page' : '',
             isCursorPage ? 'cursor-710488' : '',
@@ -568,5 +574,18 @@ export function ModDetailPage({ submissionId, fallback, onBack, onInstalled, onO
             IM FISH
           </span>
         </button>)}
+      {easterVisible && (
+        <div
+          style={{ opacity: easterVisible ? 0.8 : 0, transition: 'opacity 180s ease-in-out' }}
+          className="pointer-events-none absolute right-4 bottom-4 z-10"
+        >
+          <img
+            src="https://images.gamebanana.com/img/Webpage/Game/Profile/Background/6aa6e421cb585.png"
+            alt=""
+            className="h-32 w-52 rounded-md object-cover shadow-lg ring-1 ring-border"
+            referrerPolicy="no-referrer"
+          />
+        </div>
+      )}
     </div>);
 }

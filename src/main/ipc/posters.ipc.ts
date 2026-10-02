@@ -1,9 +1,7 @@
-import { ipcMain } from 'electron';
+﻿import { ipcMain } from 'electron';
 import { installPosterPack, listPosterPacks, probePosterPackArchive, setPosterPackEnabled, uninstallPosterPack } from '../services/PosterPackService';
 import { customPostersDir } from '../constants';
 import { runtimeState } from '../store';
-import { downloadManager } from '../services/DownloadManager';
-import path from 'path';
 import type { PosterPackInstallResult, PosterPackListResult, PosterPackProgress, Result } from '../../shared/types';
 function requireEnv(): {
     ok: true;
@@ -49,33 +47,13 @@ export function registerPostersIpc(): void {
         if (!env.ok)
             return env;
         try {
-            const jobName = `Poster Pack: ${path.basename(archivePath)}`;
-            let resolveResult!: (v: PosterPackInstallResult) => void;
-            let rejectResult!: (e: unknown) => void;
-            const resultPromise = new Promise<PosterPackInstallResult>((resolve, reject) => {
-                resolveResult = resolve;
-                rejectResult = reject;
-            });
-            downloadManager.submit(jobName, async (_controller, onProgress) => {
-                const emit = (stage: string): void => {
-                    onProgress({ stage: 'extracting', message: stage });
-                    const wc = _e.sender;
-                    if (!wc.isDestroyed()) {
-                        const p: PosterPackProgress = { stage };
-                        wc.send('posters:install-progress', p);
-                    }
-                };
-                try {
-                    onProgress({ stage: 'extracting', message: 'Starting install' });
-                    const value = await installPosterPack(env.value, archivePath, emit);
-                    onProgress({ stage: 'done', percent: 100, message: 'Install complete' });
-                    resolveResult(value);
-                } catch (err) {
-                    rejectResult(err);
-                    throw err;
+            const value = await installPosterPack(env.value, archivePath, (stage) => {
+                const wc = _e.sender;
+                if (!wc.isDestroyed()) {
+                    const p: PosterPackProgress = { stage };
+                    wc.send('posters:install-progress', p);
                 }
             });
-            const value = await resultPromise;
             return { ok: true, value };
         }
         catch (err) {

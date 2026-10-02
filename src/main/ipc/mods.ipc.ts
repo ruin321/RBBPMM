@@ -1,4 +1,4 @@
-import fs from 'fs';
+﻿import fs from 'fs';
 import { ipcMain, WebContents } from 'electron';
 import { loadModManifest } from '../services/ManifestLoader';
 import { scanRepositoryCached, invalidateModScan, patchModScanEntry } from '../services/ModRepositoryScanner';
@@ -11,9 +11,8 @@ import { deleteMod, deleteLegacyPlugin } from '../services/ModUnInstaller';
 import { checkForUpdate, persistArchiveName, updateMod } from '../services/ModSourceLinker';
 import { isInside } from '../services/PathGuard';
 import { BEPINEX_FOLDER, PLUGINS_FOLDER } from '../constants';
-import path from 'path';
 import { runtimeState } from '../store';
-import { downloadManager } from '../services/DownloadManager';
+import path from 'path';
 import type { InstallProgress, ModInstallOutcome, ModItemDto, ModUpdateInfoDto, Result } from '../../shared/types';
 function requireEnv(): {
     ok: true;
@@ -64,70 +63,39 @@ export function registerModsIpc(getWebContents: () => WebContents | null): void 
         const env = requireEnv();
         if (!env.ok)
             return env;
+        runtimeState.cancelController = new AbortController();
+        const signal = runtimeState.cancelController.signal;
+        progressSink = () => { };
+        const tempRoot = createTempDir(env.value);
         try {
-            const jobName = `Mod: ${path.basename(archivePath)}`;
-            let resolveResult!: (v: ModInstallOutcome) => void;
-            let rejectResult!: (e: unknown) => void;
-            const resultPromise = new Promise<ModInstallOutcome>((resolve, reject) => {
-                resolveResult = resolve;
-                rejectResult = reject;
-            });
-            downloadManager.submit(jobName, async (controller, onProgress) => {
-                runtimeState.cancelController = controller.signal.aborted ? null : new AbortController();
-                const signal = runtimeState.cancelController?.signal ?? new AbortController().signal;
-                progressSink = (p) => {
-                    if (p.stage === 'start' || p.stage === 'extracting')
-                        onProgress({ stage: 'extracting', percent: p.percent, message: p.message });
-                    else
-                        onProgress({ stage: 'installing', percent: p.percent, message: p.message });
-                    const wc = _e.sender;
-                    if (!wc.isDestroyed())
-                        wc.send('mods:install-progress', p);
-                };
-                const tempRoot = createTempDir(env.value);
-                try {
-                    emit({ stage: 'start', percent: 0, message: 'Starting install' });
-                    emit({ stage: 'extracting', message: 'Extracting archive' });
-                    const extractRoot = await extractArchive(archivePath, tempRoot);
-                    const readmes: ReadmeFile[] = [];
-                    collectReadmes(extractRoot, readmes, 8);
-                    if (hasManifest(extractRoot)) {
-                        const result = await installModArchive(env.value, archivePath, runtimeState.environment?.gameVersion, (p) => emit(p), () => signal.aborted, extractRoot);
-                        if (result.mod) {
-                            const mm = loadModManifest(result.mod.installDir);
-                            if (mm)
-                                persistArchiveName(result.mod.installDir, mm, path.basename(archivePath));
-                        }
-                        invalidateModScan(env.value);
-                        onProgress({ stage: 'done', percent: 100, message: 'Install complete' });
-                        resolveResult({ mode: 'manifest', modName: result.mod?.name ?? '', readmes });
-                        return;
-                    }
-                    const plan = buildPlan(extractRoot);
-                    if (plan.needsConfirm) {
-                        // No actual install performed — just return the plan
-                        progressSink = null;
-                        runtimeState.cancelController = null;
-                        if (fs.existsSync(tempRoot))
-                            removeDirIfInside(env.value, tempRoot);
-                        resolveResult({ mode: 'confirm', plan, readmes });
-                        return;
-                    }
-                    const modName = installUnmanaged(extractRoot, env.value, (p) => emit(p), () => signal.aborted);
-                    invalidateModScan(env.value);
-                    onProgress({ stage: 'done', percent: 100, message: 'Install complete' });
-                    resolveResult({ mode: 'unmanaged', modName, readmes });
-                } finally {
-                    if (fs.existsSync(tempRoot))
-                        removeDirIfInside(env.value, tempRoot);
-                    progressSink = null;
-                    runtimeState.cancelController = null;
+            emit({ stage: 'start', percent: 0, message: 'Starting install' });
+            emit({ stage: 'extracting', message: 'Extracting archive' });
+            const extractRoot = await extractArchive(archivePath, tempRoot);
+            const readmes: ReadmeFile[] = [];
+            collectReadmes(extractRoot, readmes, 8);
+            if (hasManifest(extractRoot)) {
+                const result = await installModArchive(env.value, archivePath, runtimeState.environment?.gameVersion, (p) => emit(p), () => signal.aborted, extractRoot);
+                if (result.mod) {
+                    const mm = loadModManifest(result.mod.installDir);
+                    if (mm)
+                        persistArchiveName(result.mod.installDir, mm, path.basename(archivePath));
                 }
-            });
-            const value = await resultPromise;
-            return { ok: true, value };
-        } catch (err) {
-            return { ok: false, error: err instanceof Error ? err.message : String(err) };
+                invalidateModScan(env.value);
+                return { ok: true, value: { mode: 'manifest', modName: result.mod?.name ?? '', readmes } };
+            }
+            const plan = buildPlan(extractRoot);
+            if (plan.needsConfirm) {
+                return { ok: true, value: { mode: 'confirm', plan, readmes } };
+            }
+            const modName = installUnmanaged(extractRoot, env.value, (p) => emit(p), () => signal.aborted);
+            invalidateModScan(env.value);
+            return { ok: true, value: { mode: 'unmanaged', modName, readmes } };
+        }
+        finally {
+            if (fs.existsSync(tempRoot))
+                removeDirIfInside(env.value, tempRoot);
+            progressSink = null;
+            runtimeState.cancelController = null;
         }
     });
     ipcMain.handle('mods:install-unmanaged', async (_e, { archivePath }: {
@@ -139,48 +107,25 @@ export function registerModsIpc(getWebContents: () => WebContents | null): void 
         const env = requireEnv();
         if (!env.ok)
             return env;
+        runtimeState.cancelController = new AbortController();
+        const signal = runtimeState.cancelController.signal;
+        progressSink = () => { };
+        const tempRoot = createTempDir(env.value);
         try {
-            const jobName = `Mod (unmanaged): ${path.basename(archivePath)}`;
-            let resolveResult!: (v: { modName: string; readmes: ReadmeFile[] }) => void;
-            let rejectResult!: (e: unknown) => void;
-            const resultPromise = new Promise<{ modName: string; readmes: ReadmeFile[] }>((resolve, reject) => {
-                resolveResult = resolve;
-                rejectResult = reject;
-            });
-            downloadManager.submit(jobName, async (controller, onProgress) => {
-                runtimeState.cancelController = new AbortController();
-                const signal = runtimeState.cancelController.signal;
-                progressSink = (p) => {
-                    if (p.stage === 'start' || p.stage === 'extracting')
-                        onProgress({ stage: 'extracting', percent: p.percent, message: p.message });
-                    else
-                        onProgress({ stage: 'installing', percent: p.percent, message: p.message });
-                    const wc = _e.sender;
-                    if (!wc.isDestroyed())
-                        wc.send('mods:install-progress', p);
-                };
-                const tempRoot = createTempDir(env.value);
-                try {
-                    emit({ stage: 'start', percent: 0, message: 'Starting install' });
-                    emit({ stage: 'extracting', message: 'Extracting archive' });
-                    const extractRoot = await extractArchive(archivePath, tempRoot);
-                    const readmes: ReadmeFile[] = [];
-                    collectReadmes(extractRoot, readmes, 8);
-                    const modName = installUnmanaged(extractRoot, env.value, (p) => emit(p), () => signal.aborted);
-                    invalidateModScan(env.value);
-                    onProgress({ stage: 'done', percent: 100, message: 'Install complete' });
-                    resolveResult({ modName, readmes });
-                } finally {
-                    if (fs.existsSync(tempRoot))
-                        removeDirIfInside(env.value, tempRoot);
-                    progressSink = null;
-                    runtimeState.cancelController = null;
-                }
-            });
-            const value = await resultPromise;
-            return { ok: true, value };
-        } catch (err) {
-            return { ok: false, error: err instanceof Error ? err.message : String(err) };
+            emit({ stage: 'start', percent: 0, message: 'Starting install' });
+            emit({ stage: 'extracting', message: 'Extracting archive' });
+            const extractRoot = await extractArchive(archivePath, tempRoot);
+            const readmes: ReadmeFile[] = [];
+            collectReadmes(extractRoot, readmes, 8);
+            const modName = installUnmanaged(extractRoot, env.value, (p) => emit(p), () => signal.aborted);
+            invalidateModScan(env.value);
+            return { ok: true, value: { modName, readmes } };
+        }
+        finally {
+            if (fs.existsSync(tempRoot))
+                removeDirIfInside(env.value, tempRoot);
+            progressSink = null;
+            runtimeState.cancelController = null;
         }
     });
     ipcMain.handle('mods:install-cancel', async (): Promise<void> => {

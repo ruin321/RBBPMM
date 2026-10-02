@@ -1,9 +1,7 @@
-import { ipcMain } from 'electron';
+﻿import { ipcMain } from 'electron';
 import { installTexturePack, listTexturePacks, probeTexturePackArchive, setTexturePackEnabled, uninstallTexturePack } from '../services/TexturePackService';
 import { texturePacksDir } from '../constants';
 import { runtimeState } from '../store';
-import { downloadManager } from '../services/DownloadManager';
-import path from 'path';
 import type { Result, TexturePackInstallResult, TexturePackListResult, TexturePackProgress } from '../../shared/types';
 function requireEnv(): {
     ok: true;
@@ -49,31 +47,14 @@ export function registerTexturesIpc(): void {
         if (!env.ok)
             return env;
         try {
-            const jobName = `Texture Pack: ${path.basename(archivePath)}`;
-            let resolveResult!: (v: TexturePackInstallResult) => void;
-            let rejectResult!: (e: unknown) => void;
-            const resultPromise = new Promise<TexturePackInstallResult>((resolve, reject) => {
-                resolveResult = resolve;
-                rejectResult = reject;
+            const emit = (p: TexturePackProgress): void => {
+                const wc = _e.sender;
+                if (!wc.isDestroyed())
+                    wc.send('textures:install-progress', p);
+            };
+            const value = await installTexturePack(env.value, archivePath, (stage) => {
+                emit({ stage });
             });
-            downloadManager.submit(jobName, async (_controller, onProgress) => {
-                const emit = (stage: string): void => {
-                    onProgress({ stage: 'extracting', message: stage });
-                    const wc = _e.sender;
-                    if (!wc.isDestroyed())
-                        wc.send('textures:install-progress', { stage });
-                };
-                try {
-                    onProgress({ stage: 'extracting', message: 'Starting install' });
-                    const value = await installTexturePack(env.value, archivePath, emit);
-                    onProgress({ stage: 'done', percent: 100, message: 'Install complete' });
-                    resolveResult(value);
-                } catch (err) {
-                    rejectResult(err);
-                    throw err;
-                }
-            });
-            const value = await resultPromise;
             return { ok: true, value };
         }
         catch (err) {

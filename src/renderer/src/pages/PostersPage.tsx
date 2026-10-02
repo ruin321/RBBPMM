@@ -130,6 +130,16 @@ export function PostersPage({ env, dropPath, onDropConsumed, modInstalled }: Pro
         </Button>
       </PageHeader>
 
+      {installing && (
+          <div className="mt-4 flex items-center gap-3 rounded-lg border bg-muted/50 px-4 py-2 shadow-sm">
+            <Loader2 className="h-5 w-5 animate-spin text-primary"/>
+            <span className="text-sm text-muted-foreground">
+              {stage === 'extracting' ? 'Extracting archive...' : 'Installing posters...'}
+            </span>
+            <Progress indeterminate className="ml-auto h-1.5 w-32"/>
+          </div>
+      )}
+
       {!env ? (<Card>
           <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
             <PackageX className="h-10 w-10 text-muted-foreground"/>
@@ -176,17 +186,6 @@ export function PostersPage({ env, dropPath, onDropConsumed, modInstalled }: Pro
                 </div>
               </CardContent>
             </Card>))}
-        </div>)}
-
-      
-      {installing && (<div className="pointer-events-auto fixed inset-0 z-[60] flex items-center justify-center bg-background/60 backdrop-blur-sm">
-          <div className="flex w-80 flex-col items-center gap-5 rounded-2xl border bg-card p-8 shadow-lg">
-            <Loader2 className="h-10 w-10 animate-spin text-primary"/>
-            <p className="text-sm font-medium">
-              {stage === 'extracting' ? t('textures.installingExtract') : t('textures.installingCopy')}
-            </p>
-            <Progress indeterminate className="h-1.5 w-full"/>
-          </div>
         </div>)}
 
       {readmes.length > 0 && (<ReadmeDialog kind="mod" readmes={readmes} installDir={readmeDir} onOpenChange={(open) => {
