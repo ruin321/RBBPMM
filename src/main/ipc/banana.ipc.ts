@@ -13,7 +13,7 @@ import { linkKnownSubmission } from '../services/ModSourceLinker';
 import { loadModManifest } from '../services/ManifestLoader';
 import { invalidateModScan, scanRepositoryCached } from '../services/ModRepositoryScanner';
 import { LEVEL_STUDIO_CATEGORY_ID, TEXTURE_PACK_CATEGORY_ID } from '../../shared/types';
-import type { GamebananaCommentDto, GamebananaCommentsDto, GamebananaSearchResult, GamebananaSubmissionDto, GamebananaUpdatesDto, InstallResult, LevelStudioPrereqItem, Result } from '../../shared/types';
+import type { GamebananaCommentDto, GamebananaCommentsDto, GamebananaSearchResult, GamebananaSubmissionDto, GamebananaUpdatesDto, InstallResult, JobProgress, LevelStudioPrereqItem, Result } from '../../shared/types';
 import { downloadManager } from '../services/DownloadManager';
 function requireEnv(): {
     ok: true;
@@ -228,6 +228,16 @@ export function registerBananaIpc(getWebContents: () => WebContents | null): voi
     });
     ipcMain.handle('banana:clear-completed', async (): Promise<void> => {
         downloadManager.clearCompleted();
+    });
+    ipcMain.handle('banana:get-jobs', async (): Promise<JobProgress[]> => {
+        return downloadManager.getAll().map((j) => ({
+            id: j.id,
+            name: j.name,
+            stage: j.status,
+            percent: j.percent,
+            message: j.message,
+            error: j.error
+        }));
     });
     ipcMain.handle('banana:install-url', async (_e, { url, modType, modId }: {
         url: string;

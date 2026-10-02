@@ -33,6 +33,7 @@ const api: AppApi = {
         cancelJob: (jobId) => ipcRenderer.invoke('banana:cancel-job', { jobId }),
         clearJob: (jobId) => ipcRenderer.invoke('banana:clear-job', { jobId }),
         clearCompleted: () => ipcRenderer.invoke('banana:clear-completed'),
+        getJobs: () => ipcRenderer.invoke('banana:get-jobs'),
         onJobProgress: (cb) => {
             const handler = (_e: unknown, p: unknown): void => cb(p as never);
             ipcRenderer.on('banana:job-progress', handler);

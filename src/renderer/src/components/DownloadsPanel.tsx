@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { X, Trash2, Loader2 } from 'lucide-react';
 import downloadsBg from '@/assets/downloads-bg.png';
 
@@ -12,6 +12,10 @@ interface JobItem {
 }
 
 const TERMINAL_STAGES = new Set(['done', 'error', 'cancelled']);
+
+const HEADER_H = 72;
+const ROW_H = 72;
+const VISIBLE_H = HEADER_H; // 收起时只露出一整条头部
 
 // 图片 480x360：上半部分（红顶 + 灰条）给头部，下半部分（白心 + 两边红框）给每一行
 const BG_TOP: React.CSSProperties = {
@@ -44,49 +48,56 @@ function CharProgress({ percent }: { percent: number }): React.JSX.Element {
 
 export function DownloadsPanel(): React.JSX.Element | null {
     const [jobs, setJobs] = useState<Map<string, JobItem>>(new Map());
-    const cleanupTimers = useRef<Map<string, number>>(new Map());
 
     useEffect(() => {
-        const off = window.api.banana.onJobProgress((p) => {
+        const upsert = (p: JobItem): void => {
             setJobs((prev) => {
                 const next = new Map(prev);
-                next.set(p.id, {
-                    id: p.id,
-                    name: p.name,
-                    stage: p.stage,
-                    percent: p.percent,
-                    message: p.message,
-                    error: p.error
-                });
-                if (TERMINAL_STAGES.has(p.stage)) {
-                    const existing = cleanupTimers.current.get(p.id);
-                    if (existing) window.clearTimeout(existing);
-                    const t = window.setTimeout(() => {
-                        setJobs((cur) => {
-                            const n = new Map(cur);
-                            n.delete(p.id);
-                            return n;
-                        });
-                        cleanupTimers.current.delete(p.id);
-                    }, 8000);
-                    cleanupTimers.current.set(p.id, t);
-                }
+                next.set(p.id, p);
                 return next;
             });
-        });
-        return () => {
-            off();
-            for (const t of cleanupTimers.current.values()) window.clearTimeout(t);
         };
+
+        const off = window.api.banana.onJobProgress((p) => {
+            upsert({
+                id: p.id,
+                name: p.name,
+                stage: p.stage,
+                percent: p.percent,
+                message: p.message,
+                error: p.error
+            });
+        });
+
+        // 拉一次主进程的任务快照：切换页面 / 组件重挂载后进度不会丢
+        void window.api.banana
+            .getJobs()
+            .then((list) => {
+                for (const p of list) upsert(p);
+            })
+            .catch(() => { /* noop */ });
+
+        return () => off();
     }, []);
 
     const jobsArr = Array.from(jobs.values());
     const runningCount = jobsArr.filter((j) => !TERMINAL_STAGES.has(j.stage)).length;
 
-    const cancelJob = (id: string): void => { void window.api.banana.cancelJob(id); };
+    const cancelJob = (id: string): void => {
+        void window.api.banana.cancelJob(id);
+        setJobs((prev) => {
+            const n = new Map(prev);
+            n.delete(id);
+            return n;
+        });
+    };
     const clearJob = (id: string): void => {
         void window.api.banana.clearJob(id);
-        setJobs((prev) => { const n = new Map(prev); n.delete(id); return n; });
+        setJobs((prev) => {
+            const n = new Map(prev);
+            n.delete(id);
+            return n;
+        });
     };
     const clearDone = (): void => {
         void window.api.banana.clearCompleted();
@@ -100,14 +111,20 @@ export function DownloadsPanel(): React.JSX.Element | null {
     if (jobsArr.length === 0) return null;
 
     const hasFinished = jobsArr.some((j) => TERMINAL_STAGES.has(j.stage));
+    // 展开后的完整高度 = 头部 + 每行；收起时用 translateY 把行部分藏到视口外
+    const panelH = HEADER_H + jobsArr.length * ROW_H;
 
     return (
-        // 外层固定不动（保证 hover 区域稳定，不然升起后鼠标会掉出去）
-        <div className="group pointer-events-auto fixed right-4 bottom-4 z-50 w-[480px] text-black">
-            {/* 内层负责位移：默认只露半个头部 45px，hover 升起只露出整个头部 90px */}
-            <div className="translate-y-[calc(100%-45px)] transition-transform duration-300 ease-out group-hover:translate-y-[calc(100%-90px)]">
-                {/* 头部 — 用图片上半部分，文本居中，无 emoji */}
-                <div style={BG_TOP} className="relative flex h-[90px] items-center justify-center pt-8">
+        // 外层盒子只占「头部」这一条的高度 —— hover 判定区就只在这一条上，
+        // 不会像之前那样整块面板（含隐藏的行）都算触发区。
+        <div
+            className="group pointer-events-auto fixed bottom-0 right-4 z-50 w-[480px] text-black"
+            style={{ height: VISIBLE_H, ['--panel-h' as string]: `${panelH}px` }}
+        >
+            {/* 内层绝对定位在盒子底部：收起时下移只露头部，hover 时上滑露出全部内容 */}
+            <div className="absolute bottom-0 left-0 w-full translate-y-[calc(var(--panel-h)-72px)] transition-transform duration-300 ease-out group-hover:translate-y-0">
+                {/* 头部 — 用图片上半部分，文本居中在灰条下方 */}
+                <div style={BG_TOP} className="relative flex h-[72px] items-center justify-center pt-[50px]">
                     <span className="text-sm font-bold">Downloads</span>
                     {runningCount > 0 && (
                         <span className="ml-1.5 font-mono text-[10px] font-bold">({runningCount})</span>

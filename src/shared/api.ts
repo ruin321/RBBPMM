@@ -45,6 +45,7 @@ export interface AppApi {
         cancelJob: (jobId: string) => Promise<void>;
         clearJob: (jobId: string) => Promise<void>;
         clearCompleted: () => Promise<void>;
+        getJobs: () => Promise<JobProgress[]>;
         onJobProgress: (cb: (p: JobProgress) => void) => () => void;
     };
     ui: {
