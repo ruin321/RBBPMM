@@ -3,6 +3,7 @@ import { deleteCustomLevel, listCustomLevels, toggleCustomLevel } from '../servi
 import { findPbplFiles, installLevelStudioPlayable } from '../services/LevelStudioInstaller';
 import { extractArchive } from '../services/ModArchiveExtractor';
 import { logInfo, logWarn } from '../logger';
+import { downloadManager } from '../services/DownloadManager';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
@@ -51,21 +52,41 @@ export function registerCustomLevelIpc(): void {
         if (!fs.existsSync(archivePath)) {
             return { ok: false, error: `file not found: ${archivePath}` };
         }
-        const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'ls-install-'));
         try {
-            logInfo('customLevel:install extract =', archivePath);
-            const extractRoot = await extractArchive(archivePath, tmpRoot);
-            const result = await installLevelStudioPlayable(extractRoot);
-            logInfo('customLevel:install installed =', result.playables.length, result.playables);
-            return { ok: true, value: result };
+            const jobName = `Custom Level: ${path.basename(archivePath)}`;
+            let resolveResult!: (v: LevelStudioInstallResult) => void;
+            let rejectResult!: (e: unknown) => void;
+            const resultPromise = new Promise<LevelStudioInstallResult>((resolve, reject) => {
+                resolveResult = resolve;
+                rejectResult = reject;
+            });
+            downloadManager.submit(jobName, async (_controller, onProgress) => {
+                const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'ls-install-'));
+                try {
+                    onProgress({ stage: 'extracting', message: 'Extracting archive' });
+                    logInfo('customLevel:install extract =', archivePath);
+                    const extractRoot = await extractArchive(archivePath, tmpRoot);
+                    onProgress({ stage: 'installing', message: 'Installing level' });
+                    const result = await installLevelStudioPlayable(extractRoot);
+                    logInfo('customLevel:install installed =', result.playables.length, result.playables);
+                    onProgress({ stage: 'done', percent: 100, message: 'Install complete' });
+                    resolveResult(result);
+                } catch (err) {
+                    const msg = err instanceof Error ? err.message : String(err);
+                    logWarn('customLevel:install failed =', msg);
+                    rejectResult(err);
+                    throw err;
+                }
+                finally {
+                    fs.rmSync(tmpRoot, { recursive: true, force: true });
+                }
+            });
+            const value = await resultPromise;
+            return { ok: true, value };
         }
         catch (err) {
             const msg = err instanceof Error ? err.message : String(err);
-            logWarn('customLevel:install failed =', msg);
             return { ok: false, error: msg };
-        }
-        finally {
-            fs.rmSync(tmpRoot, { recursive: true, force: true });
         }
     });
     ipcMain.handle('customLevel:toggle', async (_e, { fileName, enabled }: {

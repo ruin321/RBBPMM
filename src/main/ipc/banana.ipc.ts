@@ -8,7 +8,7 @@ import { installTexturePacksFromRoot, findPackDirs, hasModStructureInRoot } from
 import { installLevelStudioPlayable } from '../services/LevelStudioInstaller';
 import { installPosterPacksFromRoot } from '../services/PosterPackService';
 import { downloadMod, getComments, getPostReplies, getSubmission, getUpdates, searchMods } from '../services/GamebananaService';
-import { runtimeState, getAutoInstallAfterDownload } from '../store';
+import { runtimeState } from '../store';
 import { debugLog, debugError } from '../logger';
 import { linkKnownSubmission } from '../services/ModSourceLinker';
 import { loadModManifest } from '../services/ManifestLoader';
@@ -28,6 +28,7 @@ function requireEnv(): {
     }
     return { ok: true, value: runtimeState.environment.rootPath };
 }
+const choiceResolvers = new Map<string, (shouldInstall: boolean) => void>();
 export function registerBananaIpc(getWebContents: () => WebContents | null): void {
     // Bridge DownloadManager events to renderer with job ids
     downloadManager.subscribe((p) => {
@@ -131,8 +132,7 @@ export function registerBananaIpc(getWebContents: () => WebContents | null): voi
                 allFiles[0];
 
             const url = file.downloadUrl;
-            const autoInstall = getAutoInstallAfterDownload();
-            const jobName = `${submission.name}${autoInstall ? '' : ' (download only)'}`;
+            const jobName = submission.name;
 
             const jobId = downloadManager.submit(jobName, async (controller, onProgress) => {
                 let tmpFile: string | null = null;
@@ -147,13 +147,20 @@ export function registerBananaIpc(getWebContents: () => WebContents | null): voi
                         });
                     }, () => controller.signal.aborted);
 
-                    if (!autoInstall) {
-                        // Just keep the zip in a downloads folder and we're done
-                        const dlDir = path.join(os.homedir(), 'Downloads', 'BaldiMods');
-                        try { fs.mkdirSync(dlDir, { recursive: true }); } catch { /* noop */ }
-                        const dest = path.join(dlDir, path.basename(tmpFile));
-                        try { fs.copyFileSync(tmpFile, dest); } catch { /* noop */ }
-                        onProgress({ stage: 'done', percent: 100, message: `Saved to ${dest}` });
+                    // Always save copy to Downloads/BaldiMods first
+                    const dlDir = path.join(os.homedir(), 'Downloads', 'BaldiMods');
+                    try { fs.mkdirSync(dlDir, { recursive: true }); } catch { /* noop */ }
+                    const savedPath = path.join(dlDir, path.basename(tmpFile));
+                    try { fs.copyFileSync(tmpFile, savedPath); } catch { /* noop */ }
+
+                    // Ask renderer whether to install
+                    getWebContents()?.send('banana:need-install-choice', { jobId, savedPath, submissionName: submission.name });
+                    const shouldInstall = await new Promise<boolean>((resolve) => {
+                        choiceResolvers.set(jobId, resolve);
+                    });
+
+                    if (!shouldInstall) {
+                        onProgress({ stage: 'done', percent: 100, message: `Saved to ${savedPath}` });
                         return;
                     }
 
@@ -253,8 +260,7 @@ export function registerBananaIpc(getWebContents: () => WebContents | null): voi
         if (!url || typeof url !== 'string')
             return { ok: false, error: 'Missing archive URL' };
 
-        const autoInstall = getAutoInstallAfterDownload();
-        const jobName = `${path.basename(url.split('?')[0]) || 'mod'}${autoInstall ? '' : ' (download only)'}`;
+        const jobName = path.basename(url.split('?')[0]) || 'mod';
 
         const jobId = downloadManager.submit(jobName, async (controller, onProgress) => {
             let tmpFile: string | null = null;
@@ -269,12 +275,20 @@ export function registerBananaIpc(getWebContents: () => WebContents | null): voi
                     });
                 }, () => controller.signal.aborted);
 
-                if (!autoInstall) {
-                    const dlDir = path.join(os.homedir(), 'Downloads', 'BaldiMods');
-                    try { fs.mkdirSync(dlDir, { recursive: true }); } catch { /* noop */ }
-                    const dest = path.join(dlDir, path.basename(tmpFile));
-                    try { fs.copyFileSync(tmpFile, dest); } catch { /* noop */ }
-                    onProgress({ stage: 'done', percent: 100, message: `Saved to ${dest}` });
+                // Always save copy first
+                const dlDir = path.join(os.homedir(), 'Downloads', 'BaldiMods');
+                try { fs.mkdirSync(dlDir, { recursive: true }); } catch { /* noop */ }
+                const savedPath = path.join(dlDir, path.basename(tmpFile));
+                try { fs.copyFileSync(tmpFile, savedPath); } catch { /* noop */ }
+
+                // Ask renderer
+                getWebContents()?.send('banana:need-install-choice', { jobId, savedPath, submissionName: path.basename(url.split('?')[0]) || 'mod' });
+                const shouldInstall = await new Promise<boolean>((resolve) => {
+                    choiceResolvers.set(jobId, resolve);
+                });
+
+                if (!shouldInstall) {
+                    onProgress({ stage: 'done', percent: 100, message: `Saved to ${savedPath}` });
                     return;
                 }
 
@@ -316,5 +330,12 @@ export function registerBananaIpc(getWebContents: () => WebContents | null): voi
         });
 
         return { ok: true, value: { jobId } };
+    });
+    ipcMain.handle('banana:confirm-install-choice', (_e, { jobId, shouldInstall }: { jobId: string; shouldInstall: boolean }): void => {
+        const r = choiceResolvers.get(jobId);
+        if (r) {
+            choiceResolvers.delete(jobId);
+            r(!!shouldInstall);
+        }
     });
 }

@@ -48,6 +48,7 @@ export interface AppApi {
         clearCompleted: () => Promise<void>;
         getJobs: () => Promise<JobProgress[]>;
         onJobProgress: (cb: (p: JobProgress) => void) => () => void;
+        confirmInstallChoice: (jobId: string, shouldInstall: boolean) => Promise<void>;
     };
     ui: {
         pickZip: () => Promise<Result<{
@@ -139,5 +140,6 @@ export interface AppApi {
         onTexturePackProgress: (cb: (p: TexturePackProgress) => void) => () => void;
         onPosterPackProgress: (cb: (p: PosterPackProgress) => void) => () => void;
         onOpenUrl: (cb: (url: OpenUrlPayload) => void) => () => void;
+        onNeedInstallChoice: (cb: (p: { jobId: string; savedPath: string; submissionName: string }) => void) => () => void;
     };
 }

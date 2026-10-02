@@ -1,6 +1,6 @@
 import { execFile } from 'child_process';
 import { ipcMain, BrowserWindow, nativeTheme } from 'electron';
-import { getFontFamily, getLocale, getTheme, setFontFamily, setLocale, setTheme, resetAllSettings, getSplashEnabled, setSplashEnabled, getDebugLogging, setDebugLogging, getNavOpen, setNavOpen, getVerticalLayout, setVerticalLayout, getAutoInstallAfterDownload, setAutoInstallAfterDownload } from '../store';
+import { getFontFamily, getLocale, getTheme, setFontFamily, setLocale, setTheme, resetAllSettings, getSplashEnabled, setSplashEnabled, getDebugLogging, setDebugLogging, getNavOpen, setNavOpen, getVerticalLayout, setVerticalLayout } from '../store';
 import { isDarkTheme } from '../constants';
 function syncNativeTheme(): void {
     nativeTheme.themeSource = isDarkTheme(getTheme()) ? 'dark' : 'light';
@@ -103,12 +103,6 @@ export function registerAppIpc(): void {
         enabled: boolean;
     }): Promise<void> => {
         setVerticalLayout(enabled);
-    });
-    ipcMain.handle('app:get-auto-install', async (): Promise<boolean> => getAutoInstallAfterDownload());
-    ipcMain.handle('app:set-auto-install', async (_e, { enabled }: {
-        enabled: boolean;
-    }): Promise<void> => {
-        setAutoInstallAfterDownload(enabled);
     });
     ipcMain.handle('app:reset-settings', async (): Promise<void> => {
         const defaults = resetAllSettings();

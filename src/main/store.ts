@@ -89,12 +89,6 @@ export function getVerticalLayout(): boolean {
 export function setVerticalLayout(v: boolean): void {
     store.set('verticalLayout', v);
 }
-export function getAutoInstallAfterDownload(): boolean {
-    return store.get('autoInstallAfterDownload', true);
-}
-export function setAutoInstallAfterDownload(v: boolean): void {
-    store.set('autoInstallAfterDownload', v);
-}
 export function resetAllSettings(): {
     theme: string;
     fontFamily: string;

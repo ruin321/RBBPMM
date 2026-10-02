@@ -43,7 +43,8 @@ const api: AppApi = {
             const handler = (_e: unknown, p: unknown): void => cb(p as never);
             ipcRenderer.on('banana:job-progress', handler);
             return () => ipcRenderer.removeListener('banana:job-progress', handler);
-        }
+        },
+        confirmInstallChoice: (jobId, shouldInstall) => ipcRenderer.invoke('banana:confirm-install-choice', { jobId, shouldInstall })
     },
     customLevel: {
         list: () => ipcRenderer.invoke('customLevel:list'),
@@ -176,6 +177,11 @@ const api: AppApi = {
             const handler = (_e: unknown, url: unknown): void => cb(url as never);
             ipcRenderer.on('app:open-url', handler);
             return () => ipcRenderer.removeListener('app:open-url', handler);
+        },
+        onNeedInstallChoice: (cb) => {
+            const handler = (_e: unknown, p: unknown): void => cb(p as never);
+            ipcRenderer.on('banana:need-install-choice', handler);
+            return () => ipcRenderer.removeListener('banana:need-install-choice', handler);
         }
     }
 };

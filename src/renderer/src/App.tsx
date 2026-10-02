@@ -9,6 +9,7 @@ import { useI18n } from '@/i18n';
 import { initAnimations } from '@/hooks/useAnimations';
 import { TooltipProvider, WithTooltip } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { HomePage } from '@/pages/HomePage';
 import { ModsPage } from '@/pages/ModsPage';
 import { SettingsPage } from '@/pages/SettingsPage';
@@ -60,6 +61,11 @@ export function App(): React.JSX.Element {
     const [installedMods, setInstalledMods] = useState<{
         name: string;
     }[]>([]);
+    const [installChoice, setInstallChoice] = useState<{
+        jobId: string;
+        savedPath: string;
+        submissionName: string;
+    } | null>(null);
     useEffect(() => {
         initAnimations();
     }, []);
@@ -132,6 +138,11 @@ export function App(): React.JSX.Element {
         });
     }, []);
     useEffect(() => {
+        return window.api.app.onNeedInstallChoice((p) => {
+            setInstallChoice(p);
+        });
+    }, []);
+    useEffect(() => {
         void checkSetup();
     }, [checkSetup]);
     useEffect(() => {
@@ -165,46 +176,57 @@ export function App(): React.JSX.Element {
     const handleDrop = (e: React.DragEvent): void => {
         e.preventDefault();
         setDragging(false);
-        const file = Array.from(e.dataTransfer.files).find((f) => ARCHIVE_EXT.test(f.name));
-        if (file) {
-            const path = (file as File & {
-                path?: string;
-            }).path;
-            if (path) {
-                void window.api.textures.probe(path).then(async (r) => {
-                    if (r.ok && r.value) {
-                        setTextureDropPath(path);
-                        setPage('textures');
-                        return;
-                    }
-                    if (postersTabVisible) {
-                        const pr = await window.api.posters.probe(path);
-                        if (pr.ok && pr.value) {
-                            setPosterDropPath(path);
-                            setPage('posters');
-                            return;
-                        }
-                    }
-                    if (mapTabVisible) {
-                        const lr = await window.api.customLevel.probe(path);
-                        if (lr.ok && lr.value) {
-                            const ir = await window.api.customLevel.install(path);
-                            if (ir.ok) {
-                                toast.success(t('maps.installedToast'));
-                                setPage('maps');
-                            }
-                            else {
-                                toast.error(`Install failed: ${ir.error}`);
-                                setDropPath(path);
-                                setPage('mods');
-                            }
-                            return;
-                        }
-                    }
+        const allFiles = Array.from(e.dataTransfer.files);
+        const LOose_EXT = /\.(dll|plugin)$/i;
+        const archives = allFiles.filter((f) => ARCHIVE_EXT.test(f.name));
+        const looseDlls = allFiles.filter((f) => LOose_EXT.test(f.name));
+
+        // Each archive handled independently (parallel)
+        for (const file of archives) {
+            const f = file as File & { path?: string };
+            const path = f.path;
+            if (!path) continue;
+            void (async () => {
+                const probes: Promise<any>[] = [window.api.textures.probe(path)];
+                if (postersTabVisible) probes.push(window.api.posters.probe(path));
+                if (mapTabVisible) probes.push(window.api.customLevel.probe(path));
+                const results = await Promise.allSettled(probes);
+                const texturesHit = results[0].status === 'fulfilled' && results[0].value.ok && results[0].value.value;
+                const postersHit = postersTabVisible && results[1]?.status === 'fulfilled' && results[1].value.ok && results[1].value.value;
+                const mapsHit = mapTabVisible && results[probes.length - 1]?.status === 'fulfilled' && results[probes.length - 1].value.ok && results[probes.length - 1].value.value;
+                if (texturesHit) {
+                    setTextureDropPath(path);
+                    setPage('textures');
+                    void window.api.textures.install(path);
+                } else if (postersHit) {
+                    setPosterDropPath(path);
+                    setPage('posters');
+                    void window.api.posters.install(path);
+                } else if (mapsHit) {
+                    setPage('maps');
+                    void window.api.customLevel.install(path).then((ir) => {
+                        if (ir.ok)
+                            toast.success(t('maps.installedToast'));
+                        else
+                            toast.error(`Install failed: ${ir.error}`);
+                    });
+                } else {
                     setDropPath(path);
                     setPage('mods');
-                });
-            }
+                    void window.api.mods.installUnmanaged(path);
+                }
+            })();
+        }
+
+        // Loose DLLs / plugin files — install directly
+        for (const file of looseDlls) {
+            const f = file as File & { path?: string };
+            const path = f.path;
+            if (!path) continue;
+            void (async () => {
+                setPage('mods');
+                void window.api.mods.installUnmanaged(path);
+            })();
         }
     };
     return (<TooltipProvider delayDuration={220}>
@@ -344,6 +366,34 @@ export function App(): React.JSX.Element {
       {deepLinkInstall && (<DeepLinkInstallDialog key={'url' in deepLinkInstall
                 ? deepLinkInstall.url
                 : `${deepLinkInstall.submissionId}:${deepLinkInstall.fileId ?? ''}`} submissionId={'submissionId' in deepLinkInstall ? deepLinkInstall.submissionId : undefined} fileId={'fileId' in deepLinkInstall ? deepLinkInstall.fileId : undefined} url={'url' in deepLinkInstall ? deepLinkInstall.url : undefined} modType={'modType' in deepLinkInstall ? deepLinkInstall.modType : undefined} modId={'modId' in deepLinkInstall ? deepLinkInstall.modId : undefined} onDone={() => setDeepLinkInstall(null)}/>)}
+
+      {installChoice && (<Dialog open={!!installChoice} onOpenChange={(o) => {
+            if (!o && installChoice) {
+                void window.api.banana.confirmInstallChoice(installChoice.jobId, false);
+                setInstallChoice(null);
+            }
+        }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t('banana.installChoice.title')}</DialogTitle>
+            <DialogDescription>{t('banana.installChoice.desc')}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+                    void window.api.banana.confirmInstallChoice(installChoice.jobId, false);
+                    setInstallChoice(null);
+                }}>
+              {t('banana.installChoice.no')}
+            </Button>
+            <Button variant="default" onClick={() => {
+                    void window.api.banana.confirmInstallChoice(installChoice.jobId, true);
+                    setInstallChoice(null);
+                }}>
+              {t('banana.installChoice.yes')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>)}
 
       
       {splashOn ? <SplashScreen onDone={() => setSplashOn(false)}/> : null}
