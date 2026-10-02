@@ -1,4 +1,5 @@
 declare const __APP_VERSION__: string;
+declare const __DEV_BUILD__: boolean;
 
 declare module '*.png' {
     const src: string;

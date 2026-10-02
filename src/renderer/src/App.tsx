@@ -17,6 +17,7 @@ import { ConfigsPage } from '@/pages/ConfigsPage';
 import { TexturePacksPage } from '@/pages/TexturePacksPage';
 import { ToolboxPage } from '@/pages/ToolboxPage';
 import { AboutDialog } from '@/components/AboutDialog';
+import { DevBuildDialog } from '@/components/DevBuildDialog';
 import { SplashScreen } from '@/components/SplashScreen';
 import { DownloadsPanel } from '@/components/DownloadsPanel';
 import { TitleBar } from '@/components/TitleBar';
@@ -316,6 +317,7 @@ export function App(): React.JSX.Element {
         </div>)}
 
       <AboutDialog open={aboutOpen} onOpenChange={setAboutOpen}/>
+      <DevBuildDialog />
       <SetupWizardDialog open={setupOpen} onOpenChange={(o) => {
             setSetupOpen(o);
             if (!o)

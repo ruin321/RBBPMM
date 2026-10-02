@@ -3,7 +3,7 @@ import { defineConfig, externalizeDepsPlugin } from 'electron-vite'
 import react from '@vitejs/plugin-react'
 import pkg from './package.json'
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   main: {
     plugins: [externalizeDepsPlugin()]
   },
@@ -19,8 +19,9 @@ export default defineConfig({
       }
     },
     define: {
-      __APP_VERSION__: JSON.stringify(pkg.version)
+      __APP_VERSION__: JSON.stringify(pkg.version),
+      __DEV_BUILD__: JSON.stringify(mode !== 'production')
     },
     plugins: [react()]
   }
-})
+}))

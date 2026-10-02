@@ -52,6 +52,8 @@
     "dev": "electron-vite dev",
     "build": "electron-vite build",
     "build:win": "electron-vite build && electron-builder --win",
+    "build:dev": "electron-vite build --mode dev",
+    "build:win:dev": "electron-vite build --mode dev && electron-builder --win",
     "preview": "electron-vite preview"
   },
   "dependencies": {
